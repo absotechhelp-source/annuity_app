@@ -667,7 +667,7 @@ async function loadAdmin(){
         return '<tr><td>'+escHtml(u.name)+'</td><td>'+escHtml(u.employeeId)+'</td><td>'+escHtml(u.role)+'</td>'
           +'<td>'+escHtml(u.phone)+'</td><td>'+escHtml(u.branch||'—')+'</td>'
           +'<td><span class="active-pill '+(u.active?'yes':'no')+'">'+(u.active?'Active':'Inactive')+'</span></td>'
-          +'<td><button class="btn btn-ghost btn-sm" onclick="toggleFA(''+u.userId+'',this)">'+(u.active?'Deactivate':'Activate')+'</button></td></tr>';
+          +'<td><button class="btn btn-ghost btn-sm" onclick="toggleFA(\''+u.userId+'\',this)">'+(u.active?'Deactivate':'Activate')+'</button></td></tr>';
       }).join('')+'</tbody></table>';
   }catch(e){document.getElementById('fa-table-wrap').innerHTML='<div class="empty-state">Could not load users.</div>';}
 }
