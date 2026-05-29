@@ -1,0 +1,767 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<meta name="theme-color" content="#8B0000"/>
+<title>VLA Annuity Quotation</title>
+<link rel="manifest" href="manifest.json"/>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --red:#8B0000;--red2:#a00000;--gold:#c9a84c;
+  --cream:#fafaf8;--text:#1a1a1a;--muted:#666;
+  --border:#ddd;--radius:3px;--shadow:0 2px 12px rgba(0,0,0,.10);
+}
+html{font-size:15px}
+body{font-family:'Segoe UI',Arial,sans-serif;background:#e8e0d8;color:var(--text);min-height:100vh}
+.offline-bar{background:var(--red);color:#fff;text-align:center;font-size:.78rem;padding:.35rem;display:none}
+body.offline .offline-bar{display:block}
+.app{max-width:900px;margin:0 auto;padding:1.5rem 1rem 4rem}
+
+/* tabs */
+.tabs{display:flex;background:#fff;border-radius:var(--radius);box-shadow:var(--shadow);margin-bottom:1.25rem;overflow:hidden}
+.tab-btn{flex:1;padding:.75rem .5rem;border:none;background:transparent;font-size:.78rem;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);cursor:pointer;border-bottom:3px solid transparent;transition:all .2s}
+.tab-btn.active{color:var(--red);border-bottom-color:var(--red);font-weight:600}
+.tab-btn.done{color:#2e7d32}
+.tab-btn:hover:not(.active){background:#fafafa;color:var(--text)}
+
+/* card */
+.card{background:#fff;border-radius:var(--radius);box-shadow:var(--shadow);padding:1.5rem;margin-bottom:1.25rem}
+.card-title{font-size:.72rem;text-transform:uppercase;letter-spacing:.12em;color:var(--red);margin-bottom:1rem;padding-bottom:.5rem;border-bottom:1px solid #f0e0e0}
+
+/* form */
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:1rem 1.5rem}
+.span2{grid-column:span 2}
+@media(max-width:580px){.grid-2{grid-template-columns:1fr}.span2{grid-column:span 1}}
+.field{display:flex;flex-direction:column;gap:.3rem}
+label{font-size:.72rem;color:var(--muted);text-transform:uppercase;letter-spacing:.08em}
+label sup{color:var(--red)}
+input,select{font-family:inherit;font-size:.9rem;padding:.45rem .7rem;border:1px solid var(--border);border-radius:var(--radius);background:#fff;color:var(--text);width:100%;transition:border-color .2s}
+input:focus,select:focus{outline:none;border-color:var(--red)}
+input[readonly]{background:#f9f9f9;color:var(--muted)}
+input::placeholder{color:#ccc}
+.field-err{font-size:.68rem;color:#c00;display:none}
+.field.err .field-err{display:block}
+.field.err input,.field.err select{border-color:#c00}
+.toggle-row{display:flex;gap:.4rem;flex-wrap:wrap}
+.tog{flex:1;min-width:70px;text-align:center;padding:.4rem;font-size:.78rem;border:1px solid var(--border);border-radius:var(--radius);cursor:pointer;background:#fff;color:var(--muted);transition:all .18s}
+.tog.on{background:var(--red);border-color:var(--red);color:#fff;font-weight:600}
+.tog:hover:not(.on){border-color:#bbb;color:var(--text)}
+.sdiv{display:flex;align-items:center;gap:.75rem;margin:1.25rem 0 .9rem;color:var(--red);font-size:.72rem;text-transform:uppercase;letter-spacing:.12em}
+.sdiv::after{content:'';flex:1;height:1px;background:#f0e0e0}
+.collapsible{max-height:0;overflow:hidden;transition:max-height .35s ease,opacity .3s;opacity:0}
+.collapsible.open{max-height:700px;opacity:1}
+.btn{font-family:inherit;font-size:.8rem;letter-spacing:.08em;padding:.6rem 1.75rem;border-radius:var(--radius);cursor:pointer;border:1px solid;text-transform:uppercase;transition:all .18s}
+.btn-primary{background:var(--red);border-color:var(--red);color:#fff}
+.btn-primary:hover{background:var(--red2)}
+.btn-ghost{background:transparent;border-color:var(--border);color:var(--muted)}
+.btn-ghost:hover{border-color:#999;color:var(--text)}
+.actions{display:flex;gap:.75rem;justify-content:flex-end;margin-top:1.5rem}
+
+/* review */
+.rev-grid{display:grid;grid-template-columns:1fr 1fr;gap:.4rem 2rem}
+@media(max-width:540px){.rev-grid{grid-template-columns:1fr}}
+.rev-item{padding:.45rem 0;border-bottom:1px solid #f5f5f5}
+.rev-item .rl{font-size:.7rem;color:var(--muted);text-transform:uppercase;letter-spacing:.08em}
+.rev-item .rv{font-size:.9rem;color:var(--text);margin-top:.1rem}
+
+/* spinner */
+.spin-wrap{display:none;text-align:center;padding:.75rem;font-size:.8rem;color:var(--muted)}
+.spin-wrap.show{display:block}
+.spinner{display:inline-block;width:14px;height:14px;vertical-align:middle;border:2px solid #ddd;border-top-color:var(--red);border-radius:50%;animation:spin .6s linear infinite;margin-right:.4rem}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* panels */
+.panel{display:none}
+.panel.active{display:block;animation:fadeUp .25s ease}
+@keyframes fadeUp{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+
+/* ── QUOTE CANVAS PANEL ── */
+#panel-quote{text-align:center}
+#quote-canvas{max-width:100%;border-radius:var(--radius);box-shadow:var(--shadow);cursor:pointer;display:block;margin:0 auto}
+.canvas-hint{font-size:.75rem;color:var(--muted);margin-top:.6rem}
+.intermediates{background:#f9f9f9;border:1px solid #eee;border-radius:var(--radius);padding:.75rem 1rem;margin-top:1rem;text-align:left;font-size:.78rem}
+.intermediates summary{cursor:pointer;color:var(--red);font-size:.72rem;text-transform:uppercase;letter-spacing:.08em}
+.int-row{display:flex;justify-content:space-between;border-bottom:1px solid #eee;padding:.25rem 0}
+.int-row .il{color:var(--muted)}
+
+/* print */
+@media print{
+  body{background:#fff}
+  .tabs,.actions,.offline-bar,.intermediates,.canvas-hint{display:none!important}
+  .panel{display:block!important}
+  #panel-form,#panel-review{display:none!important}
+  #quote-canvas{max-width:100%;box-shadow:none}
+}
+</style>
+</head>
+<body>
+<div class="offline-bar">&#9679; Offline — tool still works normally</div>
+<div class="app">
+
+<!-- tabs -->
+<div class="tabs">
+  <button class="tab-btn active" data-panel="panel-form"   onclick="goTab('panel-form')">① Inputs</button>
+  <button class="tab-btn"        data-panel="panel-review" onclick="goTab('panel-review')">② Review</button>
+  <button class="tab-btn"        data-panel="panel-quote"  id="tab-quote">③ Quotation</button>
+</div>
+
+<!-- ══ PANEL 1 — INPUTS ══ -->
+<div class="panel active" id="panel-form">
+
+  <div class="card">
+    <div class="card-title">Policy &amp; Client</div>
+    <div class="grid-2">
+      <div class="field span2">
+        <label>Proposer name <sup>*</sup></label>
+        <input id="policyholderName" type="text" placeholder="Full legal name" autocomplete="name"/>
+        <span class="field-err">Required</span>
+      </div>
+      <div class="field">
+        <label>Quotation reference</label>
+        <input id="policyNumber" type="text" placeholder="e.g. A.T/A.M/Vanguard Life"/>
+      </div>
+      <div class="field">
+        <label>Mortality basis</label>
+        <select id="basisName">
+          <option value="PA90">PA90 — Pensioners 1990</option>
+          <option value="A55">A55 — Assured Lives 1955-60</option>
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Primary Life</div>
+    <div class="grid-2">
+      <div class="field">
+        <label>Gender <sup>*</sup></label>
+        <div class="toggle-row">
+          <button type="button" class="tog on" data-g="gender1" data-v="Male">Male</button>
+          <button type="button" class="tog"    data-g="gender1" data-v="Female">Female</button>
+        </div>
+        <input type="hidden" id="gender1" value="Male"/>
+      </div>
+      <div class="field">
+        <label>Date of birth <sup>*</sup></label>
+        <input id="dob1" type="date"/>
+        <span class="field-err">Enter a valid date of birth</span>
+      </div>
+      <div class="field" id="anb1-wrap" style="display:none">
+        <label>Age next birthday</label>
+        <input id="anb1-val" type="text" readonly/>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Annuity Structure</div>
+    <div class="grid-2">
+      <div class="field span2">
+        <label>Type <sup>*</sup></label>
+        <div class="toggle-row">
+          <button type="button" class="tog on" data-g="annuityStructure" data-v="Single">Single Life</button>
+          <button type="button" class="tog"    data-g="annuityStructure" data-v="Reversionary last survivor">Joint / Reversionary</button>
+          <button type="button" class="tog"    data-g="annuityStructure" data-v="Fixed term">Fixed Term</button>
+        </div>
+        <input type="hidden" id="annuityStructure" value="Single"/>
+      </div>
+      <div class="field">
+        <label>Payment timing</label>
+        <select id="paymentTiming">
+          <option value="Advance">Advance (start of period)</option>
+          <option value="Arrear">Arrear (end of period)</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Frequency</label>
+        <select id="frequency">
+          <option value="Monthly">Monthly</option>
+          <option value="Quarterly">Quarterly</option>
+          <option value="Half-yearly">Half-yearly</option>
+          <option value="Annual">Annual</option>
+        </select>
+      </div>
+    </div>
+    <!-- joint -->
+    <div class="collapsible" id="joint-sect">
+      <div class="sdiv">Second Life</div>
+      <div class="grid-2">
+        <div class="field"><label>Relationship</label>
+          <select id="relationship"><option value="Spouse">Spouse</option><option value="Child">Child</option></select></div>
+        <div class="field"><label>Name</label><input id="name2" type="text" placeholder="Second life name"/></div>
+        <div class="field"><label>Gender</label>
+          <div class="toggle-row">
+            <button type="button" class="tog on" data-g="gender2" data-v="Male">Male</button>
+            <button type="button" class="tog"    data-g="gender2" data-v="Female">Female</button>
+          </div>
+          <input type="hidden" id="gender2" value="Male"/></div>
+        <div class="field"><label>Date of birth</label><input id="dob2" type="date"/></div>
+        <div class="field" id="childAge-wrap" style="display:none">
+          <label>Max child age</label><input id="maxChildAge" type="number" value="23" min="1" max="60"/></div>
+        <div class="field"><label>Reversion % to second life</label>
+          <input id="reversionPct" type="number" value="50" min="0" max="100" step="5"/></div>
+      </div>
+    </div>
+    <!-- fixed -->
+    <div class="collapsible" id="fixed-sect">
+      <div class="sdiv">Fixed Period</div>
+      <div class="grid-2">
+        <div class="field"><label>Fixed period (years) <sup>*</sup></label>
+          <input id="fixedPeriod" type="number" value="10" min="1" max="40"/></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Purchase Price</div>
+    <div class="grid-2">
+      <div class="field span2">
+        <label>Initial consideration (MWK) <sup>*</sup></label>
+        <input id="initialConsideration" type="number" min="0" step="1000" placeholder="0"
+               style="font-size:1.05rem;font-weight:600"/>
+        <span class="field-err">Enter a positive amount</span>
+      </div>
+      <div class="field">
+        <label>Due date for payment</label>
+        <input id="dueDate" type="date"/>
+      </div>
+    </div>
+  </div>
+
+  <div class="actions">
+    <button class="btn btn-primary" onclick="goReview()">Review &rarr;</button>
+  </div>
+</div>
+
+<!-- ══ PANEL 2 — REVIEW ══ -->
+<div class="panel" id="panel-review">
+  <div class="card">
+    <div class="card-title">Review — confirm all details before calculating</div>
+    <div class="rev-grid" id="rev-content"></div>
+    <div class="actions">
+      <button class="btn btn-ghost" onclick="goTab('panel-form')">&#8592; Edit</button>
+      <button class="btn btn-primary" onclick="runCalc()">Calculate Quotation</button>
+    </div>
+    <div class="spin-wrap" id="spin"><span class="spinner"></span>Rendering quotation&hellip;</div>
+  </div>
+</div>
+
+<!-- ══ PANEL 3 — QUOTATION (canvas image) ══ -->
+<div class="panel" id="panel-quote">
+  <canvas id="quote-canvas"></canvas>
+  <p class="canvas-hint">Tap / click the quotation to download as PNG &nbsp;·&nbsp; Use browser Print (Ctrl+P) to save as PDF</p>
+
+  <details class="intermediates">
+    <summary>Actuarial Intermediates (for audit / validation)</summary>
+    <div id="int-rows" style="margin-top:.6rem"></div>
+  </details>
+
+  <div class="actions" style="margin-top:1rem">
+    <button class="btn btn-ghost" onclick="goTab('panel-form')">&#8592; New Quote</button>
+    <button class="btn btn-primary" onclick="downloadQuote()">&#8595; Download PNG</button>
+    <button class="btn btn-primary" onclick="window.print()">&#128438; Print / PDF</button>
+  </div>
+</div>
+
+</div><!-- /app -->
+
+<script src="mortality.js"></script>
+<script src="engine.js"></script>
+<script>
+// ── State ────────────────────────────────────────────────────────────────
+let currentInputs = {};
+let lastQuote     = null;
+let letterheadImg = null;
+let footerImg     = null;
+let imagesReady   = 0;
+
+// Pre-load letterhead images
+function loadImages() {
+  letterheadImg = new Image();
+  letterheadImg.onload = () => { imagesReady++; };
+  letterheadImg.src = 'letterhead.jpg';
+
+  footerImg = new Image();
+  footerImg.onload = () => { imagesReady++; };
+  footerImg.src = 'footer_bar.jpg';
+}
+loadImages();
+
+// ── Tab navigation ────────────────────────────────────────────────────────
+function goTab(id) {
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  document.querySelectorAll('.tab-btn').forEach(b =>
+    b.classList.toggle('active', b.dataset.panel === id));
+}
+
+// ── Toggle buttons ────────────────────────────────────────────────────────
+document.querySelectorAll('.tog').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const g = btn.dataset.g;
+    document.querySelectorAll(`.tog[data-g="${g}"]`).forEach(b => b.classList.remove('on'));
+    btn.classList.add('on');
+    document.getElementById(g).value = btn.dataset.v;
+    handleStructureChange();
+  });
+});
+function handleStructureChange() {
+  const s = v('annuityStructure');
+  setOpen('joint-sect', s === 'Reversionary last survivor');
+  setOpen('fixed-sect', s === 'Fixed term');
+  const cw = document.getElementById('childAge-wrap');
+  if (cw) cw.style.display = v('relationship') === 'Child' ? '' : 'none';
+}
+function setOpen(id, open) { document.getElementById(id).classList.toggle('open', open); }
+document.getElementById('relationship').addEventListener('change', handleStructureChange);
+
+// ── Live ANB display ──────────────────────────────────────────────────────
+document.getElementById('dob1').addEventListener('change', () => {
+  const val = document.getElementById('dob1').value;
+  const wrap = document.getElementById('anb1-wrap');
+  if (!val) { wrap.style.display = 'none'; return; }
+  try {
+    const anb = computeANB(new Date(val));
+    document.getElementById('anb1-val').value = anb + ' years';
+    wrap.style.display = '';
+  } catch(e) {}
+});
+
+// ── Defaults ──────────────────────────────────────────────────────────────
+const today = new Date().toISOString().slice(0,10);
+document.getElementById('dob1').max = today;
+document.getElementById('dob2').max = today;
+document.getElementById('dueDate').value = today;
+
+// ── Helpers ───────────────────────────────────────────────────────────────
+function v(id) { return document.getElementById(id).value; }
+
+function validate() {
+  let ok = true;
+  function req(id, fn) {
+    const el = document.getElementById(id);
+    const f  = el.closest('.field');
+    if (!f) return;
+    const fail = !fn(el.value.trim());
+    f.classList.toggle('err', fail);
+    if (fail) ok = false;
+  }
+  req('policyholderName', val => val.length > 0);
+  req('dob1', val => { if (!val) return false; const a = computeANB(new Date(val)); return a >= 1 && a <= 115; });
+  req('initialConsideration', val => parseFloat(val) > 0);
+  return ok;
+}
+
+function collectInputs() {
+  currentInputs = {
+    policyholderName: v('policyholderName').trim(),
+    policyNumber:     v('policyNumber').trim() || ('VLA-' + Date.now().toString().slice(-6)),
+    gender1:          v('gender1'),
+    dob1:             v('dob1'),
+    gender2:          v('gender2'),
+    dob2:             v('dob2') || null,
+    name2:            v('name2'),
+    relationship:     v('relationship'),
+    maxChildAge:      parseInt(v('maxChildAge')) || 23,
+    annuityStructure: v('annuityStructure'),
+    paymentTiming:    v('paymentTiming'),
+    frequency:        v('frequency'),
+    reversionPct:     (parseFloat(v('reversionPct')) || 0) / 100,
+    fixedPeriod:      parseInt(v('fixedPeriod')) || 10,
+    initialConsideration: parseFloat(v('initialConsideration')) || 0,
+    basisName:        v('basisName'),
+    dueDate:          v('dueDate')
+  };
+}
+
+// ── Review ────────────────────────────────────────────────────────────────
+function goReview() {
+  if (!validate()) { alert('Please fix the highlighted fields.'); return; }
+  collectInputs();
+  const inp = currentInputs;
+  const anb1 = computeANB(new Date(inp.dob1));
+  const items = [
+    ['Proposer',          inp.policyholderName],
+    ['Reference',         inp.policyNumber],
+    ['Basis',             inp.basisName],
+    ['Gender',            inp.gender1],
+    ['Date of Birth',     fmtDate(inp.dob1)],
+    ['Age Next Birthday', anb1 + ' years'],
+    ['Annuity Type',      inp.annuityStructure],
+    ['Payment',           inp.paymentTiming + ' · ' + inp.frequency],
+    ['Initial Consideration', 'MWK ' + fmtN(inp.initialConsideration)],
+  ];
+  if (inp.annuityStructure === 'Reversionary last survivor' && inp.dob2) {
+    items.push(['Second Life', (inp.name2||'—') + ' · ' + inp.gender2]);
+    items.push(['Reversion %', (inp.reversionPct*100).toFixed(0) + '%']);
+  }
+  if (inp.annuityStructure === 'Fixed term')
+    items.push(['Fixed Period', inp.fixedPeriod + ' years']);
+  document.getElementById('rev-content').innerHTML = items.map(([l,val]) =>
+    `<div class="rev-item"><div class="rl">${l}</div><div class="rv">${val}</div></div>`
+  ).join('');
+  goTab('panel-review');
+  document.querySelector('[data-panel="panel-review"]').classList.add('done');
+}
+
+// ── Calculate & Render ────────────────────────────────────────────────────
+function runCalc() {
+  const spin = document.getElementById('spin');
+  spin.classList.add('show');
+  setTimeout(() => {
+    try {
+      lastQuote = generateQuote(currentInputs);
+      renderQuoteCanvas(lastQuote);
+      goTab('panel-quote');
+      document.getElementById('tab-quote').classList.add('done');
+    } catch(e) {
+      alert('Calculation error: ' + e.message);
+      console.error(e);
+    }
+    spin.classList.remove('show');
+  }, 60);
+}
+
+// ── Canvas quote renderer ──────────────────────────────────────────────────
+function renderQuoteCanvas(q) {
+  const inp = currentInputs;
+  const canvas = document.getElementById('quote-canvas');
+
+  // A4-ish proportions at 2× for sharpness
+  const W = 1240, SCALE = 2;
+  canvas.style.width  = (W/2) + 'px';
+
+  const ctx = canvas.getContext('2d');
+
+  // ── Layout constants ──
+  const MARGIN = 56;
+  const RED    = '#8B0000';
+  const GOLD   = '#c9a84c';
+  const LTGRAY = '#f9f4f4';
+  const DGRAY  = '#444';
+  const MGRAY  = '#888';
+  const fontSans = 'Arial, sans-serif';
+
+  // ── Measure content height first ──
+  // Rows: header img + ref bar + section + details + section + table + footnotes + acceptance + footer
+  const freqLabel  = { Monthly:'Monthly annuity', Quarterly:'Quarterly annuity', 'Half-yearly':'Half-yearly annuity', Annual:'Annual annuity' }[inp.frequency] || 'Per-instalment';
+  const tierLabels = ['No funeral benefit','Funeral Benefit Option 1','Funeral Benefit Option 2','Funeral Benefit Option 3','Funeral Benefit Option 4'];
+
+  // Table rows: 5 tiers × 2 sub-rows (annuity + cover) = 10 data rows + 1 header
+  const ROW_H   = 40;
+  const THEAD_H = 50;
+  const tblRows = 10;
+
+  // Details rows
+  const anb1 = q.anb1;
+  const typeStr = q.annuityStructure==='Single'?'With-Profits Single Life':
+    q.annuityStructure==='Fixed term'?'Fixed Term Annuity':'With-Profits Joint / Reversionary';
+  const detailItems = [
+    ['Type of annuity',                   typeStr],
+    ['Name of proposer',                  inp.policyholderName],
+    ['Date of birth',                     fmtDob(inp.dob1)],
+    ['Age next birthday',                 String(anb1)],
+    ['Gender',                            inp.gender1.toUpperCase()],
+    ['Purchase amount (MWK)',             fmtN(inp.initialConsideration, true)],
+    ['Due date for payment to Vanguard Life', inp.dueDate?fmtDate(inp.dueDate):'—'],
+    ['Selected payment frequency',        inp.frequency],
+    ['Annuity paid in advance or in arrear', inp.paymentTiming],
+    ['Expected due date for first payment',  inp.dueDate?fmtDate(inp.dueDate):'—'],
+  ];
+  const DET_H = 38;
+
+  // Compute total height
+  const LH_H      = letterheadImg && letterheadImg.complete ? Math.round(W * letterheadImg.naturalHeight / letterheadImg.naturalWidth) : 120;
+  const REF_H     = 56;
+  const SBAR_H    = 36;
+  const DET_BLOCK = detailItems.length * DET_H + 16;
+  const TBL_BLOCK = THEAD_H + tblRows * ROW_H + 16;
+  const FOOT_NOTE = 80;
+  const ACCEPT_H  = 180;
+  const FTR_H     = footerImg && footerImg.complete ? Math.round(W * footerImg.naturalHeight / footerImg.naturalWidth) : 60;
+  const TOTAL_H   = LH_H + REF_H + SBAR_H + DET_BLOCK + SBAR_H + TBL_BLOCK + FOOT_NOTE + ACCEPT_H + FTR_H + 20;
+
+  canvas.width  = W * SCALE;
+  canvas.height = TOTAL_H * SCALE;
+  canvas.style.height = (TOTAL_H/2) + 'px';
+  ctx.scale(SCALE, SCALE);
+
+  // ── Background ──
+  ctx.fillStyle = '#fff';
+  ctx.fillRect(0, 0, W, TOTAL_H);
+
+  let Y = 0;
+
+  // ── Letterhead image ──
+  if (letterheadImg && letterheadImg.complete && letterheadImg.naturalWidth) {
+    ctx.drawImage(letterheadImg, 0, 0, W, LH_H);
+    Y = LH_H;
+  } else {
+    // Fallback header
+    ctx.fillStyle = '#fff';
+    ctx.fillRect(0, 0, W, 90);
+    ctx.fillStyle = RED;
+    ctx.fillRect(0, 85, W, 6);
+    ctx.fillStyle = RED;
+    ctx.font = `bold 22px ${fontSans}`;
+    ctx.fillText('Vanguard Life Assurance Company Limited', MARGIN, 55);
+    Y = 100;
+  }
+
+  // ── Ref / date bar ──
+  ctx.fillStyle = LTGRAY;
+  ctx.fillRect(0, Y, W, REF_H);
+  ctx.fillStyle = RED;
+  ctx.strokeStyle = RED;
+  ctx.lineWidth = 0.5;
+  ctx.beginPath(); ctx.moveTo(0,Y); ctx.lineTo(W,Y); ctx.stroke();
+
+  ctx.fillStyle = MGRAY;
+  ctx.font = `11px ${fontSans}`;
+  ctx.fillText('QUOTATION REFERENCE', MARGIN, Y+16);
+  ctx.fillText('QUOTATION DATE', W/2+20, Y+16);
+  ctx.fillStyle = '#111';
+  ctx.font = `bold 14px ${fontSans}`;
+  ctx.fillText(inp.policyNumber, MARGIN, Y+36);
+  const qDate = new Date(q.generatedAt);
+  ctx.fillText(qDate.toLocaleDateString('en-GB',{day:'2-digit',month:'numeric',year:'numeric'})+' '+qDate.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'}), W/2+20, Y+36);
+  Y += REF_H;
+
+  // ── Helper: section bar ──
+  function sectionBar(label) {
+    ctx.fillStyle = RED;
+    ctx.fillRect(0, Y, W, SBAR_H);
+    ctx.fillStyle = '#fff';
+    ctx.font = `bold 12px ${fontSans}`;
+    ctx.fillText(label.toUpperCase(), MARGIN, Y + SBAR_H/2 + 5);
+    Y += SBAR_H;
+  }
+
+  // ── Details of Annuity ──
+  sectionBar('Details of Annuity');
+  Y += 8;
+  const COL2 = W/2;
+  detailItems.forEach(([label, val], idx) => {
+    const rowY = Y + idx*DET_H;
+    if (idx % 2 === 0) {
+      ctx.fillStyle = '#fff';
+    } else {
+      ctx.fillStyle = '#fdf9f9';
+    }
+    ctx.fillRect(0, rowY, W, DET_H);
+
+    // Separator line
+    ctx.strokeStyle = '#f0e0e0';
+    ctx.lineWidth = 0.5;
+    ctx.beginPath(); ctx.moveTo(MARGIN, rowY+DET_H-1); ctx.lineTo(W-MARGIN, rowY+DET_H-1); ctx.stroke();
+
+    ctx.fillStyle = DGRAY;
+    ctx.font = `13px ${fontSans}`;
+    ctx.fillText(label, MARGIN, rowY + DET_H/2 + 5);
+
+    ctx.fillStyle = '#111';
+    ctx.font = `13px ${fontSans}`;
+    const tw = ctx.measureText(val).width;
+    ctx.fillText(':', COL2-20, rowY + DET_H/2 + 5);
+    ctx.textAlign = 'right';
+    ctx.fillText(val, W-MARGIN, rowY + DET_H/2 + 5);
+    ctx.textAlign = 'left';
+  });
+  Y += detailItems.length * DET_H + 16;
+
+  // ── Details of Quotation ──
+  sectionBar('Details of Quotation');
+
+  // Table header
+  const COL_W = (W - MARGIN*2) / 5;
+  const C0 = MARGIN, C1 = MARGIN + COL_W*2, C2 = C1+COL_W, C3 = C2+COL_W, C4 = C3+COL_W;
+
+  ctx.fillStyle = RED;
+  ctx.fillRect(0, Y, W, THEAD_H);
+  ctx.fillStyle = '#fff';
+  ctx.font = `bold 11px ${fontSans}`;
+  ctx.textAlign = 'center';
+  ctx.fillText('Option 1',    C1 + COL_W/2, Y + 18);
+  ctx.fillText('Option 2',    C2 + COL_W/2, Y + 18);
+  ctx.fillText('Option 3',    C3 + COL_W/2, Y + 18);
+  ctx.font = `10px ${fontSans}`;
+  ctx.fillText('No Guarantee',      C1 + COL_W/2, Y + 36);
+  ctx.fillText('5 Years Guarantee', C2 + COL_W/2, Y + 36);
+  ctx.fillText('10 Years Guarantee',C3 + COL_W/2, Y + 36);
+  ctx.textAlign = 'left';
+  Y += THEAD_H;
+
+  // Table body
+  const fms = {0:q.results.find(r=>r.funeralTier===0&&r.guarantee===0).annuityFactorM,
+               5:q.results.find(r=>r.funeralTier===0&&r.guarantee===5).annuityFactorM,
+              10:q.results.find(r=>r.funeralTier===0&&r.guarantee===10).annuityFactorM};
+
+  for (let tier=0; tier<5; tier++) {
+    const rows_t = q.results.filter(r=>r.funeralTier===tier).sort((a,b)=>a.guarantee-b.guarantee);
+    const annuities = rows_t.map(r=>fmtN(r.perInstalmentAnnuity));
+    const cover     = rows_t[0].funeralCover;
+    const coverStr  = cover>0 ? fmtN(cover) : '0';
+
+    // Tier label row (light red bg)
+    ctx.fillStyle = '#fdf4f4';
+    ctx.fillRect(0, Y, W, ROW_H);
+    ctx.fillStyle = RED;
+    ctx.font = `bold 12px ${fontSans}`;
+    ctx.fillText(tierLabels[tier], MARGIN + 4, Y + ROW_H/2 + 4);
+    ctx.textAlign = 'center';
+    ctx.fillStyle = '#111';
+    ctx.font = `bold 13px ${fontSans}`;
+    ctx.fillText(annuities[0], C1+COL_W/2, Y+ROW_H/2+5);
+    ctx.fillText(annuities[1], C2+COL_W/2, Y+ROW_H/2+5);
+    ctx.fillText(annuities[2], C3+COL_W/2, Y+ROW_H/2+5);
+    ctx.textAlign = 'left';
+    // row divider
+    ctx.strokeStyle = '#eedddd'; ctx.lineWidth=0.5;
+    ctx.beginPath(); ctx.moveTo(0,Y+ROW_H); ctx.lineTo(W,Y+ROW_H); ctx.stroke();
+    Y += ROW_H;
+
+    // Funeral cover sub-row
+    ctx.fillStyle = '#fff';
+    ctx.fillRect(0, Y, W, ROW_H);
+    ctx.fillStyle = MGRAY;
+    ctx.font = `12px ${fontSans}`;
+    ctx.fillText('Funeral benefit', MARGIN + 20, Y + ROW_H/2 + 4);
+    ctx.textAlign = 'center';
+    ctx.fillStyle = '#555';
+    ctx.fillText(coverStr, C1+COL_W/2, Y+ROW_H/2+5);
+    ctx.fillText(coverStr, C2+COL_W/2, Y+ROW_H/2+5);
+    ctx.fillText(coverStr, C3+COL_W/2, Y+ROW_H/2+5);
+    ctx.textAlign = 'left';
+    ctx.strokeStyle = '#f5eded'; ctx.lineWidth=0.5;
+    ctx.beginPath(); ctx.moveTo(0,Y+ROW_H); ctx.lineTo(W,Y+ROW_H); ctx.stroke();
+    Y += ROW_H;
+  }
+  Y += 8;
+
+  // ── Footnotes ──
+  ctx.strokeStyle = '#f0e0e0'; ctx.lineWidth=1;
+  ctx.beginPath(); ctx.moveTo(MARGIN,Y); ctx.lineTo(W-MARGIN,Y); ctx.stroke();
+  Y += 12;
+  ctx.fillStyle = MGRAY;
+  ctx.font = `italic 11px ${fontSans}`;
+  ctx.fillText('Please note that annuity instalments will be adjusted annually in line with Vanguard Life\'s bonus declaration.', MARGIN, Y+14);
+  ctx.fillText('The funeral benefit is only payable on death of the proposer.', MARGIN, Y+32);
+  Y += FOOT_NOTE;
+
+  // ── Acceptance of terms ──
+  ctx.strokeStyle = '#f0e0e0'; ctx.lineWidth=1;
+  ctx.beginPath(); ctx.moveTo(0,Y); ctx.lineTo(W,Y); ctx.stroke();
+
+  ctx.fillStyle = RED;
+  ctx.fillRect(0, Y, W, SBAR_H);
+  ctx.fillStyle = '#fff';
+  ctx.font = `bold 12px ${fontSans}`;
+  ctx.fillText('ACCEPTANCE OF TERMS', MARGIN, Y + SBAR_H/2 + 5);
+  Y += SBAR_H + 20;
+
+  const halfW = (W - MARGIN*2 - 40) / 2;
+  // Proposer block
+  ctx.fillStyle = '#111';
+  ctx.font = `11px ${fontSans}`;
+  ctx.fillStyle = MGRAY;
+  ctx.fillText('PROPOSER', MARGIN, Y);
+  ctx.fillStyle = '#111';
+  ctx.font = `bold 14px ${fontSans}`;
+  ctx.fillText(inp.policyholderName.toUpperCase(), MARGIN, Y+20);
+  ctx.strokeStyle = '#bbb'; ctx.lineWidth=1;
+  ctx.beginPath(); ctx.moveTo(MARGIN,Y+70); ctx.lineTo(MARGIN+halfW,Y+70); ctx.stroke();
+  ctx.fillStyle = MGRAY; ctx.font = `10px ${fontSans}`;
+  ctx.fillText('Signature', MARGIN, Y+84);
+  ctx.beginPath(); ctx.moveTo(MARGIN,Y+110); ctx.lineTo(MARGIN+halfW,Y+110); ctx.stroke();
+  ctx.fillText('Date', MARGIN, Y+124);
+
+  // Intermediary block
+  const IX = MARGIN + halfW + 40;
+  ctx.fillStyle = MGRAY; ctx.font = `11px ${fontSans}`;
+  ctx.fillText('INTERMEDIARY', IX, Y);
+  ctx.fillStyle = '#111';
+  ctx.font = `bold 14px ${fontSans}`;
+  ctx.fillText('ATANAZIO MWITHA', IX, Y+20);
+  ctx.font = `12px ${fontSans}`;
+  ctx.fillStyle = '#555';
+  ctx.fillText('Intermediary', IX, Y+38);
+  ctx.fillStyle = RED;
+  ctx.fillText('Email: pngwira@vanguardlifemw.com', IX, Y+56);
+  ctx.strokeStyle = '#bbb'; ctx.lineWidth=1;
+  ctx.beginPath(); ctx.moveTo(IX,Y+70); ctx.lineTo(IX+halfW,Y+70); ctx.stroke();
+  ctx.fillStyle = MGRAY; ctx.font = `10px ${fontSans}`;
+  ctx.fillText('Signature', IX, Y+84);
+  ctx.beginPath(); ctx.moveTo(IX,Y+110); ctx.lineTo(IX+halfW,Y+110); ctx.stroke();
+  ctx.fillText('Date', IX, Y+124);
+
+  Y += ACCEPT_H;
+
+  // ── Footer bar (actual letterhead image) ──
+  if (footerImg && footerImg.complete && footerImg.naturalWidth) {
+    ctx.drawImage(footerImg, 0, Y, W, FTR_H);
+  } else {
+    ctx.fillStyle = RED;
+    ctx.fillRect(0, Y, W, FTR_H);
+    ctx.fillStyle = '#fff';
+    ctx.font = `11px ${fontSans}`;
+    ctx.fillText('Life Assurance · Pension Services', MARGIN, Y + FTR_H/2 + 4);
+  }
+
+  // ── Actuarial intermediates ──
+  const intData = [
+    ['Net interest rate (i)',        (q.iRate*100).toFixed(6)+'%'],
+    ['Advance discount rate (d)',    (q.dRate*100).toFixed(6)+'%'],
+    ['Mortality basis',              q.basisName],
+    ['Gross after charges',         'MWK '+fmtN(q.grossAfterCharges)],
+    ['Funeral PV factor (Ax)',       q.Ax.toFixed(8)],
+    ['Single factor G0 / G5 / G10', q.singleFactors.map(f=>f.toFixed(6)).join(' / ')],
+    ['Joint factor  G0 / G5 / G10', q.jointFactors.map(f=>f.toFixed(6)).join(' / ')],
+    ['Frequency (m)',                String(q.m)],
+    ['ANB primary',                  String(q.anb1)],
+  ];
+  document.getElementById('int-rows').innerHTML = intData.map(([l,val]) =>
+    `<div class="int-row"><span class="il">${l}</span><span>${val}</span></div>`
+  ).join('');
+
+  // Click to download
+  canvas.onclick = downloadQuote;
+}
+
+// ── Download PNG ──────────────────────────────────────────────────────────
+function downloadQuote() {
+  const canvas = document.getElementById('quote-canvas');
+  const a = document.createElement('a');
+  const name = (currentInputs.policyholderName || 'quote').replace(/\s+/g,'_');
+  a.download = `VLA_Quotation_${name}_${new Date().toISOString().slice(0,10)}.png`;
+  a.href = canvas.toDataURL('image/png');
+  a.click();
+}
+
+// ── Formatters ────────────────────────────────────────────────────────────
+function fmtN(n, precise) {
+  if (!isFinite(n) || n < 0) return '—';
+  return precise
+    ? n.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2})
+    : Math.round(n).toLocaleString('en-MW');
+}
+function fmtDate(s) {
+  if (!s) return '—';
+  return new Date(s).toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'});
+}
+function fmtDob(s) {
+  if (!s) return '—';
+  return new Date(s).toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'}).replace(/ /g,'-');
+}
+
+// ── PWA ───────────────────────────────────────────────────────────────────
+if ('serviceWorker' in navigator)
+  navigator.serviceWorker.register('./sw.js').catch(console.warn);
+function syncOnline() { document.body.classList.toggle('offline', !navigator.onLine); }
+window.addEventListener('online', syncOnline);
+window.addEventListener('offline', syncOnline);
+syncOnline();
+</script>
+</body>
+</html>
