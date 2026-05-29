@@ -67,66 +67,11 @@ const PA90_F = [
   0.6184319300,0.6437700500,0.6683279700,0.6920028800,0.7147092400,0.7363793400,0.7569631500,1.0000000000
 ];
 
-// ── Lookup (raw, for internal use) ────────────────────────────────────────────
-// gender key: 'M' | 'F'   basis key: 'A55' | 'PA90'
-const _TABLES = { A55: { M: A55_M, F: A55_F }, PA90: { M: PA90_M, F: PA90_F } };
+// ── Lookup ─────────────────────────────────────────────────────────
+const MORTALITY = { A55:{M:A55_M,F:A55_F}, PA90:{M:PA90_M,F:PA90_F} };
 
-function _tbl(basis, gender) {
-  // Accept both 'Male'/'Female' and 'M'/'F'
-  const g = (gender === 'Male' || gender === 'M') ? 'M' : 'F';
-  const t = _TABLES[basis] && _TABLES[basis][g];
-  if (!t) throw new Error('Unknown basis/gender: ' + basis + '/' + gender);
-  return t;
-}
-
-// ── getQx(age, gender, basis) — annual mortality rate ────────────────────────
-// Returns qx for integer age x (probability of dying within the year [x, x+1]).
-function getQx(age, gender, basis) {
-  const tbl = _tbl(basis, gender);
-  const idx = Math.min(Math.max(0, Math.floor(age)), tbl.length - 1);
-  return Math.min(1, tbl[idx]);
-}
-
-// ── tPx(x, t, gender, basis) — t-year survival probability ───────────────────
-// Uses UDD (Uniform Distribution of Deaths) for fractional years within each
-// integer age interval.  Works for any non-negative real t.
-function tPx(x, t, gender, basis) {
-  if (t <= 0) return 1.0;
-
-  const tbl   = _tbl(basis, gender);
-  let   px    = 1.0;
-  let   remaining = t;
-  let   currentAge = x;
-
-  while (remaining > 1e-10) {
-    const intAge  = Math.floor(currentAge);
-    const fracAge = currentAge - intAge;          // how far into this age year we already are
-    const yearEnd = 1 - fracAge;                  // remaining fraction of this age year
-    const step    = Math.min(remaining, yearEnd); // how much of this age year we consume
-
-    const idx = Math.min(Math.max(0, intAge), tbl.length - 1);
-    const q   = Math.min(1, tbl[idx]);
-
-    // UDD: s_p_x = 1 − s·q_x  (for 0 ≤ s ≤ 1 within the integer year)
-    // Conditional on having already survived `fracAge` into this year:
-    //   Pr(survive `step` more | at `fracAge`) = (1 − (fracAge + step)·q) / (1 − fracAge·q)
-    const denom = 1 - fracAge * q;
-    if (denom <= 0) { px = 0; break; }
-    px *= (1 - (fracAge + step) * q) / denom;
-    if (px <= 0) { px = 0; break; }
-
-    remaining   -= step;
-    currentAge  += step;
-  }
-
-  return Math.max(0, Math.min(1, px));
-}
-
-// ── computeANB(dob) — Age Next Birthday ──────────────────────────────────────
-function computeANB(dob) {
-  const today = new Date();
-  let age = today.getFullYear() - dob.getFullYear();
-  const m = today.getMonth() - dob.getMonth();
-  if (m < 0 || (m === 0 && today.getDate() < dob.getDate())) age--;
-  return age + 1; // ANB = age last birthday + 1
+function qxLookup(basis, gender, age) {
+  const tbl = MORTALITY[basis]?.[gender];
+  if (!tbl) return 1;
+  return Math.min(1, tbl[Math.min(Math.max(0,Math.floor(age)),117)] ?? 1);
 }
