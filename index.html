@@ -703,54 +703,62 @@ function renderQuoteCanvas(q,inp){
   var ftOK=typeof _ftImg!=='undefined'&&_ftImg.naturalWidth>0;
   var LH_H=lhOK?Math.round(W*_lhImg.naturalHeight/_lhImg.naturalWidth):130;
   var FT_H=ftOK?Math.round(W*_ftImg.naturalHeight/_ftImg.naturalWidth):72;
-  var BAN_H=96,CLI_H=90,SBAR_H=44,DET_H=44,THEAD_H=58,ROW_H=46,FEAT_H=148,DISC_H=62,GAP=14;
+
+  // Layout — no client strip
+  var BAN_H=96,SBAR_H=44,DET_H=46,THEAD_H=58,ROW_H=46,FEAT_H=148,DISC_H=58,GAP=10;
+
   var typeStr=q.annuityStructure==='Single'?'With-Profits Single Life':q.annuityStructure==='Fixed term'?'Fixed Term Annuity':'With-Profits Joint / Reversionary';
   var detailItems=[
-    ['Type of annuity',typeStr],['Name of proposer',inp.policyholderName],
-    ['Date of birth',fmtDob(inp.dob1)],['Age next birthday',String(q.anb1)],
-    ['Gender',inp.gender1.toUpperCase()],['Purchase amount (MWK)',fmtNp(inp.initialConsideration)],
+    ['Type of annuity',typeStr],
+    ['Name of proposer',inp.policyholderName],
+    ['Date of birth',fmtDob(inp.dob1)],
+    ['Age next birthday',String(q.anb1)],
+    ['Gender',inp.gender1.toUpperCase()],
+    ['Purchase amount (MWK)',fmtNp(inp.initialConsideration)],
     ['Due date for payment to Vanguard Life',inp.dueDate?fmtDate(inp.dueDate):'—'],
-    ['Selected payment frequency',inp.frequency],['Annuity paid in advance or in arrear',inp.paymentTiming],
+    ['Selected payment frequency',inp.frequency],
+    ['Annuity paid in advance or in arrear',inp.paymentTiming],
     ['Expected due date for first payment',inp.dueDate?fmtDate(inp.dueDate):'—'],
   ];
   var TL=['No funeral benefit','Funeral Benefit Option 1','Funeral Benefit Option 2','Funeral Benefit Option 3','Funeral Benefit Option 4'];
-  var TOTAL_H=LH_H+BAN_H+CLI_H+SBAR_H+GAP+detailItems.length*DET_H+GAP+SBAR_H+THEAD_H+10*ROW_H+GAP+FEAT_H+DISC_H+FT_H;
+
+  var TOTAL_H=LH_H+BAN_H
+    +SBAR_H+GAP+detailItems.length*DET_H+GAP
+    +SBAR_H+THEAD_H+10*ROW_H+GAP
+    +FEAT_H+DISC_H+FT_H;
+
   canvas.width=W*SCALE; canvas.height=TOTAL_H*SCALE;
-  canvas.style.width=Math.round(W/2)+'px'; canvas.style.height=Math.round(TOTAL_H/2)+'px';
+  canvas.style.width=Math.round(W/2)+'px';
+  canvas.style.height=Math.round(TOTAL_H/2)+'px';
   ctx.scale(SCALE,SCALE);
   ctx.fillStyle='#fff'; ctx.fillRect(0,0,W,TOTAL_H);
   var Y=0;
+
   // 1. Letterhead
   if(lhOK){ctx.drawImage(_lhImg,0,0,W,LH_H);}
-  else{ctx.fillStyle='#fff';ctx.fillRect(0,0,W,LH_H);ctx.fillStyle=DRED;ctx.font='bold 20px '+SANS;ctx.textAlign='left';ctx.fillText('Vanguard Life Assurance Company Limited',ML,50);}
+  else{ctx.fillStyle='#fff';ctx.fillRect(0,0,W,LH_H);ctx.fillStyle=DRED;ctx.font='bold 22px '+SANS;ctx.textAlign='left';ctx.fillText('Vanguard Life Assurance Company Limited',ML,50);}
   Y=LH_H;
+
   // 2. Quotation banner
   ctx.fillStyle=DRED; ctx.fillRect(0,Y,W,BAN_H);
-  ctx.fillStyle='#fff'; ctx.font='bold 36px Georgia,serif'; ctx.textAlign='left';
+  ctx.fillStyle='#fff'; ctx.font='bold 38px Georgia,serif'; ctx.textAlign='left';
   ctx.fillText('QUOTATION',ML,Y+50);
   var ptype=q.annuityStructure==='Single'?'ANNUITY PLAN · SINGLE PREMIUM (WITH PROFITS)':q.annuityStructure==='Fixed term'?'ANNUITY PLAN · FIXED TERM':'ANNUITY PLAN · JOINT / REVERSIONARY (WITH PROFITS)';
-  ctx.fillStyle=GOLD; ctx.font='13px '+SANS; ctx.fillText(ptype,ML,Y+73);
-  ctx.fillStyle='#fff'; ctx.textAlign='right'; ctx.font='bold 14px '+SANS;
+  ctx.fillStyle=GOLD; ctx.font='14px '+SANS; ctx.fillText(ptype,ML,Y+74);
+  ctx.fillStyle='#fff'; ctx.textAlign='right'; ctx.font='bold 15px '+SANS;
   ctx.fillText('Ref: '+(inp.policyNumber||q.policyNumber),W-MR,Y+44);
-  ctx.fillStyle=GOLD; ctx.font='13px '+SANS; ctx.fillText(fmtDate(q.generatedAt),W-MR,Y+66);
+  ctx.fillStyle=GOLD; ctx.font='14px '+SANS; ctx.fillText(fmtDate(q.generatedAt),W-MR,Y+66);
   Y+=BAN_H;
-  // 3. Client strip
-  ctx.fillStyle='#fdf5f5'; ctx.fillRect(0,Y,W,CLI_H);
-  ctx.strokeStyle='#e8d4d4'; ctx.lineWidth=1;
-  ctx.beginPath(); ctx.moveTo(0,Y+CLI_H); ctx.lineTo(W,Y+CLI_H); ctx.stroke();
-  var CX=ML+34,CY=Y+CLI_H/2;
-  ctx.fillStyle=DRED; ctx.beginPath(); ctx.arc(CX,CY,32,0,Math.PI*2); ctx.fill();
-  var ini=(inp.policyholderName||'?').split(' ').slice(0,2).map(function(w){return w[0];}).join('').toUpperCase();
-  ctx.fillStyle='#fff'; ctx.font='bold 17px '+SANS; ctx.textAlign='center'; ctx.fillText(ini,CX,CY+6);
-  ctx.fillStyle='#111'; ctx.font='bold 18px '+SANS; ctx.textAlign='left';
-  ctx.fillText(inp.policyholderName+' ('+inp.gender1+')',ML+82,Y+28);
-  ctx.fillStyle=MGRAY; ctx.font='14px '+SANS;
-  ctx.fillText('DOB: '+fmtDob(inp.dob1)+'  ·  ANB: '+q.anb1,ML+82,Y+52);
-  if(currentUser&&currentUser.branch){ctx.fillStyle=DRED;ctx.font='13px '+SANS;ctx.fillText(currentUser.branch,ML+82,Y+72);}
-  Y+=CLI_H;
+
   // Section bar helper
-  function sbar(lbl){ctx.fillStyle=DRED;ctx.fillRect(0,Y,W,SBAR_H);ctx.fillStyle='#fff';ctx.font='bold 14px '+SANS;ctx.textAlign='left';ctx.fillText(lbl,ML,Y+SBAR_H/2+6);Y+=SBAR_H;}
-  // 4. Details
+  function sbar(lbl){
+    ctx.fillStyle=DRED; ctx.fillRect(0,Y,W,SBAR_H);
+    ctx.fillStyle='#fff'; ctx.font='bold 15px '+SANS; ctx.textAlign='left';
+    ctx.fillText(lbl,ML,Y+SBAR_H/2+6);
+    Y+=SBAR_H;
+  }
+
+  // 3. Details of Annuity
   sbar('Policy Summary & Benefits');
   Y+=GAP;
   detailItems.forEach(function(item,idx){
@@ -758,74 +766,93 @@ function renderQuoteCanvas(q,inp){
     ctx.fillStyle=idx%2===0?'#fff':'#fdf9f9'; ctx.fillRect(0,ry,W,DET_H);
     ctx.strokeStyle='#efe4e4'; ctx.lineWidth=0.5;
     ctx.beginPath(); ctx.moveTo(ML,ry+DET_H-1); ctx.lineTo(W-MR,ry+DET_H-1); ctx.stroke();
-    ctx.fillStyle=DGRAY; ctx.font='14px '+SANS; ctx.textAlign='left';
+    // Label
+    ctx.fillStyle=DGRAY; ctx.font='15px '+SANS; ctx.textAlign='left';
     ctx.fillText(item[0],ML,ry+DET_H/2+6);
     ctx.fillText(':',W/2-24,ry+DET_H/2+6);
-    ctx.fillStyle='#111'; ctx.font='bold 14px '+SANS; ctx.textAlign='right';
+    // Value
+    ctx.fillStyle='#111'; ctx.font='bold 15px '+SANS; ctx.textAlign='right';
     ctx.fillText(item[1],W-MR,ry+DET_H/2+6);
     ctx.textAlign='left';
   });
   Y+=detailItems.length*DET_H+GAP;
-  // 5. Quotation table
+
+  // 4. Quotation table
   sbar('Details of Quotation');
   var CW=(W-ML-MR)/5,C1=ML+CW*2,C2=C1+CW,C3=C2+CW;
   ctx.fillStyle=RED; ctx.fillRect(0,Y,W,THEAD_H);
-  ctx.fillStyle='#fff'; ctx.textAlign='center'; ctx.font='bold 13px '+SANS;
+  ctx.fillStyle='#fff'; ctx.textAlign='center'; ctx.font='bold 14px '+SANS;
   ctx.fillText('Option 1',C1+CW/2,Y+22); ctx.fillText('Option 2',C2+CW/2,Y+22); ctx.fillText('Option 3',C3+CW/2,Y+22);
-  ctx.font='12px '+SANS;
-  ctx.fillText('No Guarantee',C1+CW/2,Y+42); ctx.fillText('5 Years Guarantee',C2+CW/2,Y+42); ctx.fillText('10 Years Guarantee',C3+CW/2,Y+42);
+  ctx.font='13px '+SANS;
+  ctx.fillText('No Guarantee',C1+CW/2,Y+44); ctx.fillText('5 Years Guarantee',C2+CW/2,Y+44); ctx.fillText('10 Years Guarantee',C3+CW/2,Y+44);
   ctx.textAlign='left'; Y+=THEAD_H;
+
   for(var tier=0;tier<5;tier++){
     var rws=q.results.filter(function(r){return r.funeralTier===tier;}).sort(function(a,b){return a.guarantee-b.guarantee;});
     var ann=rws.map(function(r){return fmtN(r.perInstalmentAnnuity);}),cov=rws[0].funeralCover>0?fmtN(rws[0].funeralCover):'0';
+    // Annuity row
     ctx.fillStyle='#fdf4f4'; ctx.fillRect(0,Y,W,ROW_H);
-    ctx.fillStyle=DRED; ctx.font='bold 13px '+SANS; ctx.textAlign='left'; ctx.fillText(TL[tier],ML+4,Y+ROW_H/2+5);
-    ctx.fillStyle='#111'; ctx.font='bold 15px '+SANS; ctx.textAlign='center';
+    ctx.fillStyle=DRED; ctx.font='bold 14px '+SANS; ctx.textAlign='left';
+    ctx.fillText(TL[tier],ML+4,Y+ROW_H/2+5);
+    ctx.fillStyle='#111'; ctx.font='bold 16px '+SANS; ctx.textAlign='center';
     ctx.fillText(ann[0],C1+CW/2,Y+ROW_H/2+6); ctx.fillText(ann[1],C2+CW/2,Y+ROW_H/2+6); ctx.fillText(ann[2],C3+CW/2,Y+ROW_H/2+6);
-    ctx.strokeStyle='#e8dddd'; ctx.lineWidth=0.5; ctx.beginPath(); ctx.moveTo(0,Y+ROW_H); ctx.lineTo(W,Y+ROW_H); ctx.stroke(); Y+=ROW_H;
+    ctx.strokeStyle='#e8dddd'; ctx.lineWidth=0.5;
+    ctx.beginPath(); ctx.moveTo(0,Y+ROW_H); ctx.lineTo(W,Y+ROW_H); ctx.stroke(); Y+=ROW_H;
+    // Funeral cover row
     ctx.fillStyle='#fff'; ctx.fillRect(0,Y,W,ROW_H);
-    ctx.fillStyle=MGRAY; ctx.font='13px '+SANS; ctx.textAlign='left'; ctx.fillText('Funeral benefit',ML+20,Y+ROW_H/2+5);
-    ctx.fillStyle='#444'; ctx.font='14px '+SANS; ctx.textAlign='center';
+    ctx.fillStyle=MGRAY; ctx.font='14px '+SANS; ctx.textAlign='left';
+    ctx.fillText('Funeral benefit',ML+20,Y+ROW_H/2+5);
+    ctx.fillStyle='#444'; ctx.font='bold 15px '+SANS; ctx.textAlign='center';
     ctx.fillText(cov,C1+CW/2,Y+ROW_H/2+6); ctx.fillText(cov,C2+CW/2,Y+ROW_H/2+6); ctx.fillText(cov,C3+CW/2,Y+ROW_H/2+6);
-    ctx.strokeStyle='#f0e8e8'; ctx.lineWidth=0.5; ctx.beginPath(); ctx.moveTo(0,Y+ROW_H); ctx.lineTo(W,Y+ROW_H); ctx.stroke(); Y+=ROW_H;
+    ctx.strokeStyle='#f0e8e8'; ctx.lineWidth=0.5;
+    ctx.beginPath(); ctx.moveTo(0,Y+ROW_H); ctx.lineTo(W,Y+ROW_H); ctx.stroke(); Y+=ROW_H;
   }
   Y+=GAP;
-  // 6. Key features
+
+  // 5. Key features
   ctx.fillStyle='#fdf5f5'; ctx.fillRect(0,Y,W,FEAT_H);
   ctx.strokeStyle='#e8d4d4'; ctx.lineWidth=1;
   ctx.beginPath(); ctx.moveTo(0,Y); ctx.lineTo(W,Y); ctx.stroke();
   ctx.beginPath(); ctx.moveTo(0,Y+FEAT_H); ctx.lineTo(W,Y+FEAT_H); ctx.stroke();
-  ctx.fillStyle=DRED; ctx.font='bold 13px '+SANS; ctx.textAlign='left'; ctx.fillText('KEY PRODUCT FEATURES',ML,Y+24);
-  var feats=['Maturity: Annuity paid for life, adjusted annually per Vanguard Life bonus declaration.',
+  ctx.fillStyle=DRED; ctx.font='bold 14px '+SANS; ctx.textAlign='left';
+  ctx.fillText('KEY PRODUCT FEATURES',ML,Y+24);
+  var feats=[
+    'Maturity: Annuity paid for life, adjusted annually per Vanguard Life bonus declaration.',
     'Funeral benefit: Lump sum payable on death of the proposer (selected tier).',
     'Guarantee period: Annuity certain for 0, 5 or 10 years regardless of survival.',
-    'Single premium: No further payments required after purchase. No medical tests required.'];
-  feats.forEach(function(f,i){ctx.fillStyle=DRED;ctx.fillText('✓',ML,Y+46+i*26);ctx.fillStyle=DGRAY;ctx.font='13px '+SANS;ctx.fillText(f,ML+22,Y+46+i*26);});
+    'Single premium: No further payments required after purchase. No medical tests required.'
+  ];
+  feats.forEach(function(f,i){
+    ctx.fillStyle=DRED; ctx.fillText('✓',ML,Y+50+i*26);
+    ctx.fillStyle=DGRAY; ctx.font='14px '+SANS; ctx.fillText(f,ML+22,Y+50+i*26);
+  });
   Y+=FEAT_H;
-  // 7. Disclaimer
+
+  // 6. Disclaimer
   ctx.fillStyle='#fff'; ctx.fillRect(0,Y,W,DISC_H);
   ctx.strokeStyle='#eedede'; ctx.lineWidth=1;
   ctx.beginPath(); ctx.moveTo(ML,Y+12); ctx.lineTo(W-MR,Y+12); ctx.stroke();
-  ctx.fillStyle=MGRAY; ctx.font='italic 12px '+SANS; ctx.textAlign='left';
-  ctx.fillText('Indicative quotation only. Subject to underwriting and actual bonus declarations — not guaranteed. Regulated by Reserve Bank of Malawi.',ML,Y+30);
-  ctx.fillText('Full T&Cs apply. Call 3043 for policy terms.',ML,Y+48);
+  ctx.fillStyle=MGRAY; ctx.font='italic 13px '+SANS; ctx.textAlign='left';
+  ctx.fillText('Indicative quotation only. Subject to underwriting and actual bonus declarations — not guaranteed. Regulated by Reserve Bank of Malawi.',ML,Y+32);
+  ctx.fillText('Full T&Cs apply. Call 3043 for policy terms.',ML,Y+50);
   Y+=DISC_H;
-  // 8. Footer
+
+  // 7. Footer
   if(ftOK){
     ctx.drawImage(_ftImg,0,Y,W,FT_H);
     if(currentUser){
-      ctx.fillStyle='rgba(255,255,255,0.90)'; ctx.fillRect(W*0.57,Y+6,W*0.39,FT_H-12);
-      ctx.fillStyle=DRED; ctx.font='bold 13px '+SANS; ctx.textAlign='right';
-      ctx.fillText('Agent: '+currentUser.name,W-MR,Y+28);
-      ctx.fillStyle=MGRAY; ctx.font='12px '+SANS;
-      ctx.fillText(currentUser.phone,W-MR,Y+46);
-      ctx.fillText(fmtDate(q.generatedAt),W-MR,Y+62);
+      ctx.fillStyle='rgba(255,255,255,0.92)'; ctx.fillRect(W*0.57,Y+6,W*0.39,FT_H-12);
+      ctx.fillStyle=DRED; ctx.font='bold 14px '+SANS; ctx.textAlign='right';
+      ctx.fillText('Agent: '+currentUser.name,W-MR,Y+30);
+      ctx.fillStyle=MGRAY; ctx.font='13px '+SANS;
+      ctx.fillText(currentUser.phone,W-MR,Y+48);
+      ctx.fillText(fmtDate(q.generatedAt),W-MR,Y+64);
     }
   } else {
     ctx.fillStyle=DRED; ctx.fillRect(0,Y,W,FT_H);
-    ctx.fillStyle='#fff'; ctx.font='12px '+SANS; ctx.textAlign='left';
+    ctx.fillStyle='#fff'; ctx.font='13px '+SANS; ctx.textAlign='left';
     ctx.fillText('Life Assurance · Pension Services',ML,Y+FT_H/2+5);
-    if(currentUser){ctx.textAlign='right';ctx.font='bold 13px '+SANS;ctx.fillText('Agent: '+currentUser.name,W-MR,Y+30);ctx.fillStyle='rgba(255,255,255,.8)';ctx.font='12px '+SANS;ctx.fillText(currentUser.phone+' · '+fmtDate(q.generatedAt),W-MR,Y+50);}
+    if(currentUser){ctx.textAlign='right';ctx.font='bold 14px '+SANS;ctx.fillText('Agent: '+currentUser.name,W-MR,Y+30);ctx.fillStyle='rgba(255,255,255,.8)';ctx.font='13px '+SANS;ctx.fillText(currentUser.phone+' · '+fmtDate(q.generatedAt),W-MR,Y+50);}
   }
   ctx.textAlign='left';
   canvas.onclick=downloadQuote;
