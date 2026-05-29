@@ -1,5 +1,5 @@
 // VLA Annuity Quotation — Service Worker v2
-const CACHE = 'vla-v2';
+const CACHE = 'vla-v3';
 const ASSETS = ['./', './index.html', './mortality.js', './engine.js', './manifest.json', './icon-192.png', './icon-512.png'];
 
 self.addEventListener('install', e => {
