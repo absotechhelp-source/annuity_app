@@ -1481,9 +1481,12 @@ function _quoteCtx(q,inp){
   var TL=['No funeral benefit','Funeral Benefit Option 1','Funeral Benefit Option 2','Funeral Benefit Option 3','Funeral Benefit Option 4'];
   // Section heights
   var H={GAP_LH:6,REF_H:36,GAP:8,BAND_H:32,DET_H:33,THEAD_H:44,ROW_H:33,SELECT_H:54,NOTE_H:34,ACCEPT_H:150,GAP_FT:10};
-  var P1=LH_H+H.GAP_LH+H.REF_H+H.GAP+H.BAND_H+detailItems.length*H.DET_H+H.GAP+H.BAND_H+H.THEAD_H+10*H.ROW_H+H.GAP+H.SELECT_H+H.GAP+H.NOTE_H+H.ACCEPT_H+H.GAP_FT+FT_H;
+  var ACC_HDR=34; // rule-gap (12) + 'Acceptance of terms' header (22)
+  var P1=LH_H+H.GAP_LH+H.REF_H+H.GAP+H.BAND_H+detailItems.length*H.DET_H+H.GAP+H.BAND_H+H.THEAD_H+10*H.ROW_H+H.GAP+H.SELECT_H+H.GAP+H.NOTE_H+ACC_HDR+H.ACCEPT_H+H.GAP_FT+FT_H;
   var MED={BAND:33,Q:150,PLAN:30,SPOUSE:180,TABLE1:150,TABLE2:180,SIG:150};
-  var P2=46+MED.Q+MED.PLAN+MED.SPOUSE+MED.TABLE1+MED.TABLE2+MED.SIG+70+FT_H;
+  var P2TOP_=LH_H+H.GAP_LH;
+  var P2content=46+MED.Q+MED.PLAN+MED.SPOUSE+MED.TABLE1+MED.TABLE2+MED.SIG+70;
+  var P2=Math.max(P2TOP_+P2content+FT_H, Math.round(W*297/210)); // at least full A4 so footer sits at bottom
   return {W:W,MX:MX,CONTENT_W:CONTENT_W,DRED:DRED,GOLD:GOLD,MGRAY:MGRAY,DGRAY:DGRAY,LINE:LINE,SANS:SANS,
     lhOK:lhOK,ftOK:ftOK,LH_H:LH_H,FT_H:FT_H,freqWord:freqWord,detailItems:detailItems,TL:TL,H:H,P1:P1,P2:P2,q:q,inp:inp};
 }
@@ -1607,7 +1610,8 @@ function _drawQuotePage1(ctx,C,yOffset){
 // ── Draw PAGE 2 (medical) onto ctx starting at yOffset ────────
 function _drawQuotePage2(ctx,C,yOffset){
   var W=C.W,MX=C.MX,CONTENT_W=C.CONTENT_W,DRED=C.DRED,GOLD=C.GOLD,MGRAY=C.MGRAY,DGRAY=C.DGRAY,LINE=C.LINE,SANS=C.SANS,H=C.H;
-  var Y=yOffset||0;
+  var P2TOP=C.LH_H+H.GAP_LH; // align band with page-1 header zone
+  var Y=(yOffset||0)+P2TOP;
   var P2BAND=46; // taller band for page 2 header
   function band(label){
     var r=6;
@@ -1703,11 +1707,12 @@ function _drawQuotePage2(ctx,C,yOffset){
   ctx.beginPath();ctx.moveTo(MX,Y+16);ctx.lineTo(MX+sigW,Y+16);ctx.stroke();ctx.fillText('Employer\u2019s Representative',MX,Y+28);
   ctx.beginPath();ctx.moveTo(MX+sigW+40,Y+16);ctx.lineTo(MX+CONTENT_W,Y+16);ctx.stroke();ctx.fillText('Date',MX+sigW+40,Y+28);Y+=42;
   ctx.fillText('Company Stamp',MX,Y+10);Y+=24;
-  // ── Footer on page 2 ─────────────────────────────────────────
-  Y+=H.GAP_FT;
-  if(C.ftOK){ctx.drawImage(_ftImg,0,Y,C.W,C.FT_H);}
-  else{ctx.fillStyle=DRED;ctx.fillRect(0,Y,C.W,C.FT_H);ctx.fillStyle='#fff';ctx.font='13px '+SANS;ctx.textAlign='center';ctx.fillText('Life Assurance \u00B7 Pension Services',C.W/2,Y+C.FT_H/2+5);}
-  return Y+C.FT_H;
+  // ── Footer pinned to A4 bottom (not right after content) ─────
+  var footY=(yOffset||0)+C.P2-C.FT_H;
+  if(footY<Y+10)footY=Y+10; // safety: never overlap content
+  if(C.ftOK){ctx.drawImage(_ftImg,0,footY,C.W,C.FT_H);}
+  else{ctx.fillStyle=DRED;ctx.fillRect(0,footY,C.W,C.FT_H);ctx.fillStyle='#fff';ctx.font='13px '+SANS;ctx.textAlign='center';ctx.fillText('Life Assurance \u00B7 Pension Services',C.W/2,footY+C.FT_H/2+5);}
+  return footY+C.FT_H;
 }
 
 // ── Combined preview canvas (both pages stacked) ──────────────
