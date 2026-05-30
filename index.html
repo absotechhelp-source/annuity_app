@@ -2257,7 +2257,7 @@ async function toggleFA(userId){
 function resetFAPass(userId,name){
   vlaPrompt('Enter a new password for '+name+':',function(newPass){
     if(!newPass||newPass.length<4){showToast('Password must be at least 4 characters');return;}
-    fetch(APPS_SCRIPT_URL,{method:'POST',body:JSON.stringify({action:'updateUser',requesterId:currentUser.userId,userId:userId,password:newPass})})
+    fetch(APPS_SCRIPT_URL,{method:'POST',redirect:'follow',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action:'updateUser',requesterId:currentUser.userId,userId:userId,password:newPass})})
       .then(function(r){return r.text();})
       .then(function(raw){var d;try{d=JSON.parse(raw);}catch(e){showToast('Server error');return;}
         if(d.ok){showToast('\u2713 Password reset for '+name);}else{showToast('Reset failed: '+(d.error||'Unknown'));}})
@@ -2267,11 +2267,15 @@ function resetFAPass(userId,name){
 function deleteFA(userId,name){
   vlaConfirm('Permanently delete '+name+'? This cannot be undone. (Their saved quotes remain in the system.)',function(yes){
     if(!yes)return;
-    fetch(APPS_SCRIPT_URL,{method:'POST',body:JSON.stringify({action:'deleteUser',requesterId:currentUser.userId,userId:userId})})
+    showToast('Deleting\u2026',1500);
+    fetch(APPS_SCRIPT_URL,{method:'POST',redirect:'follow',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action:'deleteUser',requesterId:currentUser.userId,userId:userId})})
       .then(function(r){return r.text();})
-      .then(function(raw){var d;try{d=JSON.parse(raw);}catch(e){showToast('Server error');return;}
-        if(d.ok){showToast('\u2713 '+name+' deleted');loadAdmin();}else{showToast('Delete failed: '+(d.error||'Unknown'));}})
-      .catch(function(e){showToast('Network error');});
+      .then(function(raw){
+        var d;try{d=JSON.parse(raw);}catch(e){showToast('Server error: '+raw.slice(0,40));return;}
+        if(d.ok){showToast('\u2713 '+name+' deleted');loadAdmin();}
+        else{showToast('Delete failed: '+(d.error||'Unknown'));}
+      })
+      .catch(function(e){showToast('Network error: '+e.message);});
   });
 }
 async function loadAllQuotes(){
