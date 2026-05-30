@@ -202,7 +202,7 @@ input::placeholder{color:#ccc}
   <div id="update-bar" onclick="applyUpdate()">&#10227; New version available &#8212; tap to update</div>
   <div class="offline-bar">&#9679; Offline &#8212; working from cache</div>
   <div class="topbar">
-    <div style="background:rgba(255,255,255,.18);border-radius:50%;width:30px;height:30px;display:flex;align-items:center;justify-content:center;flex-shrink:0"><img src="icon-192.png" alt="VLA" style="width:22px;height:22px;object-fit:contain"/></div>
+    <div style="width:30px;height:30px;border-radius:7px;background:#fff;overflow:hidden;flex-shrink:0;display:flex;align-items:center;justify-content:center"><img src="icon-192.png" style="width:28px;height:28px;object-fit:cover" alt="VLA"/></div>
     <span class="tb-title">VLA Annuity</span>
     <span id="topbar-name" style="font-size:.74rem;opacity:.85;max-width:105px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"></span>
     <button class="tb-btn" id="sync-btn" onclick="syncAll()"><span class="sync-dot" id="sync-dot"></span>Sync</button>
@@ -253,13 +253,13 @@ input::placeholder{color:#ccc}
   <div class="product-body">
     <div class="product-grid">
       <div class="product-tile" onclick="startQuote('WPA')">
-        <div class="pt-icon">&#129309;</div>
+        <div class="pt-icon"><svg width="52" height="52" viewBox="0 0 52 52" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="26" cy="26" r="24" stroke="#641414" stroke-width="2" fill="#fdf0f0"/><path d="M16 36V28M22 36V22M28 36V26M34 36V18" stroke="#641414" stroke-width="2.5" stroke-linecap="round"/><path d="M16 22l6-5 6 4 8-8" stroke="#c9a84c" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><circle cx="34" cy="13" r="2.5" fill="#c9a84c"/></svg></div>
         <div class="pt-name">WPA</div>
         <div class="pt-desc">With-Profits Annuity<br/>Single premium, life annuity</div>
       </div>
       <div class="product-tile coming-soon">
         <div class="cs-badge">Coming Soon</div>
-        <div class="pt-icon">&#128200;</div>
+        <div class="pt-icon"><svg width="52" height="52" viewBox="0 0 52 52" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="26" cy="26" r="24" stroke="#aaa" stroke-width="2" fill="#f5f5f5"/><rect x="14" y="16" width="24" height="20" rx="3" stroke="#aaa" stroke-width="1.8"/><path d="M14 22h24" stroke="#aaa" stroke-width="1.5"/><path d="M20 28h4M20 32h8" stroke="#aaa" stroke-width="1.5" stroke-linecap="round"/><path d="M30 29l4-4-4-4" stroke="#aaa" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
         <div class="pt-name">Programmed Withdrawal</div>
         <div class="pt-desc">Systematic retirement drawdown</div>
       </div>
@@ -287,7 +287,7 @@ input::placeholder{color:#ccc}
       <div class="card"><div class="card-title">Policy &amp; Client</div>
         <div class="grid-2">
           <div class="field span2"><label>Proposer name <sup>*</sup></label><input id="policyholderName" type="text" placeholder="Full legal name"/><span class="field-err">Required</span></div>
-          <div class="field"><label>Quotation reference</label><input id="policyNumber" type="text" placeholder="e.g. A.T/A.M/VLA"/></div>
+          
           <div class="field admin-only-field"><label>Mortality basis</label>
             <select id="basisName"><option value="PA90">PA90 &#8212; Pensioners 1990</option><option value="A55">A55 &#8212; Assured Lives 1955-60</option></select></div>
         </div>
@@ -690,7 +690,7 @@ function generateQuote(inputs) {
 
   return {
     policyholderName,
-    policyNumber:policyNumber||('VLA-'+Date.now().toString().slice(-6)),
+    policyNumber:'ANN-'+new Date().getFullYear().toString().slice(2)+('0'+(new Date().getMonth()+1)).slice(-2)+('0'+new Date().getDate()).slice(-2)+'-'+Math.random().toString(36).slice(2,6).toUpperCase(),
     generatedAt:new Date().toISOString(),
     anb1:x0, anb2:y0,
     initialConsideration, grossAfterCharges,
@@ -806,13 +806,13 @@ function showApp(){
   goScreen('scr-home');
 }
 function doLogout(){
-  vlaConfirm('Sign out?',function(yes){
-    if(!yes)return;
-    currentUser=null;
-    goScreen('scr-login');
-    document.getElementById('login-pass').value='';
-    document.getElementById('login-err').textContent='';
-  });
+  currentUser=null;
+  localStorage.removeItem('vla_ann_user');
+  localStorage.removeItem('vla_ann_cred');
+  document.getElementById('login-user').value='';
+  document.getElementById('login-pass').value='';
+  document.getElementById('login-err').textContent='';
+  goScreen('scr-login');
 }
 
 // ── Stats ─────────────────────────────────────────────────────
@@ -841,7 +841,8 @@ function updateStats(){
 // ── Recent quotes on home ─────────────────────────────────────
 function renderRecentQuotes(){
   var el=document.getElementById('recent-quotes-list');
-  var recent=localQuotes.slice(0,3);
+  var myQ=currentUser&&currentUser.role==='Admin'?localQuotes:localQuotes.filter(function(q){return !q.faSnapshot||!q.faSnapshot.name||q.faSnapshot.name===currentUser.name;});
+  var recent=myQ.slice(0,3);
   if(!recent.length){el.innerHTML='<div style="font-size:.78rem;color:var(--muted);padding:.5rem 0">No quotes yet. Tap New Quote to get started.</div>';return;}
   el.innerHTML=recent.map(function(entry,i){
     var inp=entry.inputs||{};
@@ -938,7 +939,7 @@ function validate(){
 function collectInputs(){
   currentInputs={
     policyholderName:gv('policyholderName').trim(),
-    policyNumber:gv('policyNumber').trim()||('VLA-'+Date.now().toString().slice(-6)),
+    policyNumber:'ANN-'+new Date().getFullYear().toString().slice(2)+('0'+(new Date().getMonth()+1)).slice(-2)+('0'+new Date().getDate()).slice(-2)+'-'+Math.random().toString(36).slice(2,5).toUpperCase(),
     gender1:gv('gender1'),dob1:gv('dob1'),gender2:gv('gender2'),dob2:gv('dob2')||null,
     name2:gv('name2'),relationship:gv('relationship'),maxChildAge:parseInt(gv('maxChildAge'))||23,
     annuityStructure:gv('annuityStructure'),paymentTiming:gv('paymentTiming'),frequency:gv('frequency'),
@@ -952,7 +953,7 @@ function goReview(){
   collectInputs();
   var inp=currentInputs,anb1=computeANB(new Date(inp.dob1));
   var items=[
-    ['Proposer',inp.policyholderName],['Reference',inp.policyNumber],['Basis',inp.basisName],
+    ['Proposer',inp.policyholderName],['Basis',inp.basisName],
     ['Gender',inp.gender1],['Date of Birth',fmtDate(inp.dob1)],['Age Next Birthday',anb1+' years'],
     ['Annuity Type',inp.annuityStructure],['Payment',inp.paymentTiming+' \xB7 '+inp.frequency],
     ['Initial Consideration','MWK '+fmtN(inp.initialConsideration)],
@@ -1139,95 +1140,119 @@ function renderBcard(){
   if(!currentUser)return;
   var canvas=document.getElementById('bcard-canvas');
   var ctx=canvas.getContext('2d');
-  var W=900,H=520,SCALE=2;
+  var W=860,H=480,SCALE=2;
   var DRED='#641414',GOLD='#c9a84c',SANS='Arial,sans-serif',SERIF='Georgia,serif';
   canvas.width=W*SCALE; canvas.height=H*SCALE;
   canvas.style.width=Math.round(W/2)+'px'; canvas.style.height=Math.round(H/2)+'px';
   ctx.scale(SCALE,SCALE);
 
-  // Full maroon background with rounded corners
-  var R=20;
+  // Load icon-192
+  var iconImg=new Image();
+  iconImg.onload=function(){
+    _drawBcard(ctx,W,H,DRED,GOLD,SANS,SERIF,iconImg);
+    canvas.onclick=downloadBcard;
+  };
+  iconImg.onerror=function(){
+    _drawBcard(ctx,W,H,DRED,GOLD,SANS,SERIF,null);
+    canvas.onclick=downloadBcard;
+  };
+  iconImg.src='icon-192.png';
+}
+
+function _drawBcard(ctx,W,H,DRED,GOLD,SANS,SERIF,iconImg){
+  // Rounded maroon background
+  var R=18;
   ctx.fillStyle=DRED;
   ctx.beginPath();
-  ctx.moveTo(R,0);ctx.lineTo(W-R,0);ctx.quadraticCurveTo(W,0,W,R);
-  ctx.lineTo(W,H-R);ctx.quadraticCurveTo(W,H,W-R,H);
-  ctx.lineTo(R,H);ctx.quadraticCurveTo(0,H,0,H-R);
-  ctx.lineTo(0,R);ctx.quadraticCurveTo(0,0,R,0);
+  ctx.moveTo(R,0);ctx.lineTo(W-R,0);ctx.arcTo(W,0,W,R,R);
+  ctx.lineTo(W,H-R);ctx.arcTo(W,H,W-R,H,R);
+  ctx.lineTo(R,H);ctx.arcTo(0,H,0,H-R,R);
+  ctx.lineTo(0,R);ctx.arcTo(0,0,R,0,R);
   ctx.closePath();ctx.fill();
 
-  // Large torch watermark (low opacity, bottom-right)
+  // Large torch watermark bottom-right
   ctx.save();ctx.globalAlpha=0.08;
-  drawTorch(ctx, W-160, H/2, 160, '#fff');
+  if(iconImg){ctx.drawImage(iconImg,W-200,H-200,180,180);}
   ctx.restore();
 
-  // Top-left: white rounded box with torch icon
-  var BOX=100, BP=14;
+  // Top section: icon box (left) + name/title (right of icon)
+  var PAD=30, IB=90; // padding, icon box size
+  // White rounded box for icon
+  ctx.fillStyle='rgba(255,255,255,0.15)';
+  roundRect2(ctx,PAD,PAD,IB,IB,10);ctx.fill();
   ctx.fillStyle='#fff';
-  roundRect(ctx, BP, BP, BOX, BOX, 12);
-  ctx.fill();
-  drawTorch(ctx, BP+BOX/2, BP+BOX/2, 55, DRED);
+  roundRect2(ctx,PAD+2,PAD+2,IB-4,IB-4,8);ctx.fill();
+  // Draw actual icon or fallback torch
+  if(iconImg){
+    ctx.save();
+    ctx.beginPath();roundRect2(ctx,PAD+4,PAD+4,IB-8,IB-8,6);ctx.closePath();ctx.clip();
+    ctx.drawImage(iconImg,PAD+4,PAD+4,IB-8,IB-8);
+    ctx.restore();
+  }
 
-  // FA name
-  var TX=BP+BOX+20, TY=BP+28;
+  // Name — right of icon box, centered vertically with box
+  var TX=PAD+IB+18, nameY=PAD+30;
   ctx.fillStyle='#fff';
-  ctx.font='bold 30px '+SERIF;
+  ctx.font='bold 28px '+SERIF;
   ctx.textAlign='left';
-  ctx.fillText(currentUser.name||'FA Name', TX, TY);
+  ctx.fillText(currentUser.name||'FA Name',TX,nameY);
 
-  // Title line
+  // Title in gold
   ctx.fillStyle=GOLD;
-  ctx.font='bold 12px '+SANS;
-  ctx.fillText((currentUser.title||'Financial Advisor').toUpperCase(), TX, TY+22);
+  ctx.font='bold 11px '+SANS;
+  ctx.letterSpacing='0.15em';
+  ctx.fillText((currentUser.title||'Financial Advisor').toUpperCase(),TX,nameY+20);
 
   // Company
-  ctx.fillStyle='rgba(255,255,255,.6)';
-  ctx.font='11px '+SANS;
-  ctx.fillText('VANGUARD LIFE ASSURANCE', TX, TY+40);
+  ctx.fillStyle='rgba(255,255,255,.55)';
+  ctx.font='10.5px '+SANS;
+  ctx.fillText('VANGUARD LIFE ASSURANCE',TX,nameY+36);
 
   // Divider
-  var DY=BP+BOX+18;
-  ctx.strokeStyle='rgba(255,255,255,.25)';ctx.lineWidth=1;
-  ctx.beginPath();ctx.moveTo(BP,DY);ctx.lineTo(W-BP,DY);ctx.stroke();
+  var DY=PAD+IB+18;
+  ctx.strokeStyle='rgba(255,255,255,.22)';ctx.lineWidth=1;
+  ctx.beginPath();ctx.moveTo(PAD,DY);ctx.lineTo(W-PAD,DY);ctx.stroke();
 
-  // Contact rows
+  // Contact rows — centered block
   var items=[
-    ['phone',  currentUser.phone||''],
-    ['email',  currentUser.faEmail||''],
-    ['alt',    'Alt: Call 3043 (VLA)'],
-    ['globe',  'vanguardlifemw.com'],
+    ['&#9990;',  currentUser.phone||''],
+    ['&#9993;',  currentUser.faEmail||''],
+    ['&#9990;',  'Alt: Call 3043 (VLA)'],
+    ['&#127760;','vanguardlifemw.com'],
   ].filter(function(r){return r[1];});
 
-  var ICX=BP+16, TCX=BP+52, RY=DY+32;
+  var RY=DY+22, rowH=32;
+  var blockH=items.length*rowH;
+  var blockY=RY+(H-DY-22-blockH-40)/2; // vertically center in remaining space
+
   items.forEach(function(row,i){
-    var y=RY+i*36;
-    ctx.strokeStyle='rgba(255,255,255,.75)';ctx.lineWidth=1.5;ctx.fillStyle='none';
-    // Draw icon outline
-    if(row[0]==='phone'){
-      ctx.strokeStyle='rgba(255,255,255,.75)';
-      roundRect(ctx,ICX-10,y-16,26,28,5);ctx.stroke();
-      ctx.beginPath();ctx.arc(ICX+3,y+6,3,0,Math.PI*2);ctx.stroke();
-    } else if(row[0]==='email'){
-      ctx.beginPath();ctx.rect(ICX-10,y-14,26,20);ctx.stroke();
-      ctx.beginPath();ctx.moveTo(ICX-10,y-14);ctx.lineTo(ICX+3,y-4);ctx.lineTo(ICX+16,y-14);ctx.stroke();
-    } else if(row[0]==='alt'){
-      ctx.beginPath();ctx.arc(ICX+3,y-4,12,0,Math.PI*2);ctx.stroke();
-      ctx.beginPath();ctx.moveTo(ICX+3,y-10);ctx.lineTo(ICX+3,y-4);ctx.lineTo(ICX+7,y);ctx.stroke();
-    } else {
-      ctx.beginPath();ctx.arc(ICX+3,y-4,12,0,Math.PI*2);ctx.stroke();
-      ctx.beginPath();ctx.moveTo(ICX-9,y-4);ctx.lineTo(ICX+15,y-4);ctx.stroke();
-      ctx.beginPath();ctx.moveTo(ICX+3,y-16);ctx.lineTo(ICX+3,y+8);ctx.stroke();
-    }
-    ctx.fillStyle='#fff';ctx.font='14px '+SANS;ctx.textAlign='left';
-    ctx.fillText(row[1], TCX, y+2);
+    var y=blockY+i*rowH;
+    // Icon circle outline
+    ctx.strokeStyle='rgba(255,255,255,.6)';ctx.lineWidth=1.2;
+    ctx.beginPath();ctx.rect(PAD,y-14,24,24);ctx.stroke();
+    ctx.fillStyle='rgba(255,255,255,.6)';ctx.font='10px '+SANS;ctx.textAlign='center';
+    // Simple letter icon
+    var letter=['T','@','A','W'][i]||'';
+    ctx.fillText(letter,PAD+12,y+1);
+    // Text
+    ctx.fillStyle='#fff';ctx.font='13px '+SANS;ctx.textAlign='left';
+    ctx.fillText(row[1],PAD+34,y+2);
   });
 
-  // Tagline
-  ctx.fillStyle='rgba(255,255,255,.55)';
-  ctx.font='italic 13px '+SERIF;
+  // Tagline bottom-left
+  ctx.fillStyle='rgba(255,255,255,.45)';
+  ctx.font='italic 12px '+SERIF;
   ctx.textAlign='left';
-  ctx.fillText('“Your financial light for life”', BP+16, H-22);
+  ctx.fillText('“Your financial light for life”',PAD,H-18);
+}
 
-  canvas.onclick=downloadBcard;
+function roundRect2(ctx,x,y,w,h,r){
+  ctx.beginPath();
+  ctx.moveTo(x+r,y);ctx.arcTo(x+w,y,x+w,y+r,r);
+  ctx.arcTo(x+w,y+h,x+w-r,y+h,r);
+  ctx.arcTo(x,y+h,x,y+h-r,r);
+  ctx.arcTo(x,y,x+r,y,r);
+  ctx.closePath();
 }
 
 function drawTorch(ctx, cx, cy, size, color){
@@ -1419,9 +1444,11 @@ async function retroSync(){
 function renderHistory(){
   var list=document.getElementById('hist-list');
   var h3=document.getElementById('hist-count');
-  h3.textContent='Quote History ('+localQuotes.length+')';
-  if(!localQuotes.length){list.innerHTML='<div class="empty-state">No saved quotes yet.<br>Calculate and tap Save.</div>';return;}
-  list.innerHTML=localQuotes.map(function(entry,i){
+  // count handled below with visibleQuotes
+  var visibleQuotes=currentUser&&currentUser.role==='Admin'?localQuotes:localQuotes.filter(function(q){return !q.faSnapshot||!q.faSnapshot.name||q.faSnapshot.name===currentUser.name||!localQuotes[0].faSnapshot;});
+  h3.textContent='Quote History ('+visibleQuotes.length+')';
+  if(!visibleQuotes.length){list.innerHTML='<div class="empty-state">No saved quotes yet.<br>Calculate and tap Save.</div>';return;}
+  list.innerHTML=visibleQuotes.map(function(entry,i){
     var inp=entry.inputs||{};
     var init=(inp.policyholderName||'?').split(' ').slice(0,2).map(function(w){return w[0];}).join('').toUpperCase();
     var baseRes=entry.results&&entry.results.length?entry.results.find(function(r){return r.funeralTier===0&&r.guarantee===0;}):null;
@@ -1462,7 +1489,7 @@ function reviseQuote(idx){
   var entry=localQuotes[idx];if(!entry||!entry.inputs)return;
   var inp=entry.inputs;
   function setVal(id,val){var el=document.getElementById(id);if(el&&val!==undefined&&val!==null)el.value=val;}
-  setVal('policyholderName',inp.policyholderName);setVal('policyNumber',inp.policyNumber);
+  setVal('policyholderName',inp.policyholderName);// policyNumber auto-generated
   setVal('basisName',inp.basisName);setVal('gender1',inp.gender1);setVal('dob1',inp.dob1);
   setVal('gender2',inp.gender2);setVal('dob2',inp.dob2||'');setVal('name2',inp.name2||'');
   setVal('relationship',inp.relationship||'Spouse');setVal('maxChildAge',inp.maxChildAge||23);
@@ -1577,5 +1604,38 @@ function vlaConfirm(msg, cb){
   document.getElementById('vla-modal-cancel').onclick=function(){m.style.display='none';cb(false);};
 }
 
+
+// ── Restore session on refresh ────────────────────────────────
+(function(){
+  var saved=localStorage.getItem('vla_ann_user');
+  if(saved){
+    try{
+      currentUser=JSON.parse(saved);
+      if(currentUser&&currentUser.userId){
+        // Restore app after DOM is ready
+        if(document.readyState==='loading'){
+          document.addEventListener('DOMContentLoaded',function(){showApp();});
+        } else {
+          showApp();
+        }
+      }
+    }catch(e){localStorage.removeItem('vla_ann_user');}
+  }
+})();
+
 </script>
+
+<!-- Toast notification -->
+<div id="vla-toast" style="display:none;position:fixed;bottom:72px;left:50%;transform:translateX(-50%);background:#641414;color:#fff;padding:.45rem 1.1rem;border-radius:20px;font-size:.76rem;font-weight:600;z-index:9998;white-space:nowrap;box-shadow:0 3px 12px rgba(0,0,0,.25)"></div>
+
+<!-- Custom confirm/alert modal -->
+<div id="vla-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:9999;align-items:center;justify-content:center;padding:1rem">
+  <div style="background:#fff;border-radius:12px;padding:1.5rem 1.6rem;max-width:300px;width:100%;box-shadow:0 6px 28px rgba(0,0,0,.18)">
+    <p id="vla-modal-msg" style="font-size:.88rem;color:#1a1a1a;line-height:1.55;margin-bottom:1.2rem"></p>
+    <div style="display:flex;gap:.55rem;justify-content:flex-end">
+      <button id="vla-modal-cancel" style="display:none;padding:.42rem 1rem;border:1.5px solid #641414;background:transparent;color:#641414;border-radius:6px;font-size:.75rem;font-weight:600;cursor:pointer;text-transform:uppercase;letter-spacing:.06em">Cancel</button>
+      <button id="vla-modal-ok" style="padding:.42rem 1.1rem;border:none;background:#641414;color:#fff;border-radius:6px;font-size:.75rem;font-weight:600;cursor:pointer;text-transform:uppercase;letter-spacing:.06em">OK</button>
+    </div>
+  </div>
+</div>
 </body>
