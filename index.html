@@ -22,7 +22,7 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:var(--bg);color:var(--te
 .bnav-btn.active svg{stroke-width:2.2}
 .offline-bar{background:#333;color:#fff;text-align:center;font-size:.68rem;padding:.25rem;display:none;flex-shrink:0}
 body.offline .offline-bar{display:block}
-#update-bar{display:none;background:#1565c0;color:#fff;text-align:center;font-size:.72rem;padding:.3rem;flex-shrink:0;cursor:pointer}
+#update-bar{display:none;background:#fff;color:#641414;font-weight:700;text-align:center;font-size:.72rem;padding:.35rem;flex-shrink:0;cursor:pointer;border-bottom:2px solid #641414;letter-spacing:.04em}
 #scr-login{background:var(--bg);align-items:center;justify-content:center;padding:1.5rem}
 .login-card{background:#fff;border-radius:14px;box-shadow:var(--shadow);padding:2.2rem 1.8rem;width:100%;max-width:360px}
 .login-logo{text-align:center;margin-bottom:1.6rem}
@@ -106,8 +106,8 @@ input::placeholder{color:#ccc}
 .btn{font-family:inherit;font-size:.72rem;letter-spacing:.06em;padding:.48rem 1.25rem;border-radius:6px;cursor:pointer;border:1.5px solid;text-transform:uppercase;transition:all .13s}
 .btn-primary{background:var(--red);border-color:var(--red);color:#fff}
 .btn-primary:hover{background:var(--red2)}
-.btn-ghost{background:transparent;border-color:var(--border);color:var(--muted)}
-.btn-ghost:hover{border-color:#999;color:var(--text)}
+.btn-ghost{background:transparent;border-color:var(--red);color:var(--red)}
+.btn-ghost:hover{background:var(--red);color:#fff}
 .btn-sm{padding:.24rem .75rem;font-size:.66rem}
 .actions{display:flex;gap:.52rem;justify-content:flex-end;margin-top:1rem;flex-wrap:wrap}
 .spin-wrap{display:none;text-align:center;padding:.55rem;font-size:.72rem;color:var(--muted)}
@@ -186,7 +186,7 @@ input::placeholder{color:#ccc}
 <div class="screen active" id="scr-login">
   <div class="login-card">
     <div class="login-logo">
-      <img src="icon-192.png" alt="VLA"/>
+      <svg style="width:72px;height:72px;display:block;margin:0 auto .6rem;fill:var(--red);stroke:var(--red)" width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M14 2c-1.2 1.8-2.5 3.8-1.8 6.2.3-.8.9-1.5 1.8-1.8.9.3 1.5 1 1.8 1.8.7-2.4-.6-4.4-1.8-6.2z" fill="var(--red)"/><path d="M11.5 8.5C10.2 9.5 9.5 11 9.5 12.5h9c0-1.5-.7-3-2-4l-.8 1.2c.8.6 1.3 1.5 1.3 2.3H11c0-.8.5-1.7 1.3-2.3l-.8-1.2z" fill="var(--red)"/><rect x="12" y="12.5" width="4" height="11" rx="1" fill="var(--red)"/><rect x="10" y="23" width="8" height="2.5" rx="1.2" fill="var(--red)"/><ellipse cx="14" cy="17" rx="9" ry="3.2" fill="none" stroke="var(--red)" stroke-width="1.4" stroke-dasharray="2 1"/></svg>
       <div class="login-brand">Vanguard Life Assurance</div>
       <div class="login-sub">Annuity Quotation Tool</div>
     </div>
@@ -202,7 +202,7 @@ input::placeholder{color:#ccc}
   <div id="update-bar" onclick="applyUpdate()">&#10227; New version available &#8212; tap to update</div>
   <div class="offline-bar">&#9679; Offline &#8212; working from cache</div>
   <div class="topbar">
-    <img class="tb-logo" src="icon-192.png" alt="VLA" style="filter:brightness(0) invert(1)"/>
+    <svg class="tb-logo" style="flex-shrink:0" width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M14 2c-1.2 1.8-2.5 3.8-1.8 6.2.3-.8.9-1.5 1.8-1.8.9.3 1.5 1 1.8 1.8.7-2.4-.6-4.4-1.8-6.2z" fill="white"/><path d="M11.5 8.5C10.2 9.5 9.5 11 9.5 12.5h9c0-1.5-.7-3-2-4l-.8 1.2c.8.6 1.3 1.5 1.3 2.3H11c0-.8.5-1.7 1.3-2.3l-.8-1.2z" fill="white"/><rect x="12" y="12.5" width="4" height="11" rx="1" fill="white"/><rect x="10" y="23" width="8" height="2.5" rx="1.2" fill="white"/><ellipse cx="14" cy="17" rx="9" ry="3.2" fill="none" stroke="white" stroke-width="1.4" stroke-dasharray="2 1"/></svg>
     <span class="tb-title">VLA Annuity</span>
     <span id="topbar-name" style="font-size:.74rem;opacity:.85;max-width:105px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"></span>
     <button class="tb-btn" id="sync-btn" onclick="syncAll()"><span class="sync-dot" id="sync-dot"></span>Sync</button>
@@ -231,7 +231,7 @@ input::placeholder{color:#ccc}
       <button class="qa-btn" onclick="goScreen('scr-productinfo')">
         <div class="qa-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg></div>
         <span class="qa-label">Products</span></button>
-      <button class="qa-btn" id="qa-admin" style="display:none" onclick="goScreen('scr-admin');loadAdmin()">
+      <button class="qa-btn" id="qa-admin" style="display:none" onclick="if(currentUser&&currentUser.role==='Admin'){goScreen('scr-admin');loadAdmin();}else{vlaAlert('Admin access only.');}">
         <div class="qa-icon"><svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></div>
         <span class="qa-label">Admin</span></button>
     </div>
@@ -805,7 +805,9 @@ function showApp(){
   goScreen('scr-home');
 }
 function doLogout(){
-  if(!confirm('Sign out?'))return;
+  vlaConfirm('Sign out?',function(yes){if(!yes)return;
+});
+  return;
   currentUser=null;
   goScreen('scr-login');
   document.getElementById('login-pass').value='';
@@ -944,7 +946,7 @@ function collectInputs(){
   };
 }
 function goReview(){
-  if(!validate()){alert('Please fix the highlighted fields.');return;}
+  if(!validate()){vlaAlert('Please fix the highlighted fields.');return;}
   collectInputs();
   var inp=currentInputs,anb1=computeANB(new Date(inp.dob1));
   var items=[
@@ -971,7 +973,7 @@ function runCalc(){
       if(_lhReady) doRender(); else{_pendingRender=doRender;setTimeout(function(){if(_pendingRender){_pendingRender();_pendingRender=null;}},1200);}
       goQTab('panel-quote');
       document.getElementById('tab-quote').classList.add('done');
-    }catch(e){alert('Calculation error: '+e.message);console.error(e);}
+    }catch(e){vlaAlert('Calculation error: '+e.message);console.error(e);}
     spin.classList.remove('show');
   },80);
 }
@@ -982,7 +984,7 @@ function runCalc(){
 function renderQuoteCanvas(q,inp){
   var canvas=document.getElementById('quote-canvas');
   var ctx=canvas.getContext('2d');
-  var W=1240,SCALE=2,ML=56,MR=56;
+  var W=1240,SCALE=2,ML=72,MR=72;
   var DRED='#641414',RED='#8B0000',SANS='Arial,sans-serif';
   var MGRAY='#888',DGRAY='#444';
   var lhOK=_lhImg&&_lhImg.naturalWidth>0;
@@ -1014,7 +1016,7 @@ function renderQuoteCanvas(q,inp){
   Y=LH_H;
 
   // 2. Ref/date bar
-  ctx.fillStyle='#fdf5f5'; ctx.fillRect(0,Y,W,REF_H);
+  ctx.fillStyle='#fff'; ctx.fillRect(0,Y,W,REF_H);
   ctx.strokeStyle='#eedede'; ctx.lineWidth=1;
   ctx.beginPath();ctx.moveTo(0,Y);ctx.lineTo(W,Y);ctx.stroke();
   ctx.beginPath();ctx.moveTo(0,Y+REF_H);ctx.lineTo(W,Y+REF_H);ctx.stroke();
@@ -1133,45 +1135,132 @@ function renderBcard(){
   if(!currentUser)return;
   var canvas=document.getElementById('bcard-canvas');
   var ctx=canvas.getContext('2d');
-  var W=900,H=480,SCALE=2;
-  var DRED='#641414',GOLD='#c9a84c',SANS='Arial,sans-serif';
+  var W=900,H=520,SCALE=2;
+  var DRED='#641414',GOLD='#c9a84c',SANS='Arial,sans-serif',SERIF='Georgia,serif';
   canvas.width=W*SCALE; canvas.height=H*SCALE;
   canvas.style.width=Math.round(W/2)+'px'; canvas.style.height=Math.round(H/2)+'px';
   ctx.scale(SCALE,SCALE);
-  ctx.fillStyle='#fff'; ctx.fillRect(0,0,W,H);
-  ctx.fillStyle=DRED; ctx.fillRect(0,0,280,H);
-  ctx.save(); ctx.globalAlpha=0.06;
-  ctx.fillStyle='#fff'; ctx.font='bold 190px Georgia,serif'; ctx.textAlign='center';
-  ctx.fillText('V',140,H); ctx.restore();
-  ctx.fillStyle=GOLD; ctx.fillRect(280,0,3,H);
-  ctx.fillStyle='#fff'; ctx.font='bold 18px Georgia,serif'; ctx.textAlign='center';
-  ctx.fillText('Vanguard',140,H-80);
-  ctx.fillStyle=GOLD; ctx.font='11px '+SANS;
-  ctx.fillText('Life Assurance Company Limited',140,H-62);
-  ctx.fillStyle='rgba(255,255,255,.5)'; ctx.font='10px '+SANS;
-  ctx.fillText('vanguardlifemw.com',140,H-46);
-  ctx.fillStyle=DRED; ctx.fillRect(283,0,W-283,5);
-  var LX=310,NY=52;
-  ctx.fillStyle=DRED; ctx.font='bold 26px '+SANS; ctx.textAlign='left';
-  ctx.fillText(currentUser.name,LX,NY);
-  ctx.fillStyle=GOLD; ctx.fillRect(LX,NY+6,100,2);
-  ctx.fillStyle='#555'; ctx.font='13px '+SANS;
-  ctx.fillText((currentUser.title||'Financial Advisor')+' · '+(currentUser.branch||'VLA'),LX,NY+28);
+
+  // Full maroon background with rounded corners
+  var R=20;
+  ctx.fillStyle=DRED;
+  ctx.beginPath();
+  ctx.moveTo(R,0);ctx.lineTo(W-R,0);ctx.quadraticCurveTo(W,0,W,R);
+  ctx.lineTo(W,H-R);ctx.quadraticCurveTo(W,H,W-R,H);
+  ctx.lineTo(R,H);ctx.quadraticCurveTo(0,H,0,H-R);
+  ctx.lineTo(0,R);ctx.quadraticCurveTo(0,0,R,0);
+  ctx.closePath();ctx.fill();
+
+  // Large torch watermark (low opacity, bottom-right)
+  ctx.save();ctx.globalAlpha=0.08;
+  drawTorch(ctx, W-160, H/2, 160, '#fff');
+  ctx.restore();
+
+  // Top-left: white rounded box with torch icon
+  var BOX=100, BP=14;
+  ctx.fillStyle='#fff';
+  roundRect(ctx, BP, BP, BOX, BOX, 12);
+  ctx.fill();
+  drawTorch(ctx, BP+BOX/2, BP+BOX/2, 55, DRED);
+
+  // FA name
+  var TX=BP+BOX+20, TY=BP+28;
+  ctx.fillStyle='#fff';
+  ctx.font='bold 30px '+SERIF;
+  ctx.textAlign='left';
+  ctx.fillText(currentUser.name||'FA Name', TX, TY);
+
+  // Title line
+  ctx.fillStyle=GOLD;
+  ctx.font='bold 12px '+SANS;
+  ctx.fillText((currentUser.title||'Financial Advisor').toUpperCase(), TX, TY+22);
+
+  // Company
+  ctx.fillStyle='rgba(255,255,255,.6)';
+  ctx.font='11px '+SANS;
+  ctx.fillText('VANGUARD LIFE ASSURANCE', TX, TY+40);
+
+  // Divider
+  var DY=BP+BOX+18;
+  ctx.strokeStyle='rgba(255,255,255,.25)';ctx.lineWidth=1;
+  ctx.beginPath();ctx.moveTo(BP,DY);ctx.lineTo(W-BP,DY);ctx.stroke();
+
+  // Contact rows
   var items=[
-    ['☎',currentUser.phone||''],
-    ['✉',currentUser.faEmail||''],
-    ['Branch',currentUser.branch||''],
-    ['ID',currentUser.employeeId||''],
+    ['phone',  currentUser.phone||''],
+    ['email',  currentUser.faEmail||''],
+    ['alt',    'Alt: Call 3043 (VLA)'],
+    ['globe',  'vanguardlifemw.com'],
   ].filter(function(r){return r[1];});
+
+  var ICX=BP+16, TCX=BP+52, RY=DY+32;
   items.forEach(function(row,i){
-    var iy=NY+62+i*30;
-    ctx.fillStyle=DRED; ctx.font='bold 11px '+SANS; ctx.fillText(row[0],LX,iy);
-    ctx.fillStyle='#222'; ctx.font='13px '+SANS; ctx.fillText(row[1],LX+36,iy);
+    var y=RY+i*36;
+    ctx.strokeStyle='rgba(255,255,255,.75)';ctx.lineWidth=1.5;ctx.fillStyle='none';
+    // Draw icon outline
+    if(row[0]==='phone'){
+      ctx.strokeStyle='rgba(255,255,255,.75)';
+      roundRect(ctx,ICX-10,y-16,26,28,5);ctx.stroke();
+      ctx.beginPath();ctx.arc(ICX+3,y+6,3,0,Math.PI*2);ctx.stroke();
+    } else if(row[0]==='email'){
+      ctx.beginPath();ctx.rect(ICX-10,y-14,26,20);ctx.stroke();
+      ctx.beginPath();ctx.moveTo(ICX-10,y-14);ctx.lineTo(ICX+3,y-4);ctx.lineTo(ICX+16,y-14);ctx.stroke();
+    } else if(row[0]==='alt'){
+      ctx.beginPath();ctx.arc(ICX+3,y-4,12,0,Math.PI*2);ctx.stroke();
+      ctx.beginPath();ctx.moveTo(ICX+3,y-10);ctx.lineTo(ICX+3,y-4);ctx.lineTo(ICX+7,y);ctx.stroke();
+    } else {
+      ctx.beginPath();ctx.arc(ICX+3,y-4,12,0,Math.PI*2);ctx.stroke();
+      ctx.beginPath();ctx.moveTo(ICX-9,y-4);ctx.lineTo(ICX+15,y-4);ctx.stroke();
+      ctx.beginPath();ctx.moveTo(ICX+3,y-16);ctx.lineTo(ICX+3,y+8);ctx.stroke();
+    }
+    ctx.fillStyle='#fff';ctx.font='14px '+SANS;ctx.textAlign='left';
+    ctx.fillText(row[1], TCX, y+2);
   });
-  ctx.fillStyle='#f0f0f0'; ctx.fillRect(283,H-38,W-283,38);
-  ctx.fillStyle=DRED; ctx.font='bold 10px '+SANS; ctx.textAlign='center';
-  ctx.fillText('Life Assurance · Pension Services · Asset Management',(283+W)/2,H-16);
+
+  // Tagline
+  ctx.fillStyle='rgba(255,255,255,.55)';
+  ctx.font='italic 13px '+SERIF;
+  ctx.textAlign='left';
+  ctx.fillText('“Your financial light for life”', BP+16, H-22);
+
   canvas.onclick=downloadBcard;
+}
+
+function drawTorch(ctx, cx, cy, size, color){
+  var s=size/60;
+  ctx.save();ctx.translate(cx,cy);ctx.scale(s,s);
+  ctx.fillStyle=color;ctx.strokeStyle=color;
+  // Flame
+  ctx.beginPath();
+  ctx.moveTo(0,-28);ctx.bezierCurveTo(-10,-20,-12,-8,-6,-2);
+  ctx.bezierCurveTo(-3,2,3,2,6,-2);
+  ctx.bezierCurveTo(12,-8,10,-20,0,-28);
+  ctx.fill();
+  // Inner flame highlight
+  ctx.fillStyle='rgba(255,255,255,0.25)';
+  ctx.beginPath();
+  ctx.moveTo(0,-22);ctx.bezierCurveTo(-5,-16,-6,-8,-3,-4);
+  ctx.bezierCurveTo(-1,-1,1,-1,3,-4);
+  ctx.bezierCurveTo(6,-8,5,-16,0,-22);
+  ctx.fill();
+  // Body
+  ctx.fillStyle=color;
+  ctx.fillRect(-5,-2,10,22);
+  // Base
+  ctx.fillRect(-8,18,16,5);
+  // Orbit ring
+  ctx.beginPath();ctx.ellipse(0,8,18,5,0,0,Math.PI*2);
+  ctx.strokeStyle=color;ctx.lineWidth=2/s;ctx.stroke();
+  ctx.restore();
+}
+
+function roundRect(ctx,x,y,w,h,r){
+  ctx.beginPath();
+  ctx.moveTo(x+r,y);ctx.lineTo(x+w-r,y);ctx.quadraticCurveTo(x+w,y,x+w,y+r);
+  ctx.lineTo(x+w,y+h-r);ctx.quadraticCurveTo(x+w,y+h,x+w-r,y+h);
+  ctx.lineTo(x+r,y+h);ctx.quadraticCurveTo(x,y+h,x,y+h-r);
+  ctx.lineTo(x,y+r);ctx.quadraticCurveTo(x,y,x+r,y);
+  ctx.closePath();
 }
 
 // ── Share functions ───────────────────────────────────────────
@@ -1250,7 +1339,10 @@ function saveAndSync(){
   var today=new Date().toISOString().slice(0,10);
   var name=(currentInputs.policyholderName||'').trim().toLowerCase();
   var dup=localQuotes.find(function(q){return q.quoteDate&&q.quoteDate.slice(0,10)===today&&(q.inputs&&q.inputs.policyholderName||'').trim().toLowerCase()===name;});
-  if(dup){if(!confirm('A quote for '+currentInputs.policyholderName+' already exists today.\nSave as a new revision?'))return;}
+  if(dup){vlaConfirm('A quote for '+currentInputs.policyholderName+' already exists today. Save as a new revision?',function(yes){if(yes)_doSave();});return;}
+  _doSave();
+}
+function _doSave(){
   var localId=genLocalId();
   var entry={localId,quoteId:null,syncStatus:'pending',quoteDate:lastQuote.generatedAt,
     inputs:JSON.parse(JSON.stringify(currentInputs)),results:lastQuote.results,anb1:lastQuote.anb1,
@@ -1299,12 +1391,12 @@ async function syncAll(){
   setTimeout(function(){btn.innerHTML='<span class="sync-dot" id="sync-dot"></span>Sync';updateSyncDot();},2500);
 }
 async function retroSync(){
-  if(!navigator.onLine){alert('Retrosync needs a network connection.');return;}
+  if(!navigator.onLine){vlaAlert('Retrosync needs a network connection.');return;}
   try{
     var r=await fetch(APPS_SCRIPT_URL+'?action=getQuotes&userId='+currentUser.userId+'&role='+currentUser.role,{redirect:'follow'});
     var raw=await r.text();var d;
-    try{d=JSON.parse(raw);}catch(e){alert('Retrosync failed: server returned unexpected response.\n'+raw.slice(0,200));return;}
-    if(!d.ok){alert('Retrosync error: '+(d.error||'Unknown'));return;}
+    try{d=JSON.parse(raw);}catch(e){vlaAlert('Retrosync failed: server returned unexpected response.\n'+raw.slice(0,200));return;}
+    if(!d.ok){vlaAlert('Retrosync error: '+(d.error||'Unknown'));return;}
     var added=0;
     d.quotes.forEach(function(rq){
       var exists=localQuotes.find(function(q){return q.localId===rq.localId||q.quoteId===rq.quoteId;});
@@ -1316,8 +1408,8 @@ async function retroSync(){
         added++;
       }
     });
-    saveLocalQuotes();renderHistory();alert('Retrosync complete. '+added+' quote(s) pulled.');
-  }catch(e){alert('Retrosync failed: '+e.message);}
+    saveLocalQuotes();renderHistory();vlaAlert('Retrosync complete. '+added+' quote(s) pulled.');
+  }catch(e){vlaAlert('Retrosync failed: '+e.message);}
 }
 
 // ── History ───────────────────────────────────────────────────
@@ -1352,7 +1444,7 @@ function renderHistory(){
 }
 function viewQuoteFromHistory(idx){
   var entry=localQuotes[idx];
-  if(!entry||!entry.results||!entry.results.length){alert('No result data for this quote.');return;}
+  if(!entry||!entry.results||!entry.results.length){vlaAlert('No result data for this quote.');return;}
   currentInputs=entry.inputs||{};
   var savedUser=currentUser;
   if(entry.faSnapshot) currentUser=Object.assign({},currentUser,entry.faSnapshot);
@@ -1397,8 +1489,8 @@ function showAdminTab(id,el){
 async function loadAdmin(){
   if(currentUser.role!=='Admin')return;
   try{
-    var r=await fetch(APPS_SCRIPT_URL+'?action=getUsers&requesterId='+currentUser.userId);
-    var d=await r.json();if(!d.ok)return;
+    var r=await fetch(APPS_SCRIPT_URL+'?action=getUsers&requesterId='+currentUser.userId,{redirect:'follow'});
+    var raw=await r.text();var d;try{d=JSON.parse(raw);}catch(e){document.getElementById('fa-table-wrap').innerHTML='<div class="empty-state">Server error: '+escHtml(raw.slice(0,120))+'</div>';return;}if(!d.ok)return;
     document.getElementById('fa-table-wrap').innerHTML=
       '<table class="data-table"><thead><tr><th>Name</th><th>ID</th><th>Role</th><th>Phone</th><th>Title</th><th>Email</th><th>Status</th><th></th></tr></thead><tbody>'
       +d.users.map(function(u){
@@ -1435,8 +1527,8 @@ async function toggleFA(userId){
 async function loadAllQuotes(){
   var wrap=document.getElementById('all-quotes-wrap');
   try{
-    var r=await fetch(APPS_SCRIPT_URL+'?action=getQuotes&userId='+currentUser.userId+'&role='+currentUser.role);
-    var d=await r.json();
+    var r=await fetch(APPS_SCRIPT_URL+'?action=getQuotes&userId='+currentUser.userId+'&role='+currentUser.role,{redirect:'follow'});
+    var raw2=await r.text();var d;try{d=JSON.parse(raw2);}catch(e){wrap.innerHTML='<div class="empty-state">Server error: '+escHtml(raw2.slice(0,120))+'</div>';return;}
     if(!d.ok||!d.quotes.length){wrap.innerHTML='<div class="empty-state">No quotes found.</div>';return;}
     wrap.innerHTML='<table class="data-table"><thead><tr><th>Ref</th><th>Client</th><th>FA</th><th>Date</th><th>Amount</th><th>G0</th><th>G5</th><th>G10</th></tr></thead><tbody>'
       +d.quotes.map(function(q){
@@ -1456,5 +1548,24 @@ function fmtDate(s){if(!s)return '\u2014';var d=new Date(s);if(isNaN(d))return S
 function fmtDob(s){if(!s)return '\u2014';return new Date(s).toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'}).replace(/ /g,'-');}
 function escHtml(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
 
+
+
+// ── Custom modal (replaces browser alert/confirm) ─────────────
+function vlaAlert(msg, cb){
+  var m=document.getElementById('vla-modal');
+  document.getElementById('vla-modal-msg').textContent=msg;
+  document.getElementById('vla-modal-cancel').style.display='none';
+  m.style.display='flex';
+  document.getElementById('vla-modal-ok').onclick=function(){m.style.display='none';if(cb)cb();};
+}
+function vlaConfirm(msg, cb){
+  var m=document.getElementById('vla-modal');
+  document.getElementById('vla-modal-msg').textContent=msg;
+  document.getElementById('vla-modal-cancel').style.display='';
+  m.style.display='flex';
+  document.getElementById('vla-modal-ok').onclick=function(){m.style.display='none';cb(true);};
+  document.getElementById('vla-modal-cancel').onclick=function(){m.style.display='none';cb(false);};
+}
+
 </script>
-</body></html>
+</body>
