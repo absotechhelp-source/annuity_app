@@ -2173,9 +2173,10 @@ function viewQuoteFromHistory(idx){
   var savedUser=currentUser;
   if(entry.faSnapshot) currentUser=Object.assign({},currentUser,entry.faSnapshot);
   var fakeQ={anb1:entry.anb1,annuityStructure:(entry.inputs||{}).annuityStructure,results:entry.results,policyNumber:entry.quoteId||entry.localId,generatedAt:entry.quoteDate};
-  var doRender=function(){renderQuoteCanvas(fakeQ,currentInputs);currentUser=savedUser;};
+  lastQuote=fakeQ; // so PDF/WhatsApp/Email work from history view
+  var doRender=function(){renderQuoteCanvas(fakeQ,currentInputs);};
   if(_lhReady) doRender(); else{_pendingRender=doRender;setTimeout(function(){if(_pendingRender){_pendingRender();_pendingRender=null;}},1200);}
-  document.getElementById('quote-back-btn').onclick=function(){goScreen('scr-history');renderHistory();};
+  document.getElementById('quote-back-btn').onclick=function(){currentUser=savedUser;goScreen('scr-history');renderHistory();};
   document.getElementById('quote-product-title').textContent='WPA Quotation';
   goScreen('scr-quote');goQTab('panel-quote');
 }
@@ -2223,7 +2224,11 @@ async function loadAdmin(){
           +'<td>'+escHtml(u.role)+'</td><td>'+escHtml(u.phone||'\u2014')+'</td>'
           +'<td>'+escHtml(u.title||'\u2014')+'</td><td>'+escHtml(u.faEmail||'\u2014')+'</td>'
           +'<td><span class="active-pill '+(u.active?'yes':'no')+'">'+(u.active?'Active':'Inactive')+'</span></td>'
-          +'<td><button class="btn btn-ghost btn-sm" data-uid="'+escHtml(u.userId)+'" onclick="toggleFA(this.getAttribute(\'data-uid\'))">'+(u.active?'Deactivate':'Activate')+'</button></td>'
+          +'<td style="white-space:nowrap">'
+          +'<button class="btn btn-ghost btn-sm" data-uid="'+escHtml(u.userId)+'" onclick="toggleFA(this.getAttribute(\'data-uid\'))">'+(u.active?'Deactivate':'Activate')+'</button> '
+          +'<button class="btn btn-ghost btn-sm" data-uid="'+escHtml(u.userId)+'" data-name="'+escHtml(u.name)+'" onclick="resetFAPass(this.getAttribute(\'data-uid\'),this.getAttribute(\'data-name\'))">Reset PW</button> '
+          +'<button class="btn btn-ghost btn-sm" style="border-color:#b00;color:#b00" data-uid="'+escHtml(u.userId)+'" data-name="'+escHtml(u.name)+'" onclick="deleteFA(this.getAttribute(\'data-uid\'),this.getAttribute(\'data-name\'))">Delete</button>'
+          +'</td>'
           +'</tr>';
       }).join('')+'</tbody></table>';
   }catch(e){document.getElementById('fa-table-wrap').innerHTML='<div class="empty-state">Could not load users.</div>';}
@@ -2248,6 +2253,26 @@ async function addFA(){
 }
 async function toggleFA(userId){
   try{var r=await fetch(APPS_SCRIPT_URL,{method:'POST',body:JSON.stringify({action:'toggleActive',requesterId:currentUser.userId,userId})});var d=await r.json();if(d.ok)loadAdmin();}catch(e){}
+}
+function resetFAPass(userId,name){
+  vlaPrompt('Enter a new password for '+name+':',function(newPass){
+    if(!newPass||newPass.length<4){showToast('Password must be at least 4 characters');return;}
+    fetch(APPS_SCRIPT_URL,{method:'POST',body:JSON.stringify({action:'updateUser',requesterId:currentUser.userId,userId:userId,password:newPass})})
+      .then(function(r){return r.text();})
+      .then(function(raw){var d;try{d=JSON.parse(raw);}catch(e){showToast('Server error');return;}
+        if(d.ok){showToast('\u2713 Password reset for '+name);}else{showToast('Reset failed: '+(d.error||'Unknown'));}})
+      .catch(function(e){showToast('Network error');});
+  });
+}
+function deleteFA(userId,name){
+  vlaConfirm('Permanently delete '+name+'? This cannot be undone. (Their saved quotes remain in the system.)',function(yes){
+    if(!yes)return;
+    fetch(APPS_SCRIPT_URL,{method:'POST',body:JSON.stringify({action:'deleteUser',requesterId:currentUser.userId,userId:userId})})
+      .then(function(r){return r.text();})
+      .then(function(raw){var d;try{d=JSON.parse(raw);}catch(e){showToast('Server error');return;}
+        if(d.ok){showToast('\u2713 '+name+' deleted');loadAdmin();}else{showToast('Delete failed: '+(d.error||'Unknown'));}})
+      .catch(function(e){showToast('Network error');});
+  });
 }
 async function loadAllQuotes(){
   var wrap=document.getElementById('all-quotes-wrap');
@@ -2341,6 +2366,25 @@ function vlaConfirm(msg, cb){
   m.style.display='flex';
   document.getElementById('vla-modal-ok').onclick=function(){m.style.display='none';cb(true);};
   document.getElementById('vla-modal-cancel').onclick=function(){m.style.display='none';cb(false);};
+}
+function vlaPrompt(msg, cb){
+  var m=document.getElementById('vla-modal');
+  var msgEl=document.getElementById('vla-modal-msg');
+  msgEl.textContent=msg;
+  document.getElementById('vla-modal-cancel').style.display='';
+  // Inject (or reuse) an input field
+  var inp=document.getElementById('vla-modal-input');
+  if(!inp){
+    inp=document.createElement('input');
+    inp.id='vla-modal-input';inp.type='text';
+    inp.style.cssText='width:100%;margin-top:.7rem;padding:.5rem;border:1.5px solid #641414;border-radius:6px;font-size:.85rem;box-sizing:border-box';
+    msgEl.parentNode.insertBefore(inp,msgEl.nextSibling);
+  }
+  inp.style.display='';inp.value='';
+  m.style.display='flex';
+  setTimeout(function(){inp.focus();},50);
+  document.getElementById('vla-modal-ok').onclick=function(){var v=inp.value;m.style.display='none';inp.style.display='none';cb(v);};
+  document.getElementById('vla-modal-cancel').onclick=function(){m.style.display='none';inp.style.display='none';cb(null);};
 }
 
 
