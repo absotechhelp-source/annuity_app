@@ -3,9 +3,9 @@
 <head>
 <meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1.0"/><meta name="theme-color" content="#641414"/><title>VLA Annuity Tool</title><link rel="manifest" href="manifest.json"/><script>window.addEventListener("error",function(e){var el=document.getElementById("login-err");if(el)el.textContent="App error: "+e.message+" (L"+e.lineno+")";console.error(e.message,e.lineno);});</script><style>*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 :root{--red:#641414;--red2:#8B0000;--gold:#c9a84c;--text:#1a1a1a;--muted:#666;
-  --border:#e0d8d8;--bg:#f0f0f0;--radius:10px;--shadow:0 1px 8px rgba(100,20,20,.07)}
+  --border:#e0d8d8;--bg:#fff;--radius:10px;--shadow:0 1px 8px rgba(100,20,20,.07)}
 html{font-size:15px}
-body{font-family:'Segoe UI',Arial,sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
+body{font-family:'Segoe UI',Arial,sans-serif;background:#fff;color:var(--text);min-height:100vh}
 .screen{display:none;flex-direction:column;min-height:100vh}.screen.active{display:flex}
 .topbar{background:var(--red);color:#fff;padding:.5rem .85rem;display:flex;align-items:center;gap:.55rem;flex-shrink:0}
 .tb-back{background:none;border:none;color:#fff;font-size:1.05rem;cursor:pointer;padding:.15rem .3rem;opacity:.85;flex-shrink:0}
@@ -23,7 +23,7 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:var(--bg);color:var(--te
 .offline-bar{background:#333;color:#fff;text-align:center;font-size:.68rem;padding:.25rem;display:none;flex-shrink:0}
 body.offline .offline-bar{display:block}
 #update-bar{display:none;background:#fff;color:#641414;font-weight:700;text-align:center;font-size:.72rem;padding:.35rem;flex-shrink:0;cursor:pointer;border-bottom:2px solid #641414;letter-spacing:.04em}
-#scr-login{background:var(--bg);align-items:center;justify-content:center;padding:1.5rem}
+#scr-login{background:#fff;align-items:center;justify-content:center;padding:1.5rem}
 .login-card{background:#fff;border-radius:14px;box-shadow:var(--shadow);padding:2.2rem 1.8rem;width:100%;max-width:360px}
 .login-logo{text-align:center;margin-bottom:1.6rem}
 .login-logo img{width:72px;height:72px;object-fit:contain;display:block;margin:0 auto .55rem}
@@ -170,8 +170,7 @@ input::placeholder{color:#ccc}
 .bcard-body{text-align:center}
 #bcard-canvas{max-width:100%;border-radius:7px;box-shadow:var(--shadow);display:block;margin:0 auto}
 @media print{
-  body{background:#fff}
-  .screen{display:block!important;min-height:0}
+  body{background:#fff;min-height:0}
   #scr-login,#scr-home,#scr-products,#scr-history,#scr-productinfo,#scr-profile,#scr-admin,#scr-bcard{display:none!important}
   #scr-quote{display:block!important}
   .topbar,.q-tabs,.actions,.offline-bar,.canvas-hint,#update-bar,.share-row,.bnav{display:none!important}
@@ -792,6 +791,10 @@ function showApp(){
   document.getElementById('dob2').max=today;
   document.getElementById('dueDate').value=today;
   document.getElementById('topbar-name').textContent=currentUser.name;
+  var _hr=new Date().getHours();
+  var _greet=_hr<12?'Good morning':_hr<17?'Good afternoon':'Good evening';
+  var _gEl=document.getElementById('home-greeting');
+  if(_gEl) _gEl.innerHTML=_greet+', <strong>'+escHtml(currentUser.name)+'</strong> <span style="font-size:.7rem;color:var(--muted);font-weight:400">&middot; '+escHtml(currentUser.role)+'</span>';
   if(currentUser.role==='Admin'){
     document.getElementById('qa-admin').style.display='';
   }
@@ -817,14 +820,20 @@ function doLogout(){
 
 // ── Stats ─────────────────────────────────────────────────────
 function updateStats(){
-  var total=localQuotes.length;
+  // Filter to current user's quotes only for stats
+  var myQ=currentUser&&currentUser.role==='Admin'
+    ? localQuotes
+    : localQuotes.filter(function(q){
+        return !q.faSnapshot||!q.faSnapshot.name||q.faSnapshot.name===currentUser.name;
+      });
+  var total=myQ.length;
   var now=Date.now();
   var weekAgo=now-7*24*3600*1000;
   var twoWeeksAgo=now-14*24*3600*1000;
-  var thisWeek=localQuotes.filter(function(q){return new Date(q.quoteDate).getTime()>weekAgo;}).length;
-  var lastWeek=localQuotes.filter(function(q){var t=new Date(q.quoteDate).getTime();return t>twoWeeksAgo&&t<=weekAgo;}).length;
-  var synced=localQuotes.filter(function(q){return q.syncStatus==='synced';}).length;
-  var avgPrem=total>0?Math.round(localQuotes.reduce(function(s,q){return s+((q.inputs&&q.inputs.initialConsideration)||0);},0)/total):0;
+  var thisWeek=myQ.filter(function(q){return new Date(q.quoteDate).getTime()>weekAgo;}).length;
+  var lastWeek=myQ.filter(function(q){var t=new Date(q.quoteDate).getTime();return t>twoWeeksAgo&&t<=weekAgo;}).length;
+  var synced=myQ.filter(function(q){return q.syncStatus==='synced';}).length;
+  var avgPrem=total>0?Math.round(myQ.reduce(function(s,q){return s+((q.inputs&&q.inputs.initialConsideration)||0);},0)/total):0;
   document.getElementById('st-total').textContent=total;
   document.getElementById('st-week').textContent=thisWeek;
   document.getElementById('st-sync').textContent=synced;
@@ -1170,19 +1179,20 @@ function _drawBcard(ctx,W,H,DRED,GOLD,SANS,SERIF,iconImg){
   ctx.lineTo(0,R);ctx.arcTo(0,0,R,0,R);
   ctx.closePath();ctx.fill();
 
-  // Large torch watermark bottom-right
-  ctx.save();ctx.globalAlpha=0.08;
-  if(iconImg){ctx.drawImage(iconImg,W-200,H-200,180,180);}
-  ctx.restore();
+  // Large torch watermark — CENTRED, bigger
+  if(iconImg){
+    var wSize=220;
+    ctx.save();ctx.globalAlpha=0.09;
+    ctx.drawImage(iconImg,(W-wSize)/2,(H-wSize)/2,wSize,wSize);
+    ctx.restore();
+  }
 
-  // Top section: icon box (left) + name/title (right of icon)
-  var PAD=30, IB=90; // padding, icon box size
-  // White rounded box for icon
+  var PAD=30, IB=86;
+  // White rounded icon box
   ctx.fillStyle='rgba(255,255,255,0.15)';
   roundRect2(ctx,PAD,PAD,IB,IB,10);ctx.fill();
   ctx.fillStyle='#fff';
   roundRect2(ctx,PAD+2,PAD+2,IB-4,IB-4,8);ctx.fill();
-  // Draw actual icon or fallback torch
   if(iconImg){
     ctx.save();
     ctx.beginPath();roundRect2(ctx,PAD+4,PAD+4,IB-8,IB-8,6);ctx.closePath();ctx.clip();
@@ -1190,57 +1200,50 @@ function _drawBcard(ctx,W,H,DRED,GOLD,SANS,SERIF,iconImg){
     ctx.restore();
   }
 
-  // Name — right of icon box, centered vertically with box
-  var TX=PAD+IB+18, nameY=PAD+30;
+  // Name — moved down slightly, right of icon
+  var TX=PAD+IB+18;
+  var nameY=PAD+42;  // was PAD+30 — now lower
   ctx.fillStyle='#fff';
-  ctx.font='bold 28px '+SERIF;
+  ctx.font='bold 26px '+SERIF;
   ctx.textAlign='left';
-  ctx.fillText(currentUser.name||'FA Name',TX,nameY);
+  // Truncate name if too long
+  var nameStr=currentUser.name||'FA Name';
+  ctx.fillText(nameStr,TX,nameY);
 
-  // Title in gold
   ctx.fillStyle=GOLD;
   ctx.font='bold 11px '+SANS;
-  ctx.letterSpacing='0.15em';
   ctx.fillText((currentUser.title||'Financial Advisor').toUpperCase(),TX,nameY+20);
 
-  // Company
   ctx.fillStyle='rgba(255,255,255,.55)';
   ctx.font='10.5px '+SANS;
-  ctx.fillText('VANGUARD LIFE ASSURANCE',TX,nameY+36);
+  ctx.fillText('VANGUARD LIFE ASSURANCE',TX,nameY+38);
 
   // Divider
-  var DY=PAD+IB+18;
+  var DY=PAD+IB+20;
   ctx.strokeStyle='rgba(255,255,255,.22)';ctx.lineWidth=1;
   ctx.beginPath();ctx.moveTo(PAD,DY);ctx.lineTo(W-PAD,DY);ctx.stroke();
 
-  // Contact rows — centered block
+  // Contact rows
   var items=[
-    ['&#9990;',  currentUser.phone||''],
-    ['&#9993;',  currentUser.faEmail||''],
-    ['&#9990;',  'Alt: Call 3043 (VLA)'],
-    ['&#127760;','vanguardlifemw.com'],
+    ['T', currentUser.phone||''],
+    ['@', currentUser.faEmail||''],
+    ['A', 'Alt: Call 3043 (VLA)'],
+    ['W', 'vanguardlifemw.com'],
   ].filter(function(r){return r[1];});
 
-  var RY=DY+22, rowH=32;
-  var blockH=items.length*rowH;
-  var blockY=RY+(H-DY-22-blockH-40)/2; // vertically center in remaining space
-
+  var RY=DY+18, rowH=30;
   items.forEach(function(row,i){
-    var y=blockY+i*rowH;
-    // Icon circle outline
-    ctx.strokeStyle='rgba(255,255,255,.6)';ctx.lineWidth=1.2;
-    ctx.beginPath();ctx.rect(PAD,y-14,24,24);ctx.stroke();
-    ctx.fillStyle='rgba(255,255,255,.6)';ctx.font='10px '+SANS;ctx.textAlign='center';
-    // Simple letter icon
-    var letter=['T','@','A','W'][i]||'';
-    ctx.fillText(letter,PAD+12,y+1);
-    // Text
+    var y=RY+i*rowH;
+    ctx.strokeStyle='rgba(255,255,255,.55)';ctx.lineWidth=1.2;
+    ctx.beginPath();ctx.rect(PAD,y-13,22,22);ctx.stroke();
+    ctx.fillStyle='rgba(255,255,255,.65)';ctx.font='bold 9px '+SANS;ctx.textAlign='center';
+    ctx.fillText(row[0],PAD+11,y+1);
     ctx.fillStyle='#fff';ctx.font='13px '+SANS;ctx.textAlign='left';
-    ctx.fillText(row[1],PAD+34,y+2);
+    ctx.fillText(row[1],PAD+30,y+2);
   });
 
-  // Tagline bottom-left
-  ctx.fillStyle='rgba(255,255,255,.45)';
+  // Tagline
+  ctx.fillStyle='rgba(255,255,255,.42)';
   ctx.font='italic 12px '+SERIF;
   ctx.textAlign='left';
   ctx.fillText('“Your financial light for life”',PAD,H-18);
@@ -1419,11 +1422,28 @@ async function syncAll(){
   btn.disabled=false;updateSyncDot();
 }
 async function retroSync(){
-  if(!navigator.onLine){showToast('Offline — retrosync needs a connection');return;return;}
+  if(!navigator.onLine){showToast('Offline — retrosync needs a connection');return;}
   try{
     var r=await fetch(APPS_SCRIPT_URL+'?action=getQuotes&userId='+currentUser.userId+'&role='+currentUser.role,{redirect:'follow'});
     var raw=await r.text();var d;
-    try{d=JSON.parse(raw);}catch(e){showToast('Retrosync: server error. Check Apps Script URL/ID.');return;}
+    // Strip any HTML wrapper or Apps Script prefix
+    var cleaned=raw.trim();
+    if(cleaned.startsWith('<')){
+      showToast('Retrosync: Apps Script returned HTML. Check your deployment URL and Spreadsheet ID.');
+      console.error('RetroSync raw:',raw.slice(0,300));
+      return;
+    }
+    // Strip while(1); or //OK prefix that some GAS deployments add
+    var jsonStart=cleaned.indexOf('{');
+    var jsonStart2=cleaned.indexOf('[');
+    if(jsonStart>0||(jsonStart2>0&&(jsonStart2<jsonStart||jsonStart<0))){
+      cleaned=cleaned.slice(Math.min(jsonStart<0?99999:jsonStart, jsonStart2<0?99999:jsonStart2));
+    }
+    try{d=JSON.parse(cleaned);}catch(e){
+      showToast('Retrosync failed. First chars: '+cleaned.slice(0,30));
+      console.error('RetroSync parse error. Raw:',raw.slice(0,300));
+      return;
+    }
     if(!d.ok){showToast('Retrosync error: '+(d.error||'Unknown'));return;}
     var added=0;
     d.quotes.forEach(function(rq){
