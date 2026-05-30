@@ -2,177 +2,173 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1.0"/><meta name="theme-color" content="#641414"/><title>VLA Annuity Tool</title><link rel="manifest" href="manifest.json"/><script>window.addEventListener("error",function(e){var el=document.getElementById("login-err");if(el)el.textContent="App error: "+e.message+" (L"+e.lineno+")";console.error(e.message,e.lineno);});</script><style>*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-:root{--red:#641414;--red2:#8B0000;--gold:#c9a84c;--text:#1a1a1a;--muted:#777;
-  --border:#e8e0e0;--bg:#f5eeeb;--card:#fff;--radius:12px;--shadow:0 2px 12px rgba(100,20,20,.08)}
+:root{--red:#641414;--red2:#8B0000;--gold:#c9a84c;--text:#1a1a1a;--muted:#666;
+  --border:#e0d8d8;--bg:#f2ede9;--radius:10px;--shadow:0 1px 8px rgba(100,20,20,.07)}
 html{font-size:15px}
 body{font-family:'Segoe UI',Arial,sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
 .screen{display:none;flex-direction:column;min-height:100vh}.screen.active{display:flex}
-.topbar{background:var(--red);color:#fff;padding:.55rem .9rem;display:flex;align-items:center;gap:.6rem;flex-shrink:0}
-.tb-back{background:none;border:none;color:#fff;font-size:1.1rem;cursor:pointer;padding:.15rem .35rem;opacity:.85;flex-shrink:0}
-.tb-title{font-size:.9rem;font-weight:600;flex:1;letter-spacing:.02em}
-.tb-logo{height:24px;width:24px;object-fit:contain;filter:brightness(0) invert(1);flex-shrink:0}
-.tb-btn{background:none;border:1px solid rgba(255,255,255,.3);color:#fff;border-radius:6px;padding:.25rem .55rem;font-size:.68rem;cursor:pointer;text-transform:uppercase;letter-spacing:.05em;white-space:nowrap}
+.topbar{background:var(--red);color:#fff;padding:.5rem .85rem;display:flex;align-items:center;gap:.55rem;flex-shrink:0}
+.tb-back{background:none;border:none;color:#fff;font-size:1.05rem;cursor:pointer;padding:.15rem .3rem;opacity:.85;flex-shrink:0}
+.tb-title{font-size:.88rem;font-weight:600;flex:1;letter-spacing:.02em}
+.tb-logo{height:26px;width:26px;object-fit:contain;flex-shrink:0}
+.tb-btn{background:none;border:1px solid rgba(255,255,255,.3);color:#fff;border-radius:5px;padding:.22rem .52rem;font-size:.66rem;cursor:pointer;text-transform:uppercase;letter-spacing:.05em;white-space:nowrap}
 .tb-btn:hover{background:rgba(255,255,255,.12)}
 .sync-dot{width:6px;height:6px;border-radius:50%;background:#4caf50;display:inline-block;margin-right:3px;vertical-align:middle}
 .sync-dot.pending{background:#ff9800}
 .bnav{display:flex;background:#fff;border-top:1px solid var(--border);flex-shrink:0}
-.bnav-btn{flex:1;padding:.55rem .3rem .45rem;border:none;background:transparent;display:flex;flex-direction:column;align-items:center;gap:.2rem;cursor:pointer;color:var(--muted);font-size:.6rem;letter-spacing:.04em;text-transform:uppercase}
+.bnav-btn{flex:1;padding:.52rem .3rem .42rem;border:none;background:transparent;display:flex;flex-direction:column;align-items:center;gap:.18rem;cursor:pointer;color:var(--muted);font-size:.58rem;letter-spacing:.04em;text-transform:uppercase}
 .bnav-btn.active{color:var(--red)}
-.bnav-btn svg{width:22px;height:22px;stroke:currentColor;stroke-width:1.8;fill:none;stroke-linecap:round;stroke-linejoin:round}
+.bnav-btn svg{width:20px;height:20px;stroke:currentColor;stroke-width:1.8;fill:none;stroke-linecap:round;stroke-linejoin:round}
 .bnav-btn.active svg{stroke-width:2.2}
-.offline-bar{background:#333;color:#fff;text-align:center;font-size:.7rem;padding:.28rem;display:none;flex-shrink:0}
+.offline-bar{background:#333;color:#fff;text-align:center;font-size:.68rem;padding:.25rem;display:none;flex-shrink:0}
 body.offline .offline-bar{display:block}
-#update-bar{display:none;background:#1565c0;color:#fff;text-align:center;font-size:.74rem;padding:.33rem;flex-shrink:0;cursor:pointer}
+#update-bar{display:none;background:#1565c0;color:#fff;text-align:center;font-size:.72rem;padding:.3rem;flex-shrink:0;cursor:pointer}
 #scr-login{background:var(--bg);align-items:center;justify-content:center;padding:1.5rem}
-.login-card{background:#fff;border-radius:16px;box-shadow:var(--shadow);padding:2.4rem 2rem;width:100%;max-width:360px}
-.login-logo{text-align:center;margin-bottom:1.7rem}
-.login-logo img{width:76px;height:76px;object-fit:contain;display:block;margin:0 auto .6rem}
-.login-brand{font-size:1rem;font-weight:700;color:var(--red)}
-.login-sub{font-size:.7rem;color:var(--muted);letter-spacing:.06em;text-transform:uppercase;margin-top:.18rem}
-.lf{margin-bottom:.9rem}
-.lf label{display:block;font-size:.68rem;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;margin-bottom:.25rem}
-.lf input{width:100%;padding:.5rem .72rem;border:1.5px solid var(--border);border-radius:8px;font-family:inherit;font-size:.92rem}
+.login-card{background:#fff;border-radius:14px;box-shadow:var(--shadow);padding:2.2rem 1.8rem;width:100%;max-width:360px}
+.login-logo{text-align:center;margin-bottom:1.6rem}
+.login-logo img{width:72px;height:72px;object-fit:contain;display:block;margin:0 auto .55rem}
+.login-brand{font-size:.98rem;font-weight:700;color:var(--red)}
+.login-sub{font-size:.68rem;color:var(--muted);letter-spacing:.06em;text-transform:uppercase;margin-top:.15rem}
+.lf{margin-bottom:.85rem}
+.lf label{display:block;font-size:.66rem;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:.22rem}
+.lf input{width:100%;padding:.48rem .7rem;border:1.5px solid var(--border);border-radius:7px;font-family:inherit;font-size:.9rem}
 .lf input:focus{outline:none;border-color:var(--red)}
-.login-btn{width:100%;padding:.65rem;background:var(--red);color:#fff;border:none;border-radius:8px;font-family:inherit;font-size:.82rem;letter-spacing:.1em;text-transform:uppercase;cursor:pointer;margin-top:.5rem}
+.login-btn{width:100%;padding:.62rem;background:var(--red);color:#fff;border:none;border-radius:7px;font-family:inherit;font-size:.8rem;letter-spacing:.1em;text-transform:uppercase;cursor:pointer;margin-top:.45rem}
 .login-btn:disabled{opacity:.6;cursor:not-allowed}
-.login-err{color:#c00;font-size:.74rem;margin-top:.5rem;text-align:center;min-height:1rem}
-.home-scroll{flex:1;overflow-y:auto;padding:.9rem .85rem 1rem}
-.stats-grid{display:grid;grid-template-columns:1fr 1fr;gap:.7rem;margin-bottom:1.2rem}
-.stat-card{background:#fff;border-radius:var(--radius);box-shadow:var(--shadow);padding:.9rem 1rem}
-.stat-trend{font-size:.68rem;font-weight:700;float:right}
+.login-err{color:#c00;font-size:.72rem;margin-top:.45rem;text-align:center;min-height:.9rem}
+.home-scroll{flex:1;overflow-y:auto;padding:.85rem .8rem .8rem}
+.stats-grid{display:grid;grid-template-columns:1fr 1fr;gap:.65rem;margin-bottom:1.1rem}
+.stat-card{background:#fff;border-radius:var(--radius);box-shadow:var(--shadow);padding:.85rem .95rem}
+.stat-trend{font-size:.65rem;font-weight:700;float:right}
 .stat-trend.up{color:#2e7d32}.stat-trend.down{color:#c62828}
-.stat-val{font-size:1.55rem;font-weight:700;color:var(--text);margin:.25rem 0 .15rem;line-height:1.1}
-.stat-val.money{font-size:1.1rem}
-.stat-label{font-size:.7rem;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
-.stat-icon{font-size:1.1rem;margin-bottom:.1rem;opacity:.6}
-.section-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:.65rem}
-.section-hdr h4{font-size:.72rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--text)}
-.section-hdr a{font-size:.7rem;color:var(--red);cursor:pointer}
-.qa-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:.6rem;margin-bottom:1.2rem}
-.qa-btn{background:#fff;border-radius:10px;box-shadow:var(--shadow);padding:.85rem .5rem;display:flex;flex-direction:column;align-items:center;gap:.35rem;cursor:pointer;border:none;transition:box-shadow .15s}
-.qa-btn:hover{box-shadow:0 4px 16px rgba(100,20,20,.14)}
-.qa-icon{width:42px;height:42px;border-radius:50%;background:#fdf0f0;display:flex;align-items:center;justify-content:center}
-.qa-icon svg{width:20px;height:20px;stroke:var(--red);stroke-width:1.8;fill:none;stroke-linecap:round;stroke-linejoin:round}
-.qa-label{font-size:.68rem;color:var(--text);text-align:center;line-height:1.3}
-.rq-card{background:#fff;border-radius:10px;box-shadow:var(--shadow);padding:.8rem .9rem;margin-bottom:.6rem;display:flex;align-items:center;gap:.8rem;cursor:pointer}
-.rq-card:hover{box-shadow:0 4px 14px rgba(100,20,20,.12)}
-.rq-avatar{width:38px;height:38px;border-radius:50%;background:#fdf0f0;display:flex;align-items:center;justify-content:center;color:var(--red);font-size:.82rem;font-weight:700;flex-shrink:0}
+.stat-val{font-size:1.5rem;font-weight:700;color:var(--text);margin:.22rem 0 .12rem;line-height:1.1}
+.stat-val.money{font-size:1.05rem}
+.stat-label{font-size:.67rem;color:var(--muted);text-transform:uppercase;letter-spacing:.05em}
+.section-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:.6rem}
+.section-hdr h4{font-size:.7rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase}
+.section-hdr a{font-size:.68rem;color:var(--red);cursor:pointer}
+.qa-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:.55rem;margin-bottom:1.1rem}
+.qa-btn{background:#fff;border-radius:9px;box-shadow:var(--shadow);padding:.8rem .45rem;display:flex;flex-direction:column;align-items:center;gap:.32rem;cursor:pointer;border:none;transition:box-shadow .14s}
+.qa-btn:hover{box-shadow:0 3px 14px rgba(100,20,20,.12)}
+.qa-icon{width:40px;height:40px;border-radius:50%;background:#641414;display:flex;align-items:center;justify-content:center}
+.qa-icon svg{width:19px;height:19px;stroke:#fff;stroke-width:1.8;fill:none;stroke-linecap:round;stroke-linejoin:round}
+.qa-label{font-size:.65rem;color:var(--text);text-align:center;line-height:1.3}
+.rq-card{background:#fff;border-radius:9px;box-shadow:var(--shadow);padding:.75rem .85rem;margin-bottom:.55rem;display:flex;align-items:center;gap:.75rem;cursor:pointer}
+.rq-avatar{width:36px;height:36px;border-radius:50%;background:var(--red);display:flex;align-items:center;justify-content:center;color:#fff;font-size:.78rem;font-weight:700;flex-shrink:0}
 .rq-info{flex:1;min-width:0}
-.rq-name{font-size:.84rem;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.rq-meta{font-size:.67rem;color:var(--muted);margin-top:.1rem}
+.rq-name{font-size:.82rem;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rq-meta{font-size:.65rem;color:var(--muted);margin-top:.1rem}
 .rq-right{text-align:right;flex-shrink:0}
-.rq-amt{font-size:.8rem;font-weight:700;color:var(--red);white-space:nowrap}
-.rq-age{font-size:.65rem;color:var(--muted);margin-top:.1rem}
-.product-body{flex:1;overflow-y:auto;padding:1.1rem .85rem 2rem}
-.product-grid{display:grid;grid-template-columns:1fr 1fr;gap:.9rem}
+.rq-amt{font-size:.78rem;font-weight:700;color:var(--red);white-space:nowrap}
+.rq-age{font-size:.63rem;color:var(--muted);margin-top:.08rem}
+.product-body{flex:1;overflow-y:auto;padding:1rem .8rem 1.5rem}
+.product-grid{display:grid;grid-template-columns:1fr 1fr;gap:.85rem}
 @media(max-width:360px){.product-grid{grid-template-columns:1fr}}
-.product-tile{background:#fff;border-radius:var(--radius);box-shadow:var(--shadow);padding:1.8rem 1rem;cursor:pointer;text-align:center;position:relative;transition:box-shadow .15s}
-.product-tile:hover{box-shadow:0 6px 20px rgba(100,20,20,.13)}
-.product-tile.coming-soon{opacity:.6;cursor:default}
-.cs-badge{position:absolute;top:.55rem;right:.55rem;font-size:.58rem;background:var(--gold);color:#333;padding:.12rem .45rem;border-radius:20px;font-weight:700;letter-spacing:.05em;text-transform:uppercase}
-.pt-icon{font-size:2.4rem;margin-bottom:.65rem}
-.pt-name{font-size:.95rem;font-weight:700;color:var(--red);margin-bottom:.28rem}
-.pt-desc{font-size:.72rem;color:var(--muted);line-height:1.4}
+.product-tile{background:#fff;border-radius:var(--radius);box-shadow:var(--shadow);padding:1.7rem .95rem;cursor:pointer;text-align:center;position:relative;transition:box-shadow .14s}
+.product-tile:hover{box-shadow:0 5px 18px rgba(100,20,20,.12)}
+.product-tile.coming-soon{opacity:.58;cursor:default}
+.cs-badge{position:absolute;top:.5rem;right:.5rem;font-size:.56rem;background:var(--gold);color:#333;padding:.1rem .42rem;border-radius:20px;font-weight:700;text-transform:uppercase}
+.pt-icon{font-size:2.2rem;margin-bottom:.6rem}
+.pt-name{font-size:.92rem;font-weight:700;color:var(--red);margin-bottom:.25rem}
+.pt-desc{font-size:.7rem;color:var(--muted);line-height:1.4}
 .q-tabs{display:flex;background:#fff;border-bottom:1px solid var(--border);flex-shrink:0;overflow-x:auto}
-.q-tab{flex:1;min-width:70px;padding:.62rem .35rem;border:none;background:transparent;font-size:.68rem;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);cursor:pointer;border-bottom:3px solid transparent;transition:all .18s;white-space:nowrap}
+.q-tab{flex:1;min-width:68px;padding:.6rem .32rem;border:none;background:transparent;font-size:.66rem;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);cursor:pointer;border-bottom:3px solid transparent;transition:all .16s;white-space:nowrap}
 .q-tab.active{color:var(--red);border-bottom-color:var(--red);font-weight:700}
 .q-tab.done{color:#2e7d32}
-.qbody{flex:1;overflow-y:auto;padding:1rem .82rem 2.5rem}
-.panel{display:none}.panel.active{display:block;animation:fadeUp .2s ease}
+.qbody{flex:1;overflow-y:auto;padding:.95rem .8rem 2rem}
+.panel{display:none}.panel.active{display:block;animation:fadeUp .18s ease}
 @keyframes fadeUp{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
-.card{background:#fff;border-radius:10px;box-shadow:var(--shadow);padding:1.2rem;margin-bottom:.9rem}
-.card-title{font-size:.67rem;text-transform:uppercase;letter-spacing:.12em;color:var(--red);margin-bottom:.8rem;padding-bottom:.38rem;border-bottom:1px solid #f0e0e0}
-.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:.8rem 1.1rem}
+.card{background:#fff;border-radius:9px;box-shadow:var(--shadow);padding:1.1rem;margin-bottom:.85rem}
+.card-title{font-size:.65rem;text-transform:uppercase;letter-spacing:.12em;color:var(--red);margin-bottom:.75rem;padding-bottom:.35rem;border-bottom:1px solid #f0e8e8}
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:.75rem 1rem}
 .span2{grid-column:span 2}
-@media(max-width:520px){.grid-2{grid-template-columns:1fr}.span2{grid-column:span 1}}
-.field{display:flex;flex-direction:column;gap:.22rem}
-label{font-size:.66rem;color:var(--muted);text-transform:uppercase;letter-spacing:.07em}
+@media(max-width:500px){.grid-2{grid-template-columns:1fr}.span2{grid-column:span 1}}
+.field{display:flex;flex-direction:column;gap:.2rem}
+label{font-size:.64rem;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
 label sup{color:var(--red)}
-input,select{font-family:inherit;font-size:.88rem;padding:.38rem .6rem;border:1.5px solid var(--border);border-radius:7px;background:#fff;color:var(--text);width:100%}
+input,select{font-family:inherit;font-size:.86rem;padding:.36rem .58rem;border:1.5px solid var(--border);border-radius:6px;background:#fff;color:var(--text);width:100%}
 input:focus,select:focus{outline:none;border-color:var(--red)}
-input[readonly]{background:#f9f5f5;color:var(--muted)}
+input[readonly]{background:#f8f8f8;color:var(--muted)}
 input::placeholder{color:#ccc}
-.field-err{font-size:.64rem;color:#c00;display:none}
+.field-err{font-size:.62rem;color:#c00;display:none}
 .field.err .field-err{display:block}
 .field.err input,.field.err select{border-color:#c00}
 .mwk-wrap{position:relative}
-.mwk-wrap::before{content:'MWK';position:absolute;left:.6rem;top:50%;transform:translateY(-50%);font-size:.66rem;color:var(--muted);pointer-events:none}
-.mwk-wrap input{padding-left:2.9rem}
-.toggle-row{display:flex;gap:.3rem;flex-wrap:wrap}
-.tog{flex:1;min-width:58px;text-align:center;padding:.34rem;font-size:.72rem;border:1.5px solid var(--border);border-radius:7px;cursor:pointer;background:#fff;color:var(--muted);transition:all .14s}
+.mwk-wrap::before{content:'MWK';position:absolute;left:.58rem;top:50%;transform:translateY(-50%);font-size:.64rem;color:var(--muted);pointer-events:none}
+.mwk-wrap input{padding-left:2.8rem}
+.toggle-row{display:flex;gap:.28rem;flex-wrap:wrap}
+.tog{flex:1;min-width:55px;text-align:center;padding:.32rem;font-size:.7rem;border:1.5px solid var(--border);border-radius:6px;cursor:pointer;background:#fff;color:var(--muted);transition:all .13s}
 .tog.on{background:var(--red);border-color:var(--red);color:#fff;font-weight:600}
-.sdiv{display:flex;align-items:center;gap:.6rem;margin:.9rem 0 .7rem;color:var(--red);font-size:.66rem;text-transform:uppercase;letter-spacing:.1em}
-.sdiv::after{content:'';flex:1;height:1px;background:#f0e0e0}
-.collapsible{max-height:0;overflow:hidden;transition:max-height .3s ease,opacity .22s;opacity:0}
+.sdiv{display:flex;align-items:center;gap:.58rem;margin:.85rem 0 .65rem;color:var(--red);font-size:.64rem;text-transform:uppercase;letter-spacing:.1em}
+.sdiv::after{content:'';flex:1;height:1px;background:#f0e8e8}
+.collapsible{max-height:0;overflow:hidden;transition:max-height .28s ease,opacity .2s;opacity:0}
 .collapsible.open{max-height:600px;opacity:1}
-.btn{font-family:inherit;font-size:.74rem;letter-spacing:.06em;padding:.5rem 1.3rem;border-radius:7px;cursor:pointer;border:1.5px solid;text-transform:uppercase;transition:all .14s}
+.btn{font-family:inherit;font-size:.72rem;letter-spacing:.06em;padding:.48rem 1.25rem;border-radius:6px;cursor:pointer;border:1.5px solid;text-transform:uppercase;transition:all .13s}
 .btn-primary{background:var(--red);border-color:var(--red);color:#fff}
 .btn-primary:hover{background:var(--red2)}
 .btn-ghost{background:transparent;border-color:var(--border);color:var(--muted)}
 .btn-ghost:hover{border-color:#999;color:var(--text)}
-.btn-sm{padding:.26rem .8rem;font-size:.68rem}
-.actions{display:flex;gap:.55rem;justify-content:flex-end;margin-top:1.1rem;flex-wrap:wrap}
-.spin-wrap{display:none;text-align:center;padding:.6rem;font-size:.74rem;color:var(--muted)}
+.btn-sm{padding:.24rem .75rem;font-size:.66rem}
+.actions{display:flex;gap:.52rem;justify-content:flex-end;margin-top:1rem;flex-wrap:wrap}
+.spin-wrap{display:none;text-align:center;padding:.55rem;font-size:.72rem;color:var(--muted)}
 .spin-wrap.show{display:block}
-.spinner{display:inline-block;width:12px;height:12px;vertical-align:middle;border:2px solid #ddd;border-top-color:var(--red);border-radius:50%;animation:spin .5s linear infinite;margin-right:.3rem}
+.spinner{display:inline-block;width:11px;height:11px;vertical-align:middle;border:2px solid #ddd;border-top-color:var(--red);border-radius:50%;animation:spin .5s linear infinite;margin-right:.28rem}
 @keyframes spin{to{transform:rotate(360deg)}}
-.rev-grid{display:grid;grid-template-columns:1fr 1fr;gap:.3rem 1.5rem}
-@media(max-width:460px){.rev-grid{grid-template-columns:1fr}}
-.rev-item{padding:.35rem 0;border-bottom:1px solid #f5f0f0}
-.rev-item .rl{font-size:.64rem;color:var(--muted);text-transform:uppercase;letter-spacing:.07em}
-.rev-item .rv{font-size:.84rem;margin-top:.05rem}
+.rev-grid{display:grid;grid-template-columns:1fr 1fr;gap:.28rem 1.4rem}
+@media(max-width:440px){.rev-grid{grid-template-columns:1fr}}
+.rev-item{padding:.32rem 0;border-bottom:1px solid #f5f2f2}
+.rev-item .rl{font-size:.62rem;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
+.rev-item .rv{font-size:.82rem;margin-top:.04rem}
 #panel-quote{text-align:center}
-#quote-canvas{max-width:100%;border-radius:8px;box-shadow:var(--shadow);cursor:pointer;display:block;margin:0 auto}
-.canvas-hint{font-size:.68rem;color:var(--muted);margin-top:.42rem}
-.share-row{display:flex;gap:.5rem;justify-content:center;margin-top:.7rem;flex-wrap:wrap}
-.share-btn{display:flex;align-items:center;gap:.4rem;padding:.42rem .9rem;border-radius:20px;font-size:.72rem;font-weight:600;letter-spacing:.04em;cursor:pointer;border:none;transition:opacity .15s}
-.share-btn:hover{opacity:.88}
+#quote-canvas{max-width:100%;border-radius:7px;box-shadow:var(--shadow);cursor:pointer;display:block;margin:0 auto}
+.canvas-hint{font-size:.66rem;color:var(--muted);margin-top:.38rem}
+.share-row{display:flex;gap:.45rem;justify-content:center;margin-top:.6rem;flex-wrap:wrap}
+.share-btn{display:flex;align-items:center;gap:.35rem;padding:.38rem .82rem;border-radius:20px;font-size:.7rem;font-weight:600;cursor:pointer;border:none;transition:opacity .14s}
+.share-btn:hover{opacity:.87}
 .share-wa{background:#25D366;color:#fff}.share-email{background:#ea4335;color:#fff}
 .share-dl{background:#1565c0;color:#fff}.share-print{background:#555;color:#fff}
-.hist-body{flex:1;overflow-y:auto;padding:.85rem .82rem 1rem}
-.hist-hdr{display:flex;align-items:center;justify-content:space-between;padding:.7rem .82rem 0;flex-shrink:0}
-.hist-hdr h3{font-size:.88rem;font-weight:600}
-.quote-card{background:#fff;border-radius:10px;box-shadow:var(--shadow);padding:.85rem;margin-bottom:.65rem}
-.qc-top{display:flex;align-items:center;gap:.75rem}
-.qc-avatar{width:38px;height:38px;border-radius:50%;background:#fdf0f0;display:flex;align-items:center;justify-content:center;color:var(--red);font-size:.78rem;font-weight:700;flex-shrink:0}
+.hist-hdr{display:flex;align-items:center;justify-content:space-between;padding:.65rem .8rem 0;flex-shrink:0}
+.hist-hdr h3{font-size:.85rem;font-weight:600}
+.hist-body{flex:1;overflow-y:auto;padding:.8rem .8rem .8rem}
+.quote-card{background:#fff;border-radius:9px;box-shadow:var(--shadow);padding:.8rem;margin-bottom:.6rem}
+.qc-top{display:flex;align-items:center;gap:.7rem}
+.qc-avatar{width:36px;height:36px;border-radius:50%;background:var(--red);display:flex;align-items:center;justify-content:center;color:#fff;font-size:.75rem;font-weight:700;flex-shrink:0}
 .qc-info{flex:1;min-width:0}
-.qc-name{font-size:.84rem;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.qc-meta{font-size:.68rem;color:var(--muted);margin-top:.12rem}
+.qc-name{font-size:.82rem;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.qc-meta{font-size:.66rem;color:var(--muted);margin-top:.1rem}
 .qc-right{text-align:right;flex-shrink:0}
-.qc-amount{font-size:.78rem;font-weight:700;color:var(--red);white-space:nowrap}
-.sync-badge{font-size:.58rem;padding:.08rem .38rem;border-radius:20px;font-weight:600;text-transform:uppercase}
+.qc-amount{font-size:.76rem;font-weight:700;color:var(--red);white-space:nowrap}
+.sync-badge{font-size:.56rem;padding:.07rem .35rem;border-radius:20px;font-weight:600;text-transform:uppercase}
 .sync-badge.synced{background:#e8f5e9;color:#2e7d32}.sync-badge.pending{background:#fff3e0;color:#e65100}
-.qc-actions{display:flex;gap:.38rem;margin-top:.55rem;justify-content:flex-end}
-.empty-state{text-align:center;padding:2.5rem 1rem;color:var(--muted);font-size:.83rem}
-.pinfo-body{flex:1;overflow-y:auto;padding:1rem .82rem 1rem}
-.pinfo-card{background:#fff;border-radius:10px;box-shadow:var(--shadow);padding:1.2rem;margin-bottom:.9rem}
-.pinfo-card h3{font-size:.88rem;font-weight:700;color:var(--red);margin-bottom:.65rem}
-.pinfo-card p{font-size:.82rem;line-height:1.6;margin-bottom:.45rem}
-.profile-body{flex:1;overflow-y:auto;padding:1rem .82rem 1rem}
-.profile-hero{background:var(--red);border-radius:12px;padding:1.5rem 1.2rem;margin-bottom:.9rem;text-align:center;color:#fff}
-.profile-avatar{width:64px;height:64px;border-radius:50%;background:rgba(255,255,255,.2);display:flex;align-items:center;justify-content:center;font-size:1.5rem;font-weight:700;margin:0 auto .7rem}
-.profile-name{font-size:1rem;font-weight:700;margin-bottom:.2rem}
-.profile-role{font-size:.72rem;opacity:.8;letter-spacing:.06em;text-transform:uppercase}
-.profile-card{background:#fff;border-radius:10px;box-shadow:var(--shadow);padding:1.1rem;margin-bottom:.8rem}
-.profile-row{display:flex;align-items:flex-start;gap:.7rem;padding:.55rem 0;border-bottom:1px solid #f5f0f0}
+.qc-actions{display:flex;gap:.35rem;margin-top:.5rem;justify-content:flex-end}
+.empty-state{text-align:center;padding:2.2rem 1rem;color:var(--muted);font-size:.8rem}
+.pinfo-body,.profile-body,.admin-body,.bcard-body{flex:1;overflow-y:auto;padding:.95rem .8rem .8rem}
+.pinfo-card{background:#fff;border-radius:9px;box-shadow:var(--shadow);padding:1.1rem;margin-bottom:.85rem}
+.pinfo-card h3{font-size:.85rem;font-weight:700;color:var(--red);margin-bottom:.6rem}
+.pinfo-card p{font-size:.8rem;line-height:1.6;margin-bottom:.4rem}
+.profile-hero{background:var(--red);border-radius:10px;padding:1.4rem 1.1rem;margin-bottom:.85rem;text-align:center;color:#fff}
+.profile-avatar{width:60px;height:60px;border-radius:50%;background:rgba(255,255,255,.2);display:flex;align-items:center;justify-content:center;font-size:1.4rem;font-weight:700;margin:0 auto .65rem}
+.profile-name{font-size:.97rem;font-weight:700;margin-bottom:.18rem}
+.profile-role{font-size:.7rem;opacity:.8;letter-spacing:.05em;text-transform:uppercase}
+.profile-card{background:#fff;border-radius:9px;box-shadow:var(--shadow);padding:1rem;margin-bottom:.75rem}
+.profile-row{display:flex;align-items:flex-start;gap:.65rem;padding:.5rem 0;border-bottom:1px solid #f5f2f2}
 .profile-row:last-child{border-bottom:none}
-.profile-row-label{font-size:.66rem;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;width:80px;flex-shrink:0;padding-top:.15rem}
-.profile-row-val{font-size:.86rem;flex:1}
-.admin-body{flex:1;overflow-y:auto;padding:1rem .82rem 1rem}
-.admin-tabs{display:flex;gap:.42rem;margin-bottom:.85rem}
-.admin-tab{padding:.35rem .85rem;border-radius:20px;font-size:.7rem;cursor:pointer;border:1.5px solid var(--border);background:#fff;color:var(--muted)}
+.profile-row-label{font-size:.63rem;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;width:75px;flex-shrink:0;padding-top:.12rem}
+.profile-row-val{font-size:.83rem;flex:1}
+.admin-tabs{display:flex;gap:.4rem;margin-bottom:.8rem}
+.admin-tab{padding:.32rem .8rem;border-radius:20px;font-size:.68rem;cursor:pointer;border:1.5px solid var(--border);background:#fff;color:var(--muted)}
 .admin-tab.on{background:var(--red);border-color:var(--red);color:#fff;font-weight:600}
 .admin-section{display:none}.admin-section.on{display:block}
-.data-table{width:100%;border-collapse:collapse;font-size:.74rem;background:#fff;border-radius:10px;overflow:hidden;box-shadow:var(--shadow)}
-.data-table th{background:var(--red);color:#fff;padding:.42rem .6rem;text-align:left;font-size:.66rem;text-transform:uppercase;letter-spacing:.06em}
-.data-table td{padding:.42rem .6rem;border-bottom:1px solid #f5f0f0;vertical-align:middle}
+.data-table{width:100%;border-collapse:collapse;font-size:.72rem;background:#fff;border-radius:9px;overflow:hidden;box-shadow:var(--shadow)}
+.data-table th{background:var(--red);color:#fff;padding:.4rem .58rem;text-align:left;font-size:.64rem;text-transform:uppercase;letter-spacing:.05em}
+.data-table td{padding:.4rem .58rem;border-bottom:1px solid #f5f2f2;vertical-align:middle}
 .data-table tr:last-child td{border-bottom:none}
-.active-pill{font-size:.6rem;padding:.08rem .38rem;border-radius:20px;font-weight:600}
+.active-pill{font-size:.58rem;padding:.07rem .35rem;border-radius:20px;font-weight:600}
 .active-pill.yes{background:#e8f5e9;color:#2e7d32}.active-pill.no{background:#fce4ec;color:#c62828}
-.form-row{display:grid;grid-template-columns:1fr 1fr;gap:.6rem;margin-bottom:.6rem}
-@media(max-width:460px){.form-row{grid-template-columns:1fr}}
-.bcard-body{flex:1;overflow-y:auto;padding:1rem .82rem 1rem;text-align:center}
-#bcard-canvas{max-width:100%;border-radius:8px;box-shadow:var(--shadow);display:block;margin:0 auto}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:.58rem;margin-bottom:.58rem}
+@media(max-width:440px){.form-row{grid-template-columns:1fr}}
+.bcard-body{text-align:center}
+#bcard-canvas{max-width:100%;border-radius:7px;box-shadow:var(--shadow);display:block;margin:0 auto}
 @media print{
   body{background:#fff}
   .screen{display:block!important;min-height:0}
@@ -184,10 +180,9 @@ input::placeholder{color:#ccc}
   #panel-quote,#quote-canvas{display:block!important}
   #quote-canvas{max-width:100%;box-shadow:none;width:100%!important;height:auto!important}
   .qbody{padding:0;overflow:visible}
-}
-</style></head><body>
+}</style></head><body>
 
-<!-- ══ LOGIN ══ -->
+<!-- LOGIN -->
 <div class="screen active" id="scr-login">
   <div class="login-card">
     <div class="login-logo">
@@ -202,97 +197,57 @@ input::placeholder{color:#ccc}
   </div>
 </div>
 
-<!-- ══ HOME ══ -->
+<!-- HOME -->
 <div class="screen" id="scr-home">
-  <div id="update-bar" onclick="applyUpdate()">&#10227; New version available — tap to update</div>
-  <div class="offline-bar">&#9679; Offline — working from cache</div>
+  <div id="update-bar" onclick="applyUpdate()">&#10227; New version available &#8212; tap to update</div>
+  <div class="offline-bar">&#9679; Offline &#8212; working from cache</div>
   <div class="topbar">
-    <img class="tb-logo" src="icon-192.png" alt="VLA"/>
+    <img class="tb-logo" src="icon-192.png" alt="VLA" style="filter:brightness(0) invert(1)"/>
     <span class="tb-title">VLA Annuity</span>
-    <span id="topbar-name" style="font-size:.76rem;opacity:.85;max-width:110px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"></span>
+    <span id="topbar-name" style="font-size:.74rem;opacity:.85;max-width:105px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"></span>
     <button class="tb-btn" id="sync-btn" onclick="syncAll()"><span class="sync-dot" id="sync-dot"></span>Sync</button>
   </div>
   <div class="home-scroll">
-    <!-- Stats -->
-    <div class="stats-grid" id="stats-grid">
-      <div class="stat-card">
-        <div><span class="stat-icon">&#128196;</span><span class="stat-trend up" id="st-total-trend"></span></div>
-        <div class="stat-val" id="st-total">0</div>
-        <div class="stat-label">Total Quotes</div>
-      </div>
-      <div class="stat-card">
-        <div><span class="stat-icon">&#128197;</span><span class="stat-trend up" id="st-week-trend"></span></div>
-        <div class="stat-val" id="st-week">0</div>
-        <div class="stat-label">This Week</div>
-      </div>
-      <div class="stat-card">
-        <div><span class="stat-icon">&#128176;</span><span class="stat-trend" id="st-avg-trend"></span></div>
-        <div class="stat-val money" id="st-avg">MK 0</div>
-        <div class="stat-label">Avg Premium</div>
-      </div>
-      <div class="stat-card">
-        <div><span class="stat-icon">&#9729;</span><span class="stat-trend up" id="st-sync-trend"></span></div>
-        <div class="stat-val" id="st-sync">0</div>
-        <div class="stat-label">Synced</div>
-      </div>
+    <div class="stats-grid">
+      <div class="stat-card"><div><span style="font-size:.9rem;opacity:.55">&#128196;</span><span class="stat-trend up" id="st-total-trend"></span></div><div class="stat-val" id="st-total">0</div><div class="stat-label">Total Quotes</div></div>
+      <div class="stat-card"><div><span style="font-size:.9rem;opacity:.55">&#128197;</span><span class="stat-trend" id="st-week-trend"></span></div><div class="stat-val" id="st-week">0</div><div class="stat-label">This Week</div></div>
+      <div class="stat-card"><div><span style="font-size:.9rem;opacity:.55">&#128176;</span><span class="stat-trend" id="st-avg-trend"></span></div><div class="stat-val money" id="st-avg">MK 0</div><div class="stat-label">Avg Premium</div></div>
+      <div class="stat-card"><div><span style="font-size:.9rem;opacity:.55">&#9729;</span><span class="stat-trend up" id="st-sync-trend"></span></div><div class="stat-val" id="st-sync">0</div><div class="stat-label">Synced</div></div>
     </div>
-
-    <!-- Quick Actions -->
     <div class="section-hdr"><h4>Quick Actions</h4></div>
     <div class="qa-grid">
       <button class="qa-btn" onclick="goScreen('scr-products')">
         <div class="qa-icon"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/></svg></div>
-        <div class="qa-label">New Quote</div>
-      </button>
+        <span class="qa-label">New Quote</span></button>
       <button class="qa-btn" onclick="goScreen('scr-history');renderHistory()">
         <div class="qa-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div>
-        <div class="qa-label">Quote History</div>
-      </button>
+        <span class="qa-label">History</span></button>
       <button class="qa-btn" onclick="goScreen('scr-bcard');renderBcard()">
         <div class="qa-icon"><svg viewBox="0 0 24 24"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg></div>
-        <div class="qa-label">Business Card</div>
-      </button>
+        <span class="qa-label">Business Card</span></button>
       <button class="qa-btn" onclick="syncAll()">
-        <div class="qa-icon"><svg viewBox="0 0 24 24"><polyline points="1 4 1 10 7 10"/><polyline points="23 20 23 14 17 14"/><path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4l-4.64 4.36A9 9 0 0 1 3.51 15"/></svg></div>
-        <div class="qa-label">Sync</div>
-      </button>
+        <div class="qa-icon"><svg viewBox="0 0 24 24"><polyline points="1 4 1 10 7 10"/><polyline points="23 20 23 14 17 14"/><path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4-4.64 4.36A9 9 0 0 1 3.51 15"/></svg></div>
+        <span class="qa-label">Sync</span></button>
       <button class="qa-btn" onclick="goScreen('scr-productinfo')">
         <div class="qa-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg></div>
-        <div class="qa-label">Products</div>
-      </button>
+        <span class="qa-label">Products</span></button>
       <button class="qa-btn" id="qa-admin" style="display:none" onclick="goScreen('scr-admin');loadAdmin()">
         <div class="qa-icon"><svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></div>
-        <div class="qa-label">Admin</div>
-      </button>
+        <span class="qa-label">Admin</span></button>
     </div>
-
-    <!-- Recent Quotes -->
-    <div class="section-hdr">
-      <h4>Recent Quotes</h4>
-      <a onclick="goScreen('scr-history');renderHistory()">SEE ALL &rsaquo;</a>
-    </div>
+    <div class="section-hdr"><h4>Recent Quotes</h4><a onclick="goScreen('scr-history');renderHistory()">SEE ALL &#8250;</a></div>
     <div id="recent-quotes-list"></div>
   </div>
   <div class="bnav">
-    <button class="bnav-btn active" onclick="navTo('home')">
-      <svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>Home
-    </button>
-    <button class="bnav-btn" onclick="navTo('quote')">
-      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>Quote
-    </button>
-    <button class="bnav-btn" onclick="navTo('history')">
-      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>History
-    </button>
-    <button class="bnav-btn" onclick="navTo('products')">
-      <svg viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>Products
-    </button>
-    <button class="bnav-btn" onclick="navTo('profile')">
-      <svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>Profile
-    </button>
+    <button class="bnav-btn active" onclick="navTo('home')"><svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>Home</button>
+    <button class="bnav-btn" onclick="navTo('quote')"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>Quote</button>
+    <button class="bnav-btn" onclick="navTo('history')"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>History</button>
+    <button class="bnav-btn" onclick="navTo('products')"><svg viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>Products</button>
+    <button class="bnav-btn" onclick="navTo('profile')"><svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>Profile</button>
   </div>
 </div>
 
-<!-- ══ PRODUCT SELECT ══ -->
+<!-- PRODUCT SELECT -->
 <div class="screen" id="scr-products">
   <div class="topbar"><button class="tb-back" onclick="goScreen('scr-home')">&#8592;</button><span class="tb-title">Select Product</span></div>
   <div class="product-body">
@@ -310,49 +265,40 @@ input::placeholder{color:#ccc}
       </div>
     </div>
   </div>
+  <div class="bnav">
+    <button class="bnav-btn" onclick="navTo('home')"><svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>Home</button>
+    <button class="bnav-btn active" onclick="navTo('quote')"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>Quote</button>
+    <button class="bnav-btn" onclick="navTo('history')"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>History</button>
+    <button class="bnav-btn" onclick="navTo('products')"><svg viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>Products</button>
+    <button class="bnav-btn" onclick="navTo('profile')"><svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>Profile</button>
+  </div>
 </div>
 
-<!-- ══ QUOTE FORM ══ -->
+<!-- QUOTE FORM -->
 <div class="screen" id="scr-quote">
-  <div class="topbar">
-    <button class="tb-back" id="quote-back-btn">&#8592;</button>
-    <span class="tb-title" id="quote-product-title">WPA Quotation</span>
-  </div>
+  <div class="topbar"><button class="tb-back" id="quote-back-btn">&#8592;</button><span class="tb-title" id="quote-product-title">WPA Quotation</span></div>
   <div class="q-tabs">
     <button class="q-tab active" data-panel="panel-form"   onclick="goQTab('panel-form')">&#9312; Inputs</button>
     <button class="q-tab"        data-panel="panel-review" onclick="goQTab('panel-review')">&#9313; Review</button>
     <button class="q-tab"        data-panel="panel-quote"  id="tab-quote">&#9314; Quotation</button>
   </div>
   <div class="qbody">
-    <!-- INPUTS -->
     <div class="panel active" id="panel-form">
       <div class="card"><div class="card-title">Policy &amp; Client</div>
         <div class="grid-2">
-          <div class="field span2"><label>Proposer name <sup>*</sup></label>
-            <input id="policyholderName" type="text" placeholder="Full legal name"/>
-            <span class="field-err">Required</span></div>
-          <div class="field"><label>Quotation reference</label>
-            <input id="policyNumber" type="text" placeholder="e.g. A.T/A.M/Vanguard Life"/></div>
-          <div class="field"><label>Mortality basis</label>
-            <select id="basisName">
-              <option value="PA90">PA90 &#8212; Pensioners 1990</option>
-              <option value="A55">A55 &#8212; Assured Lives 1955-60</option>
-            </select></div>
+          <div class="field span2"><label>Proposer name <sup>*</sup></label><input id="policyholderName" type="text" placeholder="Full legal name"/><span class="field-err">Required</span></div>
+          <div class="field"><label>Quotation reference</label><input id="policyNumber" type="text" placeholder="e.g. A.T/A.M/VLA"/></div>
+          <div class="field admin-only-field"><label>Mortality basis</label>
+            <select id="basisName"><option value="PA90">PA90 &#8212; Pensioners 1990</option><option value="A55">A55 &#8212; Assured Lives 1955-60</option></select></div>
         </div>
       </div>
       <div class="card"><div class="card-title">Primary Life</div>
         <div class="grid-2">
           <div class="field"><label>Gender <sup>*</sup></label>
-            <div class="toggle-row">
-              <button type="button" class="tog on" data-g="gender1" data-v="Male">Male</button>
-              <button type="button" class="tog" data-g="gender1" data-v="Female">Female</button>
-            </div>
+            <div class="toggle-row"><button type="button" class="tog on" data-g="gender1" data-v="Male">Male</button><button type="button" class="tog" data-g="gender1" data-v="Female">Female</button></div>
             <input type="hidden" id="gender1" value="Male"/></div>
-          <div class="field"><label>Date of birth <sup>*</sup></label>
-            <input id="dob1" type="date"/>
-            <span class="field-err">Enter a valid date of birth</span></div>
-          <div class="field" id="anb1-wrap" style="display:none">
-            <label>Age next birthday</label><input id="anb1-val" type="text" readonly/></div>
+          <div class="field"><label>Date of birth <sup>*</sup></label><input id="dob1" type="date"/><span class="field-err">Enter a valid date of birth</span></div>
+          <div class="field" id="anb1-wrap" style="display:none"><label>Age next birthday</label><input id="anb1-val" type="text" readonly/></div>
         </div>
       </div>
       <div class="card"><div class="card-title">Annuity Structure</div>
@@ -360,106 +306,75 @@ input::placeholder{color:#ccc}
           <div class="field span2"><label>Type</label>
             <div class="toggle-row">
               <button type="button" class="tog on" data-g="annuityStructure" data-v="Single">Single Life</button>
-              <button type="button" class="tog" data-g="annuityStructure" data-v="Reversionary last survivor">Joint</button>
-              <button type="button" class="tog" data-g="annuityStructure" data-v="Fixed term">Fixed Term</button>
+              <button type="button" class="tog admin-only-tog" data-g="annuityStructure" data-v="Reversionary last survivor">Joint</button>
+              <button type="button" class="tog admin-only-tog" data-g="annuityStructure" data-v="Fixed term">Fixed Term</button>
             </div>
             <input type="hidden" id="annuityStructure" value="Single"/></div>
-          <div class="field"><label>Payment timing</label>
-            <select id="paymentTiming"><option value="Advance">Advance</option><option value="Arrear">Arrear</option></select></div>
-          <div class="field"><label>Frequency</label>
-            <select id="frequency">
-              <option value="Monthly">Monthly</option><option value="Quarterly">Quarterly</option>
-              <option value="Half-yearly">Half-yearly</option><option value="Annual">Annual</option>
-            </select></div>
+          <div class="field"><label>Payment timing</label><select id="paymentTiming"><option value="Advance">Advance</option><option value="Arrear">Arrear</option></select></div>
+          <div class="field"><label>Frequency</label><select id="frequency"><option value="Monthly">Monthly</option><option value="Quarterly">Quarterly</option><option value="Half-yearly">Half-yearly</option><option value="Annual">Annual</option></select></div>
         </div>
         <div class="collapsible" id="joint-sect">
           <div class="sdiv">Second Life</div>
           <div class="grid-2">
-            <div class="field"><label>Relationship</label>
-              <select id="relationship"><option value="Spouse">Spouse</option><option value="Child">Child</option></select></div>
+            <div class="field"><label>Relationship</label><select id="relationship"><option value="Spouse">Spouse</option><option value="Child">Child</option></select></div>
             <div class="field"><label>Name</label><input id="name2" type="text" placeholder="Second life name"/></div>
             <div class="field"><label>Gender</label>
-              <div class="toggle-row">
-                <button type="button" class="tog on" data-g="gender2" data-v="Male">Male</button>
-                <button type="button" class="tog" data-g="gender2" data-v="Female">Female</button>
-              </div>
+              <div class="toggle-row"><button type="button" class="tog on" data-g="gender2" data-v="Male">Male</button><button type="button" class="tog" data-g="gender2" data-v="Female">Female</button></div>
               <input type="hidden" id="gender2" value="Male"/></div>
             <div class="field"><label>Date of birth</label><input id="dob2" type="date"/></div>
-            <div class="field" id="childAge-wrap" style="display:none">
-              <label>Max child age</label><input id="maxChildAge" type="number" value="23" min="1" max="60"/></div>
-            <div class="field"><label>Reversion %</label>
-              <input id="reversionPct" type="number" value="50" min="0" max="100" step="5"/></div>
+            <div class="field" id="childAge-wrap" style="display:none"><label>Max child age</label><input id="maxChildAge" type="number" value="23" min="1" max="60"/></div>
+            <div class="field"><label>Reversion %</label><input id="reversionPct" type="number" value="50" min="0" max="100" step="5"/></div>
           </div>
         </div>
         <div class="collapsible" id="fixed-sect">
           <div class="sdiv">Fixed Period</div>
-          <div class="grid-2"><div class="field"><label>Fixed period (years)</label>
-            <input id="fixedPeriod" type="number" value="10" min="1" max="40"/></div></div>
+          <div class="grid-2"><div class="field"><label>Fixed period (years)</label><input id="fixedPeriod" type="number" value="10" min="1" max="40"/></div></div>
         </div>
       </div>
       <div class="card"><div class="card-title">Purchase Price</div>
         <div class="grid-2">
           <div class="field"><label>Initial consideration (MWK) <sup>*</sup></label>
-            <div class="mwk-wrap">
-              <input id="initialConsideration" type="number" min="0" step="1000" placeholder="0" style="font-size:.98rem;font-weight:600"/>
-            </div>
+            <div class="mwk-wrap"><input id="initialConsideration" type="number" min="0" step="1000" placeholder="0" style="font-size:.96rem;font-weight:600"/></div>
             <span class="field-err">Enter a positive amount</span></div>
-          <div class="field"><label>Due date for payment</label>
-            <input id="dueDate" type="date"/></div>
+          <div class="field"><label>Due date for payment</label><input id="dueDate" type="date"/></div>
         </div>
       </div>
       <div class="actions"><button class="btn btn-primary" onclick="goReview()">Review &rarr;</button></div>
     </div>
-
-    <!-- REVIEW -->
     <div class="panel" id="panel-review">
-      <div class="card"><div class="card-title">Review — confirm all details</div>
+      <div class="card"><div class="card-title">Review &#8212; confirm all details</div>
         <div class="rev-grid" id="rev-content"></div>
-        <div class="actions">
-          <button class="btn btn-ghost" onclick="goQTab('panel-form')">&#8592; Edit</button>
-          <button class="btn btn-primary" onclick="runCalc()">Calculate</button>
-        </div>
+        <div class="actions"><button class="btn btn-ghost" onclick="goQTab('panel-form')">&#8592; Edit</button><button class="btn btn-primary" onclick="runCalc()">Calculate</button></div>
         <div class="spin-wrap" id="spin"><span class="spinner"></span>Computing&hellip;</div>
       </div>
     </div>
-
-    <!-- CANVAS QUOTATION -->
     <div class="panel" id="panel-quote">
       <canvas id="quote-canvas"></canvas>
-      <p class="canvas-hint">Tap quotation to download &nbsp;&middot;&nbsp; Print (Ctrl+P) for PDF</p>
+      <p class="canvas-hint">Tap to download PNG &nbsp;&middot;&nbsp; Print for PDF</p>
       <div class="share-row">
-        <button class="share-btn share-wa" onclick="shareWhatsApp()">
-          <svg width="16" height="16" fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.112.549 4.095 1.508 5.822L.057 23.43l5.744-1.507A11.946 11.946 0 0 0 12 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.818a9.818 9.818 0 0 1-5.007-1.369l-.359-.213-3.411.895.91-3.323-.234-.371A9.818 9.818 0 1 1 12 21.818z"/></svg>
-          WhatsApp
-        </button>
-        <button class="share-btn share-email" onclick="shareEmail()">
-          <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
-          Email
-        </button>
-        <button class="share-btn share-dl" onclick="downloadQuote()">
-          <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-          PNG
-        </button>
-        <button class="share-btn share-print" onclick="window.print()">
-          <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
-          PDF
-        </button>
+        <button class="share-btn share-wa" onclick="shareWhatsApp()"><svg width="14" height="14" fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.112.549 4.095 1.508 5.822L.057 23.43l5.744-1.507A11.946 11.946 0 0 0 12 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.818a9.818 9.818 0 0 1-5.007-1.369l-.359-.213-3.411.895.91-3.323-.234-.371A9.818 9.818 0 1 1 12 21.818z"/></svg>WhatsApp</button>
+        <button class="share-btn share-email" onclick="shareEmail()"><svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>Email</button>
+        <button class="share-btn share-dl" onclick="downloadQuote()"><svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>PNG</button>
+        <button class="share-btn share-print" onclick="window.print()"><svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>PDF</button>
       </div>
-      <div class="actions" style="margin-top:.5rem">
+      <div class="actions" style="margin-top:.45rem">
         <button class="btn btn-ghost" onclick="goQTab('panel-form')">&#8592; Edit</button>
         <button class="btn btn-primary" onclick="saveAndSync()" id="save-btn">&#9729; Save</button>
       </div>
     </div>
   </div>
+  <div class="bnav">
+    <button class="bnav-btn" onclick="navTo('home')"><svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>Home</button>
+    <button class="bnav-btn active" onclick="navTo('quote')"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>Quote</button>
+    <button class="bnav-btn" onclick="navTo('history')"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>History</button>
+    <button class="bnav-btn" onclick="navTo('products')"><svg viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>Products</button>
+    <button class="bnav-btn" onclick="navTo('profile')"><svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>Profile</button>
+  </div>
 </div>
 
-<!-- ══ HISTORY ══ -->
+<!-- HISTORY -->
 <div class="screen" id="scr-history">
-  <div class="topbar">
-    <button class="tb-back" onclick="goScreen('scr-home')">&#8592;</button>
-    <span class="tb-title">Quote History</span>
-    <button class="tb-btn" onclick="retroSync()">&#8635; Retrosync</button>
-  </div>
+  <div class="topbar"><button class="tb-back" onclick="goScreen('scr-home')">&#8592;</button><span class="tb-title">Quote History</span><button class="tb-btn" onclick="retroSync()">&#8635; Retrosync</button></div>
   <div class="hist-hdr"><h3 id="hist-count">Quotes</h3></div>
   <div class="hist-body" id="hist-list"></div>
   <div class="bnav">
@@ -471,21 +386,17 @@ input::placeholder{color:#ccc}
   </div>
 </div>
 
-<!-- ══ PRODUCT INFO ══ -->
+<!-- PRODUCT INFO -->
 <div class="screen" id="scr-productinfo">
   <div class="topbar"><button class="tb-back" onclick="goScreen('scr-home')">&#8592;</button><span class="tb-title">Product Information</span></div>
   <div class="pinfo-body">
-    <div class="pinfo-card">
-      <h3>With-Profits Annuity (WPA)</h3>
-      <p>A single-premium immediate annuity paying regular income for life. Instalments adjusted annually in line with Vanguard Life&apos;s bonus declaration.</p>
-      <p><strong>Key features:</strong> Lifelong income &middot; Annual bonus adjustment &middot; Optional funeral benefit &middot; Guarantee period (0, 5 or 10 years) &middot; Single or joint life &middot; Advance or arrear payments</p>
-      <p><strong>Eligibility:</strong> Age 18&ndash;75 &middot; Minimum purchase price MWK 1,000,000</p>
-    </div>
-    <div class="pinfo-card">
-      <h3>Programmed Withdrawal (PW)</h3>
-      <p>Systematic drawdown product for retirement fund members.</p>
-      <p style="color:var(--muted);font-style:italic">Full details and quotation engine coming soon.</p>
-    </div>
+    <div class="pinfo-card"><h3>With-Profits Annuity (WPA)</h3>
+      <p>Single-premium immediate annuity paying regular income for life. Instalments adjusted annually via Vanguard Life&apos;s bonus declaration.</p>
+      <p><strong>Features:</strong> Lifelong income &middot; Annual bonus &middot; Optional funeral benefit &middot; Guarantee 0/5/10 yrs &middot; Single or joint life</p>
+      <p><strong>Eligibility:</strong> Age 18&ndash;75 &middot; Min MWK 1,000,000</p></div>
+    <div class="pinfo-card"><h3>Programmed Withdrawal (PW)</h3>
+      <p>Systematic retirement drawdown product.</p>
+      <p style="color:var(--muted);font-style:italic">Coming soon.</p></div>
   </div>
   <div class="bnav">
     <button class="bnav-btn" onclick="navTo('home')"><svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>Home</button>
@@ -496,17 +407,13 @@ input::placeholder{color:#ccc}
   </div>
 </div>
 
-<!-- ══ PROFILE ══ -->
+<!-- PROFILE -->
 <div class="screen" id="scr-profile">
   <div class="topbar"><button class="tb-back" onclick="goScreen('scr-home')">&#8592;</button><span class="tb-title">My Profile</span></div>
   <div class="profile-body">
-    <div class="profile-hero">
-      <div class="profile-avatar" id="prof-avatar">AT</div>
-      <div class="profile-name" id="prof-name">Name</div>
-      <div class="profile-role" id="prof-role">Role</div>
-    </div>
+    <div class="profile-hero"><div class="profile-avatar" id="prof-avatar">AT</div><div class="profile-name" id="prof-name">Name</div><div class="profile-role" id="prof-role">Role</div></div>
     <div class="profile-card" id="prof-details"></div>
-    <div style="display:flex;gap:.6rem;margin-top:.5rem">
+    <div style="display:flex;gap:.55rem;margin-top:.45rem">
       <button class="btn btn-primary" style="flex:1" onclick="goScreen('scr-bcard');renderBcard()">&#128197; Business Card</button>
       <button class="btn btn-ghost" style="flex:1" onclick="doLogout()">Sign Out</button>
     </div>
@@ -520,30 +427,28 @@ input::placeholder{color:#ccc}
   </div>
 </div>
 
-<!-- ══ BUSINESS CARD ══ -->
+<!-- BUSINESS CARD -->
 <div class="screen" id="scr-bcard">
-  <div class="topbar"><button class="tb-back" onclick="history.back();goScreen('scr-profile')">&#8592;</button><span class="tb-title">Business Card</span></div>
+  <div class="topbar"><button class="tb-back" onclick="goScreen('scr-profile')">&#8592;</button><span class="tb-title">Business Card</span></div>
   <div class="bcard-body">
     <canvas id="bcard-canvas"></canvas>
-    <p class="canvas-hint" style="margin-top:.5rem">Tap to download &nbsp;&middot;&nbsp; Share via WhatsApp or Email</p>
-    <div class="share-row" style="margin-top:.6rem">
-      <button class="share-btn share-wa" onclick="shareBcardWhatsApp()">
-        <svg width="15" height="15" fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.112.549 4.095 1.508 5.822L.057 23.43l5.744-1.507A11.946 11.946 0 0 0 12 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.818a9.818 9.818 0 0 1-5.007-1.369l-.359-.213-3.411.895.91-3.323-.234-.371A9.818 9.818 0 1 1 12 21.818z"/></svg>
-        WhatsApp
-      </button>
-      <button class="share-btn share-email" onclick="shareBcardEmail()">
-        <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
-        Email
-      </button>
-      <button class="share-btn share-dl" onclick="downloadBcard()">
-        <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-        Download
-      </button>
+    <p class="canvas-hint" style="margin-top:.45rem">Tap to download</p>
+    <div class="share-row" style="margin-top:.55rem">
+      <button class="share-btn share-wa" onclick="shareBcardWhatsApp()"><svg width="14" height="14" fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.112.549 4.095 1.508 5.822L.057 23.43l5.744-1.507A11.946 11.946 0 0 0 12 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.818a9.818 9.818 0 0 1-5.007-1.369l-.359-.213-3.411.895.91-3.323-.234-.371A9.818 9.818 0 1 1 12 21.818z"/></svg>WhatsApp</button>
+      <button class="share-btn share-email" onclick="shareBcardEmail()"><svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>Email</button>
+      <button class="share-btn share-dl" onclick="downloadBcard()"><svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>Download</button>
     </div>
+  </div>
+  <div class="bnav">
+    <button class="bnav-btn" onclick="navTo('home')"><svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>Home</button>
+    <button class="bnav-btn" onclick="navTo('quote')"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>Quote</button>
+    <button class="bnav-btn" onclick="navTo('history')"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>History</button>
+    <button class="bnav-btn" onclick="navTo('products')"><svg viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>Products</button>
+    <button class="bnav-btn" onclick="navTo('profile')"><svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>Profile</button>
   </div>
 </div>
 
-<!-- ══ ADMIN ══ -->
+<!-- ADMIN -->
 <div class="screen" id="scr-admin">
   <div class="topbar"><button class="tb-back" onclick="goScreen('scr-home')">&#8592;</button><span class="tb-title">Admin Panel</span></div>
   <div class="admin-body">
@@ -560,18 +465,22 @@ input::placeholder{color:#ccc}
           <div class="field"><label>Branch</label><input id="fa-branch" type="text" placeholder="e.g. Blantyre"/></div>
           <div class="field"><label>Title</label><input id="fa-title" type="text" value="Intermediary"/></div>
           <div class="field"><label>FA Email</label><input id="fa-email" type="email" placeholder="fa@vanguardlifemw.com"/></div>
-          <div class="field"><label>Role</label>
-            <select id="fa-role"><option value="FA">Financial Advisor</option><option value="Admin">Admin</option></select></div>
+          <div class="field"><label>Role</label><select id="fa-role"><option value="FA">Financial Advisor</option><option value="Admin">Admin</option></select></div>
           <div class="field"><label>Password <sup>*</sup></label><input id="fa-pass" type="text" placeholder="Temporary password"/></div>
         </div>
         <div class="actions"><button class="btn btn-primary btn-sm" onclick="addFA()">Add FA</button></div>
-        <div id="fa-msg" style="font-size:.73rem;margin-top:.42rem;text-align:right"></div>
+        <div id="fa-msg" style="font-size:.7rem;margin-top:.4rem;text-align:right"></div>
       </div>
       <div id="fa-table-wrap"></div>
     </div>
-    <div class="admin-section" id="adm-quotes">
-      <div id="all-quotes-wrap"><div class="empty-state">Loading&hellip;</div></div>
-    </div>
+    <div class="admin-section" id="adm-quotes"><div id="all-quotes-wrap"><div class="empty-state">Loading&hellip;</div></div></div>
+  </div>
+  <div class="bnav">
+    <button class="bnav-btn" onclick="navTo('home')"><svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>Home</button>
+    <button class="bnav-btn" onclick="navTo('quote')"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>Quote</button>
+    <button class="bnav-btn" onclick="navTo('history')"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>History</button>
+    <button class="bnav-btn" onclick="navTo('products')"><svg viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>Products</button>
+    <button class="bnav-btn" onclick="navTo('profile')"><svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>Profile</button>
   </div>
 </div>
 
@@ -793,7 +702,7 @@ function generateQuote(inputs) {
 }
 </script>
 <script>
-var APPS_SCRIPT_URL='https://script.google.com/macros/s/AKfycbx33rHoPqHCHZc8DmCM-69an77tnxtVxBy82Fae0108B8tHijelYiLufvZ9_N9I2fB3/exec';
+var APPS_SCRIPT_URL='https://script.google.com/macros/s/AKfycbyCEJgb6yP_Oz6uUEvnQSfRxTFc_icrEhx6ddO1LCAyHZAS7iV0bAQFcSo36eerboX9/exec';
 var _lhImg=new Image(),_lhReady=false,_pendingRender=null;
 var _ftImg=new Image();
 _lhImg.onload=function(){_lhReady=true;if(_pendingRender){_pendingRender();_pendingRender=null;}};
@@ -860,7 +769,8 @@ function doLogin(){
     return;
   }
   fetch(APPS_SCRIPT_URL+'?action=login&u='+encodeURIComponent(u)+'&pw='+encodeURIComponent(pw),{redirect:'follow'})
-    .then(function(r){if(!r.ok)throw new Error('Server '+r.status);return r.json();})
+    .then(function(r){if(!r.ok)throw new Error('Server '+r.status);return r.text();})
+    .then(function(raw){var d;try{d=JSON.parse(raw);}catch(e){throw new Error('Bad server response: '+raw.slice(0,80));}return d;})
     .then(function(d){
       if(d.ok){currentUser=d.user;localStorage.setItem('vla_ann_user',JSON.stringify(d.user));localStorage.setItem('vla_ann_cred',u+':'+pw);showApp();}
       else errEl.textContent=d.error||'Invalid credentials.';
@@ -884,6 +794,9 @@ function showApp(){
   if(currentUser.role==='Admin'){
     document.getElementById('qa-admin').style.display='';
   }
+  var isAdmin=currentUser.role==='Admin';
+  document.querySelectorAll('.admin-only-field').forEach(function(el){el.style.display=isAdmin?'':'none';});
+  document.querySelectorAll('.admin-only-tog').forEach(function(el){el.style.display=isAdmin?'':'none';});
   loadLocalQuotes();
   updateSyncDot();
   updateStats();
@@ -1076,7 +989,7 @@ function renderQuoteCanvas(q,inp){
   var ftOK=typeof _ftImg!=='undefined'&&_ftImg.naturalWidth>0;
   var LH_H=lhOK?Math.round(W*_lhImg.naturalHeight/_lhImg.naturalWidth):140;
   var FT_H=ftOK?Math.round(W*_ftImg.naturalHeight/_ftImg.naturalWidth):72;
-  var REF_H=58,SBAR_H=34,DET_H=40,THEAD_H=52,ROW_H=40,FOOT_N=68,ACCEPT_H=180,GAP=8;
+  var REF_H=48,SBAR_H=30,DET_H=32,THEAD_H=44,ROW_H=32,FOOT_N=50,ACCEPT_H=150,GAP=6;
   var freqLabel={Monthly:'Monthly annuity',Quarterly:'Quarterly annuity','Half-yearly':'Half-yearly annuity',Annual:'Annual annuity'}[inp.frequency]||'Annuity';
   var typeStr=q.annuityStructure==='Single'?'With-Profits Single Life':q.annuityStructure==='Fixed term'?'Fixed Term Annuity':'With-Profits Joint / Reversionary';
   var detailItems=[
@@ -1088,7 +1001,7 @@ function renderQuoteCanvas(q,inp){
     ['Expected due date for first payment',inp.dueDate?fmtDate(inp.dueDate):'\u2014'],
   ];
   var TL=['No funeral benefit','Funeral Benefit Option 1','Funeral Benefit Option 2','Funeral Benefit Option 3','Funeral Benefit Option 4'];
-  var TOTAL_H=LH_H+REF_H+SBAR_H+detailItems.length*DET_H+GAP+SBAR_H+THEAD_H+10*ROW_H+GAP+FOOT_N+ACCEPT_H+FT_H;
+  var TOTAL_H=LH_H+REF_H+SBAR_H+detailItems.length*DET_H+GAP+SBAR_H+THEAD_H+10*ROW_H+GAP+FOOT_N+ACCEPT_H+FT_H+30;
   canvas.width=W*SCALE; canvas.height=TOTAL_H*SCALE;
   canvas.style.width=Math.round(W/2)+'px'; canvas.style.height=Math.round(TOTAL_H/2)+'px';
   ctx.scale(SCALE,SCALE);
@@ -1105,26 +1018,26 @@ function renderQuoteCanvas(q,inp){
   ctx.strokeStyle='#eedede'; ctx.lineWidth=1;
   ctx.beginPath();ctx.moveTo(0,Y);ctx.lineTo(W,Y);ctx.stroke();
   ctx.beginPath();ctx.moveTo(0,Y+REF_H);ctx.lineTo(W,Y+REF_H);ctx.stroke();
-  ctx.fillStyle=DRED; ctx.font='bold 14px '+SANS; ctx.textAlign='left';
+  ctx.fillStyle=DRED; ctx.font='bold 12px '+SANS; ctx.textAlign='left';
   ctx.fillText('Quotation reference:',ML,Y+REF_H/2+6);
   ctx.fillText('Quotation date',W/2+24,Y+REF_H/2+6);
-  ctx.fillStyle='#111'; ctx.font='14px '+SANS;
+  ctx.fillStyle='#111'; ctx.font='12px '+SANS;
   ctx.fillText(inp.policyNumber||q.policyNumber,ML+190,Y+REF_H/2+6);
   var qd=new Date(q.generatedAt);
   ctx.fillText((qd.getMonth()+1)+'/'+qd.getDate()+'/'+qd.getFullYear()+' '+qd.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'}),W/2+170,Y+REF_H/2+6);
   Y+=REF_H;
 
   // Section bar helper (centered text)
-  function sbar(lbl){ctx.fillStyle=DRED;ctx.fillRect(0,Y,W,SBAR_H);ctx.fillStyle='#fff';ctx.font='bold 14px '+SANS;ctx.textAlign='center';ctx.fillText(lbl,W/2,Y+SBAR_H/2+6);ctx.textAlign='left';Y+=SBAR_H;}
+  function sbar(lbl){ctx.fillStyle=DRED;ctx.fillRect(0,Y,W,SBAR_H);ctx.fillStyle='#fff';ctx.font='bold 12px '+SANS;ctx.textAlign='center';ctx.fillText(lbl,W/2,Y+SBAR_H/2+6);ctx.textAlign='left';Y+=SBAR_H;}
 
   // 3. Details of Annuity
   sbar('Details of Annuity');
   detailItems.forEach(function(item,idx){
     var ry=Y+idx*DET_H;
-    ctx.fillStyle=idx%2===0?'#fff':'#fafafa'; ctx.fillRect(0,ry,W,DET_H);
+    ctx.fillStyle=idx%2===0?'#fff':'#fff'; ctx.fillRect(0,ry,W,DET_H);
     ctx.strokeStyle='#f0e8e8'; ctx.lineWidth=0.5;
     ctx.beginPath();ctx.moveTo(ML,ry+DET_H-1);ctx.lineTo(W-MR,ry+DET_H-1);ctx.stroke();
-    ctx.fillStyle=DGRAY; ctx.font='15px '+SANS; ctx.textAlign='left';
+    ctx.fillStyle=DGRAY; ctx.font='12px '+SANS; ctx.textAlign='left';
     ctx.fillText(item[0],ML,ry+DET_H/2+6);
     ctx.fillText(':',W/2-8,ry+DET_H/2+6);
     ctx.fillStyle='#111'; ctx.textAlign='right';
@@ -1139,11 +1052,11 @@ function renderQuoteCanvas(q,inp){
   var C1W=210,C2W=200,C3W=Math.floor((avail-C1W-C2W)/3);
   var C1=ML,C2=ML+C1W,C3=ML+C1W+C2W,C4=C3+C3W,C5=C4+C3W;
   // Header
-  ctx.fillStyle='#f5ecec'; ctx.fillRect(0,Y,W,THEAD_H);
+  ctx.fillStyle='#efefef'; ctx.fillRect(0,Y,W,THEAD_H);
   ctx.strokeStyle='#e8dddd'; ctx.lineWidth=0.5;
   ctx.beginPath();ctx.moveTo(0,Y+THEAD_H);ctx.lineTo(W,Y+THEAD_H);ctx.stroke();
   [C3,C4,C5].forEach(function(x){ctx.beginPath();ctx.moveTo(x,Y);ctx.lineTo(x,Y+THEAD_H);ctx.stroke();});
-  ctx.fillStyle=DGRAY; ctx.font='bold 13px '+SANS; ctx.textAlign='center';
+  ctx.fillStyle=DGRAY; ctx.font='bold 12px '+SANS; ctx.textAlign='center';
   ctx.fillText('Option 1',C3+C3W/2,Y+20);ctx.fillText('Option 2',C4+C3W/2,Y+20);ctx.fillText('Option 3',C5+(W-MR-C5)/2,Y+20);
   ctx.fillStyle=MGRAY; ctx.font='12px '+SANS;
   ctx.fillText('No Guarantee',C3+C3W/2,Y+40);ctx.fillText('5 Years Guarantee',C4+C3W/2,Y+40);ctx.fillText('10 Years Guarantee',C5+(W-MR-C5)/2,Y+40);
@@ -1153,31 +1066,31 @@ function renderQuoteCanvas(q,inp){
     var rws=q.results.filter(function(r){return r.funeralTier===tier;}).sort(function(a,b){return a.guarantee-b.guarantee;});
     var ann=rws.map(function(r){return fmtN(r.perInstalmentAnnuity);});
     var cov=rws[0].funeralCover>0?fmtN(rws[0].funeralCover):'0';
-    var bg=tier%2===0?'#fff':'#fdf9f9';
+    var bg=tier%2===0?'#fff':'#f8f8f8';
     // Annuity row
     ctx.fillStyle=bg; ctx.fillRect(0,Y,W,ROW_H);
     ctx.strokeStyle='#f0e8e8'; ctx.lineWidth=0.5;
     [C2,C3,C4,C5].forEach(function(x){ctx.beginPath();ctx.moveTo(x,Y);ctx.lineTo(x,Y+ROW_H);ctx.stroke();});
     ctx.beginPath();ctx.moveTo(0,Y+ROW_H);ctx.lineTo(W,Y+ROW_H);ctx.stroke();
-    ctx.fillStyle=DRED; ctx.font='bold 13px '+SANS; ctx.textAlign='left';ctx.fillText(TL[tier],C1+5,Y+ROW_H/2+5);
-    ctx.fillStyle=DGRAY; ctx.font='14px '+SANS; ctx.fillText(freqLabel,C2+6,Y+ROW_H/2+5);
-    ctx.fillStyle='#111'; ctx.font='bold 14px '+SANS; ctx.textAlign='right';
+    ctx.fillStyle=DRED; ctx.font='bold 12px '+SANS; ctx.textAlign='left';ctx.fillText(TL[tier],C1+5,Y+ROW_H/2+5);
+    ctx.fillStyle=DGRAY; ctx.font='12px '+SANS; ctx.fillText(freqLabel,C2+6,Y+ROW_H/2+5);
+    ctx.fillStyle='#111'; ctx.font='bold 12px '+SANS; ctx.textAlign='right';
     ctx.fillText(ann[0],C3+C3W-6,Y+ROW_H/2+5);ctx.fillText(ann[1],C4+C3W-6,Y+ROW_H/2+5);ctx.fillText(ann[2],W-MR-6,Y+ROW_H/2+5);
     ctx.textAlign='left'; Y+=ROW_H;
     // Funeral row
-    var bg2=tier%2===0?'#f9f6f6':'#f5f0f0';
+    var bg2=tier%2===0?'#f8f8f8':'#f0f0f0';
     ctx.fillStyle=bg2; ctx.fillRect(0,Y,W,ROW_H);
     [C2,C3,C4,C5].forEach(function(x){ctx.strokeStyle='#f0e8e8';ctx.lineWidth=0.5;ctx.beginPath();ctx.moveTo(x,Y);ctx.lineTo(x,Y+ROW_H);ctx.stroke();});
     ctx.strokeStyle='#eee';ctx.lineWidth=0.5;ctx.beginPath();ctx.moveTo(0,Y+ROW_H);ctx.lineTo(W,Y+ROW_H);ctx.stroke();
-    ctx.fillStyle=MGRAY; ctx.font='13px '+SANS; ctx.textAlign='left'; ctx.fillText('Funeral benefit',C2+6,Y+ROW_H/2+5);
-    ctx.fillStyle='#555'; ctx.font='13px '+SANS; ctx.textAlign='right';
+    ctx.fillStyle=MGRAY; ctx.font='12px '+SANS; ctx.textAlign='left'; ctx.fillText('Funeral benefit',C2+6,Y+ROW_H/2+5);
+    ctx.fillStyle='#555'; ctx.font='12px '+SANS; ctx.textAlign='right';
     ctx.fillText(cov,C3+C3W-6,Y+ROW_H/2+5);ctx.fillText(cov,C4+C3W-6,Y+ROW_H/2+5);ctx.fillText(cov,W-MR-6,Y+ROW_H/2+5);
     ctx.textAlign='left'; Y+=ROW_H;
   }
   Y+=GAP;
 
   // 5. Footnotes
-  ctx.fillStyle=MGRAY; ctx.font='italic 13px '+SANS; ctx.textAlign='left';
+  ctx.fillStyle=MGRAY; ctx.font='italic 11px '+SANS; ctx.textAlign='left';
   ctx.fillText('Please note that annuity instalments will be adjusted annually in line with Vanguard Life\u2019s bonus declaration.',ML,Y+16);
   ctx.fillText('The funeral benefit is only payable on death of the proposer.',ML,Y+32);
   Y+=48;
@@ -1185,32 +1098,32 @@ function renderQuoteCanvas(q,inp){
   Y+=14;
 
   // 6. Acceptance of terms
-  ctx.fillStyle='#111'; ctx.font='bold 15px '+SANS; ctx.textAlign='left'; ctx.fillText('Acceptance of terms',ML,Y+16);
+  ctx.fillStyle='#111'; ctx.font='bold 12px '+SANS; ctx.textAlign='left'; ctx.fillText('Acceptance of terms',ML,Y+16);
   Y+=32;
   var hW=(W-ML-MR-60)/2, RX=ML+hW+60;
   // Left: Proposer
   ctx.strokeStyle='#555'; ctx.lineWidth=1;
   ctx.beginPath();ctx.moveTo(ML,Y+50);ctx.lineTo(ML+hW,Y+50);ctx.stroke();
-  ctx.fillStyle='#111'; ctx.font='14px '+SANS; ctx.textAlign='left'; ctx.fillText('Proposer',ML,Y+64);
+  ctx.fillStyle='#111'; ctx.font='12px '+SANS; ctx.textAlign='left'; ctx.fillText('Proposer',ML,Y+64);
   ctx.beginPath();ctx.moveTo(ML,Y+96);ctx.lineTo(ML+hW,Y+96);ctx.stroke();
-  ctx.fillStyle=MGRAY; ctx.font='13px '+SANS; ctx.fillText('Date',ML,Y+110);
+  ctx.fillStyle=MGRAY; ctx.font='12px '+SANS; ctx.fillText('Date',ML,Y+110);
   // Right: FA
   ctx.strokeStyle='#555'; ctx.lineWidth=1;
   ctx.beginPath();ctx.moveTo(RX,Y+50);ctx.lineTo(RX+hW,Y+50);ctx.stroke();
   var faName=(currentUser&&currentUser.name)||'';
   var faTitle=(currentUser&&currentUser.title)||'Intermediary';
   var faEmail=(currentUser&&currentUser.faEmail)||'';
-  ctx.fillStyle='#111'; ctx.font='bold 14px '+SANS; ctx.textAlign='left'; ctx.fillText(faName.toUpperCase(),RX,Y+66);
-  ctx.font='13px '+SANS; ctx.fillStyle=DGRAY; ctx.fillText(faTitle,RX,Y+83);
+  ctx.fillStyle='#111'; ctx.font='bold 12px '+SANS; ctx.textAlign='left'; ctx.fillText(faName.toUpperCase(),RX,Y+66);
+  ctx.font='12px '+SANS; ctx.fillStyle=DGRAY; ctx.fillText(faTitle,RX,Y+83);
   if(faEmail){ctx.fillStyle=DRED;ctx.fillText('Email: '+faEmail,RX,Y+100);}
   ctx.strokeStyle='#555'; ctx.lineWidth=1;
   ctx.beginPath();ctx.moveTo(RX,Y+120);ctx.lineTo(RX+Math.floor(hW*.55),Y+120);ctx.stroke();
-  ctx.fillStyle=MGRAY; ctx.font='13px '+SANS; ctx.fillText('Date',RX,Y+134);
+  ctx.fillStyle=MGRAY; ctx.font='12px '+SANS; ctx.fillText('Date',RX,Y+134);
   Y+=ACCEPT_H;
 
   // 7. Footer
   if(ftOK){ctx.drawImage(_ftImg,0,Y,W,FT_H);}
-  else{ctx.fillStyle=DRED;ctx.fillRect(0,Y,W,FT_H);ctx.fillStyle='#fff';ctx.font='13px '+SANS;ctx.textAlign='center';ctx.fillText('Life Assurance \u00B7 Pension Services',W/2,Y+FT_H/2+5);}
+  else{ctx.fillStyle=DRED;ctx.fillRect(0,Y,W,FT_H);ctx.fillStyle='#fff';ctx.font='12px '+SANS;ctx.textAlign='center';ctx.fillText('Life Assurance \u00B7 Pension Services',W/2,Y+FT_H/2+5);}
   ctx.textAlign='left';
   canvas.onclick=downloadQuote;
 }
@@ -1220,49 +1133,44 @@ function renderBcard(){
   if(!currentUser)return;
   var canvas=document.getElementById('bcard-canvas');
   var ctx=canvas.getContext('2d');
-  var W=900,H=500,SCALE=2;
+  var W=900,H=480,SCALE=2;
   var DRED='#641414',GOLD='#c9a84c',SANS='Arial,sans-serif';
   canvas.width=W*SCALE; canvas.height=H*SCALE;
   canvas.style.width=Math.round(W/2)+'px'; canvas.style.height=Math.round(H/2)+'px';
   ctx.scale(SCALE,SCALE);
-  // Background
   ctx.fillStyle='#fff'; ctx.fillRect(0,0,W,H);
-  // Left maroon panel
-  ctx.fillStyle=DRED; ctx.fillRect(0,0,300,H);
-  // Gold accent line
-  ctx.fillStyle=GOLD; ctx.fillRect(300,0,4,H);
-  // VLA initials on dark panel
-  ctx.fillStyle='rgba(255,255,255,.12)'; ctx.font='bold 140px Georgia,serif'; ctx.textAlign='center';
-  ctx.fillText('V',150,H/2+50);
-  ctx.fillStyle='#fff'; ctx.font='bold 22px Georgia,serif'; ctx.textAlign='center';
-  ctx.fillText('Vanguard',150,H-90);
-  ctx.fillStyle=GOLD; ctx.font='13px '+SANS; ctx.textAlign='center';
-  ctx.fillText('Life Assurance Company Limited',150,H-68);
-  ctx.fillStyle='rgba(255,255,255,.6)'; ctx.font='11px '+SANS;
-  ctx.fillText('vanguardlifemw.com',150,H-50);
-  // Right: FA details
-  var LX=330,nameY=90;
-  ctx.fillStyle=DRED; ctx.font='bold 30px '+SANS; ctx.textAlign='left';
-  ctx.fillText(currentUser.name,LX,nameY);
-  ctx.fillStyle=GOLD; ctx.fillRect(LX,nameY+8,80,3);
-  ctx.fillStyle='#555'; ctx.font='16px '+SANS;
-  ctx.fillText((currentUser.title||'Financial Advisor')+' \u00B7 '+(currentUser.branch||'VLA'),LX,nameY+34);
-  // Details
+  ctx.fillStyle=DRED; ctx.fillRect(0,0,280,H);
+  ctx.save(); ctx.globalAlpha=0.06;
+  ctx.fillStyle='#fff'; ctx.font='bold 190px Georgia,serif'; ctx.textAlign='center';
+  ctx.fillText('V',140,H); ctx.restore();
+  ctx.fillStyle=GOLD; ctx.fillRect(280,0,3,H);
+  ctx.fillStyle='#fff'; ctx.font='bold 18px Georgia,serif'; ctx.textAlign='center';
+  ctx.fillText('Vanguard',140,H-80);
+  ctx.fillStyle=GOLD; ctx.font='11px '+SANS;
+  ctx.fillText('Life Assurance Company Limited',140,H-62);
+  ctx.fillStyle='rgba(255,255,255,.5)'; ctx.font='10px '+SANS;
+  ctx.fillText('vanguardlifemw.com',140,H-46);
+  ctx.fillStyle=DRED; ctx.fillRect(283,0,W-283,5);
+  var LX=310,NY=52;
+  ctx.fillStyle=DRED; ctx.font='bold 26px '+SANS; ctx.textAlign='left';
+  ctx.fillText(currentUser.name,LX,NY);
+  ctx.fillStyle=GOLD; ctx.fillRect(LX,NY+6,100,2);
+  ctx.fillStyle='#555'; ctx.font='13px '+SANS;
+  ctx.fillText((currentUser.title||'Financial Advisor')+' · '+(currentUser.branch||'VLA'),LX,NY+28);
   var items=[
-    ['\u260E',currentUser.phone||''],
-    ['\u2709',currentUser.faEmail||''],
-    ['\uD83C\uDFE2',currentUser.branch||''],
-    ['\uD83C\uDD94',currentUser.employeeId||''],
+    ['☎',currentUser.phone||''],
+    ['✉',currentUser.faEmail||''],
+    ['Branch',currentUser.branch||''],
+    ['ID',currentUser.employeeId||''],
   ].filter(function(r){return r[1];});
-  ctx.font='15px '+SANS; ctx.fillStyle='#333';
   items.forEach(function(row,i){
-    ctx.fillStyle=DRED; ctx.font='15px '+SANS; ctx.fillText(row[0],LX,nameY+80+i*32);
-    ctx.fillStyle='#333'; ctx.fillText(row[1],LX+26,nameY+80+i*32);
+    var iy=NY+62+i*30;
+    ctx.fillStyle=DRED; ctx.font='bold 11px '+SANS; ctx.fillText(row[0],LX,iy);
+    ctx.fillStyle='#222'; ctx.font='13px '+SANS; ctx.fillText(row[1],LX+36,iy);
   });
-  // Bottom tagline
-  ctx.fillStyle='#f5ecec'; ctx.fillRect(330,H-50,W-330,50);
-  ctx.fillStyle=DRED; ctx.font='bold 12px '+SANS; ctx.textAlign='left';
-  ctx.fillText('Life Assurance \u00B7 Pension Services \u00B7 Asset Management',LX,H-20);
+  ctx.fillStyle='#f0f0f0'; ctx.fillRect(283,H-38,W-283,38);
+  ctx.fillStyle=DRED; ctx.font='bold 10px '+SANS; ctx.textAlign='center';
+  ctx.fillText('Life Assurance · Pension Services · Asset Management',(283+W)/2,H-16);
   canvas.onclick=downloadBcard;
 }
 
@@ -1339,6 +1247,10 @@ function updateSyncDot(){var p=localQuotes.filter(function(q){return q.syncStatu
 
 function saveAndSync(){
   if(!lastQuote)return;
+  var today=new Date().toISOString().slice(0,10);
+  var name=(currentInputs.policyholderName||'').trim().toLowerCase();
+  var dup=localQuotes.find(function(q){return q.quoteDate&&q.quoteDate.slice(0,10)===today&&(q.inputs&&q.inputs.policyholderName||'').trim().toLowerCase()===name;});
+  if(dup){if(!confirm('A quote for '+currentInputs.policyholderName+' already exists today.\nSave as a new revision?'))return;}
   var localId=genLocalId();
   var entry={localId,quoteId:null,syncStatus:'pending',quoteDate:lastQuote.generatedAt,
     inputs:JSON.parse(JSON.stringify(currentInputs)),results:lastQuote.results,anb1:lastQuote.anb1,
@@ -1389,8 +1301,11 @@ async function syncAll(){
 async function retroSync(){
   if(!navigator.onLine){alert('Retrosync needs a network connection.');return;}
   try{
-    var r=await fetch(APPS_SCRIPT_URL+'?action=getQuotes&userId='+currentUser.userId+'&role='+currentUser.role);
-    var d=await r.json();if(!d.ok)return;var added=0;
+    var r=await fetch(APPS_SCRIPT_URL+'?action=getQuotes&userId='+currentUser.userId+'&role='+currentUser.role,{redirect:'follow'});
+    var raw=await r.text();var d;
+    try{d=JSON.parse(raw);}catch(e){alert('Retrosync failed: server returned unexpected response.\n'+raw.slice(0,200));return;}
+    if(!d.ok){alert('Retrosync error: '+(d.error||'Unknown'));return;}
+    var added=0;
     d.quotes.forEach(function(rq){
       var exists=localQuotes.find(function(q){return q.localId===rq.localId||q.quoteId===rq.quoteId;});
       if(!exists){
