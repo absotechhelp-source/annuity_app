@@ -1,14 +1,12 @@
 // ================================================================
-//  VLA Annuity App — Service Worker v4
-//  JS is inlined in index.html so only 3 core assets to cache.
-//  Strategy:
-//    index.html → network-first (always fresh)
-//    icons/images → cache-first (stable)
-//  Auto-update: skipWaiting + clients.claim so all tabs update
-//  immediately. Bump CACHE_VERSION on every deploy.
+//  VLA Annuity App — Service Worker v5
+//  Single file app: only index.html + manifest + icons to cache.
+//  Network-first for HTML (always fresh), cache-first for images.
+//  Auto-update: skipWaiting + clients.claim on activate.
+//  To trigger update on all devices: bump CACHE_VERSION below.
 // ================================================================
 
-const CACHE_VERSION = 'vla-annuity-v4';
+const CACHE_VERSION = 'vla-annuity-v5';
 
 const CORE_ASSETS = [
   './',
@@ -19,17 +17,17 @@ const CORE_ASSETS = [
 ];
 
 // ── Install ───────────────────────────────────────────────────
-self.addEventListener('install', function(event) {
-  event.waitUntil(
+self.addEventListener('install', function(e) {
+  e.waitUntil(
     caches.open(CACHE_VERSION)
-      .then(function(cache) { return cache.addAll(CORE_ASSETS); })
+      .then(function(c) { return c.addAll(CORE_ASSETS); })
       .then(function() { return self.skipWaiting(); })
   );
 });
 
-// ── Activate: delete old caches, claim all tabs ───────────────
-self.addEventListener('activate', function(event) {
-  event.waitUntil(
+// ── Activate: purge old caches, claim all tabs ────────────────
+self.addEventListener('activate', function(e) {
+  e.waitUntil(
     caches.keys()
       .then(function(keys) {
         return Promise.all(
@@ -48,19 +46,26 @@ self.addEventListener('activate', function(event) {
 });
 
 // ── Fetch ─────────────────────────────────────────────────────
-self.addEventListener('fetch', function(event) {
-  if (event.request.method !== 'GET') return;
+self.addEventListener('fetch', function(e) {
+  if (e.request.method !== 'GET') return;
 
-  var url = event.request.url;
+  var url = e.request.url;
   var isImage = /\.(png|jpg|jpeg|svg|ico|gif|webp)(\?.*)?$/.test(url);
+  var isExternal = url.indexOf('script.google.com') > -1 ||
+                   url.indexOf('googleapis.com') > -1;
+
+  // Never cache Apps Script calls — always network, no fallback
+  if (isExternal) return;
 
   if (isImage) {
-    // Cache-first for icons and images
-    event.respondWith(
-      caches.match(event.request).then(function(cached) {
-        return cached || fetch(event.request).then(function(res) {
+    // Cache-first for icons
+    e.respondWith(
+      caches.match(e.request).then(function(cached) {
+        return cached || fetch(e.request).then(function(res) {
           if (res && res.status === 200) {
-            caches.open(CACHE_VERSION).then(function(c) { c.put(event.request, res.clone()); });
+            caches.open(CACHE_VERSION).then(function(c) {
+              c.put(e.request, res.clone());
+            });
           }
           return res;
         });
@@ -68,16 +73,18 @@ self.addEventListener('fetch', function(event) {
     );
   } else {
     // Network-first for HTML and everything else
-    event.respondWith(
-      fetch(event.request)
+    e.respondWith(
+      fetch(e.request)
         .then(function(res) {
           if (res && res.status === 200) {
-            caches.open(CACHE_VERSION).then(function(c) { c.put(event.request, res.clone()); });
+            caches.open(CACHE_VERSION).then(function(c) {
+              c.put(e.request, res.clone());
+            });
           }
           return res;
         })
         .catch(function() {
-          return caches.match(event.request).then(function(cached) {
+          return caches.match(e.request).then(function(cached) {
             return cached || new Response('Offline', { status: 503 });
           });
         })
@@ -85,9 +92,9 @@ self.addEventListener('fetch', function(event) {
   }
 });
 
-// ── Message: tab tells SW to skip waiting ─────────────────────
-self.addEventListener('message', function(event) {
-  if (event.data && event.data.type === 'SKIP_WAITING') {
+// ── Message: tab asks SW to skip waiting ─────────────────────
+self.addEventListener('message', function(e) {
+  if (e.data && e.data.type === 'SKIP_WAITING') {
     self.skipWaiting();
   }
 });
