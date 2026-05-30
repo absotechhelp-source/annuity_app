@@ -1480,10 +1480,10 @@ function _quoteCtx(q,inp){
   ];
   var TL=['No funeral benefit','Funeral Benefit Option 1','Funeral Benefit Option 2','Funeral Benefit Option 3','Funeral Benefit Option 4'];
   // Section heights
-  var H={GAP_LH:12,REF_H:42,GAP:11,BAND_H:33,DET_H:36,THEAD_H:48,ROW_H:36,SELECT_H:58,NOTE_H:40,ACCEPT_H:116,GAP_FT:12};
+  var H={GAP_LH:6,REF_H:36,GAP:8,BAND_H:32,DET_H:33,THEAD_H:44,ROW_H:33,SELECT_H:54,NOTE_H:34,ACCEPT_H:150,GAP_FT:10};
   var P1=LH_H+H.GAP_LH+H.REF_H+H.GAP+H.BAND_H+detailItems.length*H.DET_H+H.GAP+H.BAND_H+H.THEAD_H+10*H.ROW_H+H.GAP+H.SELECT_H+H.GAP+H.NOTE_H+H.ACCEPT_H+H.GAP_FT+FT_H;
   var MED={BAND:33,Q:150,PLAN:30,SPOUSE:180,TABLE1:150,TABLE2:180,SIG:150};
-  var P2=MED.BAND+MED.Q+MED.PLAN+MED.SPOUSE+MED.TABLE1+MED.TABLE2+MED.SIG+40;
+  var P2=46+MED.Q+MED.PLAN+MED.SPOUSE+MED.TABLE1+MED.TABLE2+MED.SIG+70+FT_H;
   return {W:W,MX:MX,CONTENT_W:CONTENT_W,DRED:DRED,GOLD:GOLD,MGRAY:MGRAY,DGRAY:DGRAY,LINE:LINE,SANS:SANS,
     lhOK:lhOK,ftOK:ftOK,LH_H:LH_H,FT_H:FT_H,freqWord:freqWord,detailItems:detailItems,TL:TL,H:H,P1:P1,P2:P2,q:q,inp:inp};
 }
@@ -1580,20 +1580,23 @@ function _drawQuotePage1(ctx,C,yOffset){
   Y+=H.NOTE_H;
   ctx.strokeStyle='#222';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(MX,Y);ctx.lineTo(W-MX,Y);ctx.stroke();Y+=12;
   // Acceptance
-  ctx.fillStyle='#111';ctx.font='bold 16px '+SANS;ctx.textAlign='left';ctx.fillText('Acceptance of terms',MX,Y+14);Y+=30;
+  ctx.fillStyle='#111';ctx.font='bold 16px '+SANS;ctx.textAlign='left';ctx.fillText('Acceptance of terms',MX,Y+12);Y+=22;
   var halfW=(CONTENT_W-50)/2,RX=MX+halfW+50;
   ctx.strokeStyle='#555';ctx.lineWidth=1;
-  ctx.beginPath();ctx.moveTo(MX,Y+40);ctx.lineTo(MX+halfW,Y+40);ctx.stroke();
-  ctx.fillStyle='#111';ctx.font='14px '+SANS;ctx.fillText('Proposer',MX,Y+56);
-  ctx.beginPath();ctx.moveTo(MX,Y+82);ctx.lineTo(MX+halfW,Y+82);ctx.stroke();
-  ctx.fillStyle=MGRAY;ctx.font='13px '+SANS;ctx.fillText('Date',MX,Y+96);
-  ctx.strokeStyle='#555';ctx.beginPath();ctx.moveTo(RX,Y+40);ctx.lineTo(RX+halfW,Y+40);ctx.stroke();
+  ctx.beginPath();ctx.moveTo(MX,Y+34);ctx.lineTo(MX+halfW,Y+34);ctx.stroke();
+  ctx.fillStyle='#111';ctx.font='14px '+SANS;ctx.fillText('Proposer',MX,Y+50);
+  // Proposer signature line + name slot, date aligned at common baseline
+  var DATE_Y=Y+92; // common date-line Y for both columns
+  ctx.beginPath();ctx.moveTo(MX,DATE_Y);ctx.lineTo(MX+halfW,DATE_Y);ctx.stroke();
+  ctx.fillStyle=MGRAY;ctx.font='13px '+SANS;ctx.fillText('Date',MX,DATE_Y+14);
+  // FA block (right)
+  ctx.strokeStyle='#555';ctx.beginPath();ctx.moveTo(RX,Y+34);ctx.lineTo(RX+halfW,Y+34);ctx.stroke();
   var faName=(currentUser&&currentUser.name)||'',faTitle=(currentUser&&currentUser.title)||'Financial Advisor',faEmail=(currentUser&&currentUser.faEmail)||'';
-  ctx.fillStyle='#111';ctx.font='bold 14px '+SANS;ctx.fillText(faName.toUpperCase(),RX,Y+34);
-  ctx.fillStyle=DGRAY;ctx.font='13px '+SANS;ctx.fillText(faTitle,RX,Y+52);
-  if(faEmail){ctx.fillStyle=DRED;ctx.fillText('Email: '+faEmail,RX,Y+68);}
-  ctx.strokeStyle='#555';ctx.beginPath();ctx.moveTo(RX,Y+92);ctx.lineTo(RX+halfW*0.6,Y+92);ctx.stroke();
-  ctx.fillStyle=MGRAY;ctx.font='13px '+SANS;ctx.fillText('Date',RX,Y+106);
+  ctx.fillStyle='#111';ctx.font='bold 14px '+SANS;ctx.fillText(faName.toUpperCase(),RX,Y+28);
+  ctx.fillStyle=DGRAY;ctx.font='13px '+SANS;ctx.fillText(faTitle,RX,Y+46);
+  if(faEmail){ctx.fillStyle=DRED;ctx.fillText('Email: '+faEmail,RX,Y+62);}
+  ctx.strokeStyle='#555';ctx.beginPath();ctx.moveTo(RX,DATE_Y);ctx.lineTo(RX+halfW,DATE_Y);ctx.stroke();
+  ctx.fillStyle=MGRAY;ctx.font='13px '+SANS;ctx.fillText('Date',RX,DATE_Y+14);
   Y+=H.ACCEPT_H+H.GAP_FT;
   // Footer
   if(C.ftOK){ctx.drawImage(_ftImg,0,Y,W,FT_H);}
@@ -1605,17 +1608,18 @@ function _drawQuotePage1(ctx,C,yOffset){
 function _drawQuotePage2(ctx,C,yOffset){
   var W=C.W,MX=C.MX,CONTENT_W=C.CONTENT_W,DRED=C.DRED,GOLD=C.GOLD,MGRAY=C.MGRAY,DGRAY=C.DGRAY,LINE=C.LINE,SANS=C.SANS,H=C.H;
   var Y=yOffset||0;
+  var P2BAND=46; // taller band for page 2 header
   function band(label){
     var r=6;
     ctx.fillStyle=DRED;ctx.beginPath();
     ctx.moveTo(MX+r,Y);ctx.lineTo(MX+CONTENT_W-r,Y);ctx.arcTo(MX+CONTENT_W,Y,MX+CONTENT_W,Y+r,r);
-    ctx.lineTo(MX+CONTENT_W,Y+H.BAND_H-r);ctx.arcTo(MX+CONTENT_W,Y+H.BAND_H,MX+CONTENT_W-r,Y+H.BAND_H,r);
-    ctx.lineTo(MX+r,Y+H.BAND_H);ctx.arcTo(MX,Y+H.BAND_H,MX,Y+H.BAND_H-r,r);
+    ctx.lineTo(MX+CONTENT_W,Y+P2BAND-r);ctx.arcTo(MX+CONTENT_W,Y+P2BAND,MX+CONTENT_W-r,Y+P2BAND,r);
+    ctx.lineTo(MX+r,Y+P2BAND);ctx.arcTo(MX,Y+P2BAND,MX,Y+P2BAND-r,r);
     ctx.lineTo(MX,Y+r);ctx.arcTo(MX,Y,MX+r,Y,r);ctx.closePath();ctx.fill();
-    ctx.fillStyle='#fff';ctx.font='bold 16px '+SANS;ctx.textAlign='center';
-    ctx.fillText(label,W/2,Y+H.BAND_H/2+6);ctx.textAlign='left';Y+=H.BAND_H;
+    ctx.fillStyle='#fff';ctx.font='bold 18px '+SANS;ctx.textAlign='center';
+    ctx.fillText(label,W/2,Y+P2BAND/2+6);ctx.textAlign='left';Y+=P2BAND;
   }
-  band('Medical Insurance Coverage');Y+=6;
+  band('Medical Insurance Coverage');Y+=10;
   ctx.fillStyle=MGRAY;ctx.font='italic 12px '+SANS;ctx.textAlign='left';
   ctx.fillText('Optional. If selected, Vanguard Life deducts the monthly premium from the annuitant\u2019s pension and pays the Medical Aid directly.',MX,Y+10);Y+=26;
   function tickRow(label){
@@ -1678,16 +1682,32 @@ function _drawQuotePage2(ctx,C,yOffset){
     });
     Y+=28;
   });
-  Y+=8;
-  ctx.strokeStyle='#555';ctx.lineWidth=1;var sigW=(CONTENT_W-40)/2;
+  Y+=12;
+  var sigW=(CONTENT_W-40)/2;
+  // ── Premium deduction & net pension FIRST (before sign-offs) ──
+  ctx.fillStyle='#fdf8f2';ctx.fillRect(MX,Y,CONTENT_W,52);
+  ctx.strokeStyle=GOLD;ctx.lineWidth=1;ctx.strokeRect(MX,Y,CONTENT_W,52);
+  ctx.fillStyle=DRED;ctx.font='bold 12px '+SANS;ctx.textAlign='left';
+  ctx.fillText('PREMIUM DEDUCTION (to be completed):',MX+10,Y+19);
+  ctx.fillStyle='#111';ctx.font='12px '+SANS;
+  ctx.fillText('Total Monthly Deduction:',MX+10,Y+40);
+  ctx.strokeStyle='#999';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(MX+165,Y+42);ctx.lineTo(MX+sigW,Y+42);ctx.stroke();
+  ctx.fillStyle='#111';ctx.fillText('Net Pension Amount:',MX+sigW+40,Y+40);
+  ctx.beginPath();ctx.moveTo(MX+sigW+175,Y+42);ctx.lineTo(MX+CONTENT_W,Y+42);ctx.stroke();
+  Y+=52+18;
+  // ── Sign-offs ────────────────────────────────────────────────
+  ctx.strokeStyle='#555';ctx.lineWidth=1;
   ctx.beginPath();ctx.moveTo(MX,Y+16);ctx.lineTo(MX+sigW,Y+16);ctx.stroke();
   ctx.fillStyle='#333';ctx.font='11px '+SANS;ctx.textAlign='left';ctx.fillText('Pensioner\u2019s Signature',MX,Y+28);
-  ctx.beginPath();ctx.moveTo(MX+sigW+40,Y+16);ctx.lineTo(MX+CONTENT_W,Y+16);ctx.stroke();ctx.fillText('Date',MX+sigW+40,Y+28);Y+=40;
+  ctx.beginPath();ctx.moveTo(MX+sigW+40,Y+16);ctx.lineTo(MX+CONTENT_W,Y+16);ctx.stroke();ctx.fillText('Date',MX+sigW+40,Y+28);Y+=42;
   ctx.beginPath();ctx.moveTo(MX,Y+16);ctx.lineTo(MX+sigW,Y+16);ctx.stroke();ctx.fillText('Employer\u2019s Representative',MX,Y+28);
-  ctx.beginPath();ctx.moveTo(MX+sigW+40,Y+16);ctx.lineTo(MX+CONTENT_W,Y+16);ctx.stroke();ctx.fillText('Date',MX+sigW+40,Y+28);Y+=40;
-  ctx.fillText('Total Monthly Deduction: ______________________',MX,Y+8);
-  ctx.fillText('Net Pension Amount: ______________________',MX+sigW+40,Y+8);Y+=22;ctx.fillText('Company Stamp',MX,Y+8);
-  return Y+20;
+  ctx.beginPath();ctx.moveTo(MX+sigW+40,Y+16);ctx.lineTo(MX+CONTENT_W,Y+16);ctx.stroke();ctx.fillText('Date',MX+sigW+40,Y+28);Y+=42;
+  ctx.fillText('Company Stamp',MX,Y+10);Y+=24;
+  // ── Footer on page 2 ─────────────────────────────────────────
+  Y+=H.GAP_FT;
+  if(C.ftOK){ctx.drawImage(_ftImg,0,Y,C.W,C.FT_H);}
+  else{ctx.fillStyle=DRED;ctx.fillRect(0,Y,C.W,C.FT_H);ctx.fillStyle='#fff';ctx.font='13px '+SANS;ctx.textAlign='center';ctx.fillText('Life Assurance \u00B7 Pension Services',C.W/2,Y+C.FT_H/2+5);}
+  return Y+C.FT_H;
 }
 
 // ── Combined preview canvas (both pages stacked) ──────────────
@@ -2083,19 +2103,30 @@ async function retroSync(){
       return;
     }
     if(!d.ok){showToast('Retrosync error: '+(d.error||'Unknown'));return;}
-    var added=0;
-    d.quotes.forEach(function(rq){
-      var exists=localQuotes.find(function(q){return q.localId===rq.localId||q.quoteId===rq.quoteId;});
-      if(!exists){
-        var inp=rq.inputsJson?JSON.parse(rq.inputsJson):{policyholderName:rq.clientName,dob1:rq.clientDob,gender1:rq.clientGender,initialConsideration:rq.consideration,dueDate:rq.dueDate,basisName:rq.basis,frequency:rq.frequency,paymentTiming:rq.timing,annuityStructure:rq.structure};
+    var added=0, skipped=0;
+    // Safe per-field JSON parse — a bad row must not abort the whole sync
+    function safeParse(s,fallback){
+      if(s===undefined||s===null||s==='')return fallback;
+      if(typeof s!=='string')return s;
+      var t=s.trim();
+      if(t[0]!=='{'&&t[0]!=='[')return fallback; // not JSON (e.g. a stray date/number)
+      try{return JSON.parse(t);}catch(e){return fallback;}
+    }
+    (d.quotes||[]).forEach(function(rq){
+      try{
+        var exists=localQuotes.find(function(q){return q.localId===rq.localId||q.quoteId===rq.quoteId;});
+        if(exists)return;
+        var inp=safeParse(rq.inputsJson,{policyholderName:rq.clientName,dob1:rq.clientDob,gender1:rq.clientGender,initialConsideration:rq.consideration,dueDate:rq.dueDate,basisName:rq.basis,frequency:rq.frequency,paymentTiming:rq.timing,annuityStructure:rq.structure});
+        var res=safeParse(rq.resultsJson,[]);
         localQuotes.push({localId:rq.localId||genLocalId(),quoteId:rq.quoteId,syncStatus:'synced',
-          quoteDate:rq.quoteDate,inputs:inp,results:rq.resultsJson?JSON.parse(rq.resultsJson):[],anb1:rq.anb,
+          quoteDate:rq.quoteDate,inputs:inp,results:res,anb1:rq.anb,
           faSnapshot:{name:rq.faName||''}});
         added++;
-      }
+      }catch(rowErr){skipped++;}
     });
-    saveLocalQuotes();renderHistory();vlaAlert('Retrosync complete. '+added+' quote(s) pulled.');
-  }catch(e){showToast('Retrosync failed: '+e.message);}
+    saveLocalQuotes();renderHistory();
+    showToast('\u2713 Retrosync: '+added+' pulled'+(skipped?' ('+skipped+' skipped)':''));
+  }catch(e){showToast('Retrosync failed: '+e.message);console.error(e);}
 }
 
 // ── History ───────────────────────────────────────────────────
