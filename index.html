@@ -229,7 +229,7 @@ input::placeholder{color:#ccc}
         <span class="qa-label">Sync</span></button>
       <button class="qa-btn" onclick="goScreen('scr-productinfo')">
         <div class="qa-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg></div>
-        <span class="qa-label">Products</span></button>
+        <span class="qa-label">ToolKit</span></button>
       <button class="qa-btn" id="qa-admin" style="display:none" onclick="if(currentUser&&currentUser.role==='Admin'){goScreen('scr-admin');loadAdmin();}else{vlaAlert('Admin access only.');}">
         <div class="qa-icon"><svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></div>
         <span class="qa-label">Admin</span></button>
@@ -241,14 +241,14 @@ input::placeholder{color:#ccc}
     <button class="bnav-btn active" onclick="navTo('home')"><svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>Home</button>
     <button class="bnav-btn" onclick="navTo('quote')"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>Quote</button>
     <button class="bnav-btn" onclick="navTo('history')"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>History</button>
-    <button class="bnav-btn" onclick="navTo('products')"><svg viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>Products</button>
+    <button class="bnav-btn" onclick="navTo('products')"><svg viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>ToolKit</button>
     <button class="bnav-btn" onclick="navTo('profile')"><svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>Profile</button>
   </div>
 </div>
 
 <!-- PRODUCT SELECT -->
 <div class="screen" id="scr-products">
-  <div class="topbar"><button class="tb-back" onclick="goScreen('scr-home')">&#8592;</button><span class="tb-title">Select Product</span></div>
+  <div class="topbar"><button class="tb-back" onclick="goScreen('scr-home')">&#8592;</button><span class="tb-title">ToolKit</span></div>
   <div class="product-body">
     <div class="product-grid">
       <div class="product-tile" onclick="startQuote('WPA')">
@@ -268,7 +268,7 @@ input::placeholder{color:#ccc}
     <button class="bnav-btn" onclick="navTo('home')"><svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>Home</button>
     <button class="bnav-btn active" onclick="navTo('quote')"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>Quote</button>
     <button class="bnav-btn" onclick="navTo('history')"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>History</button>
-    <button class="bnav-btn" onclick="navTo('products')"><svg viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>Products</button>
+    <button class="bnav-btn" onclick="navTo('products')"><svg viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>ToolKit</button>
     <button class="bnav-btn" onclick="navTo('profile')"><svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>Profile</button>
   </div>
 </div>
@@ -366,7 +366,7 @@ input::placeholder{color:#ccc}
     <button class="bnav-btn" onclick="navTo('home')"><svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>Home</button>
     <button class="bnav-btn active" onclick="navTo('quote')"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>Quote</button>
     <button class="bnav-btn" onclick="navTo('history')"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>History</button>
-    <button class="bnav-btn" onclick="navTo('products')"><svg viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>Products</button>
+    <button class="bnav-btn" onclick="navTo('products')"><svg viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>ToolKit</button>
     <button class="bnav-btn" onclick="navTo('profile')"><svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>Profile</button>
   </div>
 </div>
@@ -380,14 +380,14 @@ input::placeholder{color:#ccc}
     <button class="bnav-btn" onclick="navTo('home')"><svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>Home</button>
     <button class="bnav-btn" onclick="navTo('quote')"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>Quote</button>
     <button class="bnav-btn active" onclick="navTo('history')"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>History</button>
-    <button class="bnav-btn" onclick="navTo('products')"><svg viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>Products</button>
+    <button class="bnav-btn" onclick="navTo('products')"><svg viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>ToolKit</button>
     <button class="bnav-btn" onclick="navTo('profile')"><svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>Profile</button>
   </div>
 </div>
 
 <!-- PRODUCT INFO -->
 <div class="screen" id="scr-productinfo">
-  <div class="topbar"><button class="tb-back" onclick="goScreen('scr-home')">&#8592;</button><span class="tb-title">Product Information</span></div>
+  <div class="topbar"><button class="tb-back" onclick="goScreen('scr-home')">&#8592;</button><span class="tb-title">ToolKit</span></div>
   <div class="pinfo-body">
     <div class="pinfo-card"><h3>With-Profits Annuity (WPA)</h3>
       <p>Single-premium immediate annuity paying regular income for life. Instalments adjusted annually via Vanguard Life&apos;s bonus declaration.</p>
@@ -401,7 +401,7 @@ input::placeholder{color:#ccc}
     <button class="bnav-btn" onclick="navTo('home')"><svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>Home</button>
     <button class="bnav-btn" onclick="navTo('quote')"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>Quote</button>
     <button class="bnav-btn" onclick="navTo('history')"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>History</button>
-    <button class="bnav-btn active" onclick="navTo('products')"><svg viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>Products</button>
+    <button class="bnav-btn active" onclick="navTo('products')"><svg viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>ToolKit</button>
     <button class="bnav-btn" onclick="navTo('profile')"><svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>Profile</button>
   </div>
 </div>
@@ -421,7 +421,7 @@ input::placeholder{color:#ccc}
     <button class="bnav-btn" onclick="navTo('home')"><svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>Home</button>
     <button class="bnav-btn" onclick="navTo('quote')"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>Quote</button>
     <button class="bnav-btn" onclick="navTo('history')"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>History</button>
-    <button class="bnav-btn" onclick="navTo('products')"><svg viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>Products</button>
+    <button class="bnav-btn" onclick="navTo('products')"><svg viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>ToolKit</button>
     <button class="bnav-btn active" onclick="navTo('profile')"><svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>Profile</button>
   </div>
 </div>
@@ -442,7 +442,7 @@ input::placeholder{color:#ccc}
     <button class="bnav-btn" onclick="navTo('home')"><svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>Home</button>
     <button class="bnav-btn" onclick="navTo('quote')"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>Quote</button>
     <button class="bnav-btn" onclick="navTo('history')"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>History</button>
-    <button class="bnav-btn" onclick="navTo('products')"><svg viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>Products</button>
+    <button class="bnav-btn" onclick="navTo('products')"><svg viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>ToolKit</button>
     <button class="bnav-btn" onclick="navTo('profile')"><svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>Profile</button>
   </div>
 </div>
@@ -478,7 +478,7 @@ input::placeholder{color:#ccc}
     <button class="bnav-btn" onclick="navTo('home')"><svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>Home</button>
     <button class="bnav-btn" onclick="navTo('quote')"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>Quote</button>
     <button class="bnav-btn" onclick="navTo('history')"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>History</button>
-    <button class="bnav-btn" onclick="navTo('products')"><svg viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>Products</button>
+    <button class="bnav-btn" onclick="navTo('products')"><svg viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>ToolKit</button>
     <button class="bnav-btn" onclick="navTo('profile')"><svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>Profile</button>
   </div>
 </div>
@@ -1169,8 +1169,8 @@ function renderBcard(){
 }
 
 function _drawBcard(ctx,W,H,DRED,GOLD,SANS,SERIF,iconImg){
+  var R=18, PAD=28;
   // Rounded maroon background
-  var R=18;
   ctx.fillStyle=DRED;
   ctx.beginPath();
   ctx.moveTo(R,0);ctx.lineTo(W-R,0);ctx.arcTo(W,0,W,R,R);
@@ -1179,51 +1179,50 @@ function _drawBcard(ctx,W,H,DRED,GOLD,SANS,SERIF,iconImg){
   ctx.lineTo(0,R);ctx.arcTo(0,0,R,0,R);
   ctx.closePath();ctx.fill();
 
-  // Large torch watermark — CENTRED, bigger
+  // Centred torch watermark — NO white box, just image at low opacity
   if(iconImg){
-    var wSize=220;
-    ctx.save();ctx.globalAlpha=0.09;
+    var wSize=260;
+    ctx.save();
+    ctx.globalAlpha=0.07;
     ctx.drawImage(iconImg,(W-wSize)/2,(H-wSize)/2,wSize,wSize);
     ctx.restore();
   }
 
-  var PAD=30, IB=86;
-  // White rounded icon box
-  ctx.fillStyle='rgba(255,255,255,0.15)';
-  roundRect2(ctx,PAD,PAD,IB,IB,10);ctx.fill();
+  // ── TOP STRIP: icon box left + name/title right ──────────────
+  var IB=72; // icon box size — smaller so less space wasted
+  var boxY=PAD;
+
+  // Rounded white icon box — no big white square
   ctx.fillStyle='#fff';
-  roundRect2(ctx,PAD+2,PAD+2,IB-4,IB-4,8);ctx.fill();
+  roundRect2(ctx,PAD,boxY,IB,IB,10);ctx.fill();
   if(iconImg){
     ctx.save();
-    ctx.beginPath();roundRect2(ctx,PAD+4,PAD+4,IB-8,IB-8,6);ctx.closePath();ctx.clip();
-    ctx.drawImage(iconImg,PAD+4,PAD+4,IB-8,IB-8);
+    ctx.beginPath();roundRect2(ctx,PAD+2,boxY+2,IB-4,IB-4,8);ctx.closePath();ctx.clip();
+    ctx.drawImage(iconImg,PAD+2,boxY+2,IB-4,IB-4);
     ctx.restore();
   }
 
-  // Name — moved down slightly, right of icon
-  var TX=PAD+IB+18;
-  var nameY=PAD+42;  // was PAD+30 — now lower
+  // Name, title, company — vertically centred with icon box
+  var TX=PAD+IB+16;
+  var nameY=boxY+IB/2-10; // centre name with box
   ctx.fillStyle='#fff';
-  ctx.font='bold 26px '+SERIF;
+  ctx.font='bold 24px '+SERIF;
   ctx.textAlign='left';
-  // Truncate name if too long
-  var nameStr=currentUser.name||'FA Name';
-  ctx.fillText(nameStr,TX,nameY);
-
+  ctx.fillText(currentUser.name||'FA Name',TX,nameY);
   ctx.fillStyle=GOLD;
-  ctx.font='bold 11px '+SANS;
-  ctx.fillText((currentUser.title||'Financial Advisor').toUpperCase(),TX,nameY+20);
+  ctx.font='bold 10.5px '+SANS;
+  // Use actual title from profile — not "Intermediary"
+  ctx.fillText((currentUser.title||'Financial Advisor').toUpperCase(),TX,nameY+17);
+  ctx.fillStyle='rgba(255,255,255,.5)';
+  ctx.font='10px '+SANS;
+  ctx.fillText('VANGUARD LIFE ASSURANCE',TX,nameY+32);
 
-  ctx.fillStyle='rgba(255,255,255,.55)';
-  ctx.font='10.5px '+SANS;
-  ctx.fillText('VANGUARD LIFE ASSURANCE',TX,nameY+38);
-
-  // Divider
-  var DY=PAD+IB+20;
-  ctx.strokeStyle='rgba(255,255,255,.22)';ctx.lineWidth=1;
+  // ── DIVIDER ──────────────────────────────────────────────────
+  var DY=boxY+IB+14;
+  ctx.strokeStyle='rgba(255,255,255,.2)';ctx.lineWidth=1;
   ctx.beginPath();ctx.moveTo(PAD,DY);ctx.lineTo(W-PAD,DY);ctx.stroke();
 
-  // Contact rows
+  // ── CONTACT ROWS — compact ────────────────────────────────────
   var items=[
     ['T', currentUser.phone||''],
     ['@', currentUser.faEmail||''],
@@ -1231,22 +1230,28 @@ function _drawBcard(ctx,W,H,DRED,GOLD,SANS,SERIF,iconImg){
     ['W', 'vanguardlifemw.com'],
   ].filter(function(r){return r[1];});
 
-  var RY=DY+18, rowH=30;
+  var rowH=26, startY=DY+18;
   items.forEach(function(row,i){
-    var y=RY+i*rowH;
-    ctx.strokeStyle='rgba(255,255,255,.55)';ctx.lineWidth=1.2;
-    ctx.beginPath();ctx.rect(PAD,y-13,22,22);ctx.stroke();
-    ctx.fillStyle='rgba(255,255,255,.65)';ctx.font='bold 9px '+SANS;ctx.textAlign='center';
-    ctx.fillText(row[0],PAD+11,y+1);
+    var y=startY+i*rowH;
+    // Small icon label box
+    ctx.strokeStyle='rgba(255,255,255,.45)';ctx.lineWidth=1;
+    ctx.beginPath();ctx.rect(PAD,y-10,18,18);ctx.stroke();
+    ctx.fillStyle='rgba(255,255,255,.55)';ctx.font='bold 8px '+SANS;ctx.textAlign='center';
+    ctx.fillText(row[0],PAD+9,y+2);
+    // Value text
     ctx.fillStyle='#fff';ctx.font='13px '+SANS;ctx.textAlign='left';
-    ctx.fillText(row[1],PAD+30,y+2);
+    ctx.fillText(row[1],PAD+26,y+3);
   });
 
-  // Tagline
-  ctx.fillStyle='rgba(255,255,255,.42)';
-  ctx.font='italic 12px '+SERIF;
-  ctx.textAlign='left';
-  ctx.fillText('“Your financial light for life”',PAD,H-18);
+  // ── TAGLINE ───────────────────────────────────────────────────
+  var tagY=startY+items.length*rowH+12;
+  // Only show if space allows
+  if(tagY<H-14){
+    ctx.fillStyle='rgba(255,255,255,.38)';
+    ctx.font='italic 11px '+SERIF;
+    ctx.textAlign='left';
+    ctx.fillText('“Your financial light for life”',PAD,H-14);
+  }
 }
 
 function roundRect2(ctx,x,y,w,h,r){
