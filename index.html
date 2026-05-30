@@ -1739,6 +1739,21 @@ function renderQuoteCanvas(q,inp){
 }
 
 
+
+// ── Consistent quote filename: client name + reference + date ──
+function _quoteFileName(ext){
+  var nm=(currentInputs&&currentInputs.policyholderName?currentInputs.policyholderName:'Client')
+            .replace(/[^A-Za-z0-9]+/g,'_').replace(/^_+|_+$/g,'')||'Client';
+  var ref='';
+  if(lastQuote&&(lastQuote.policyNumber||lastQuote.quoteId)){
+    ref='_'+String(lastQuote.policyNumber||lastQuote.quoteId).replace(/[^A-Za-z0-9-]+/g,'');
+  } else if(currentInputs&&currentInputs.policyNumber){
+    ref='_'+String(currentInputs.policyNumber).replace(/[^A-Za-z0-9-]+/g,'');
+  }
+  var date=new Date().toISOString().slice(0,10);
+  return 'VLA_Annuity_'+nm+ref+'_'+date+'.'+ext;
+}
+
 // ── Build quote PDF as Blob (for sharing) ─────────────────────
 function _buildQuotePdfBlob(){
   if(!lastQuote||!window.jspdf||!window.jspdf.jsPDF)return null;
@@ -1764,8 +1779,7 @@ function downloadQuotePDF(){
   setTimeout(function(){
     var blob=_buildQuotePdfBlob();
     if(!blob){showToast('PDF generation failed');return;}
-    var name=(currentInputs.policyholderName||'quote').replace(/\s+/g,'_');
-    var fn='VLA_Annuity_'+name+'_'+new Date().toISOString().slice(0,10)+'.pdf';
+    var fn=_quoteFileName('pdf');
     var a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=fn;a.click();
     showToast('\u2713 PDF downloaded');
   },60);
@@ -1967,7 +1981,7 @@ function _shareCanvas(canvasId, filename, title){
 async function shareWhatsApp(){
   var blob=_buildQuotePdfBlob();
   if(!blob){showToast('PDF not ready');return;}
-  var fname='VLA_Annuity_Quote.pdf';
+  var fname=_quoteFileName('pdf');
   var file=new File([blob],fname,{type:'application/pdf'});
   if(navigator.share&&navigator.canShare&&navigator.canShare({files:[file]})){
     try{await navigator.share({files:[file],title:'VLA Annuity Quote',text:'Please find your VLA Annuity Quotation attached.'});return;}catch(e){}
@@ -1979,7 +1993,7 @@ async function shareWhatsApp(){
 async function shareEmail(){
   var blob=_buildQuotePdfBlob();
   if(!blob){showToast('PDF not ready');return;}
-  var fname='VLA_Annuity_Quote.pdf';
+  var fname=_quoteFileName('pdf');
   var file=new File([blob],fname,{type:'application/pdf'});
   if(navigator.share&&navigator.canShare&&navigator.canShare({files:[file]})){
     try{await navigator.share({files:[file],title:'VLA Annuity Quote'});return;}catch(e){}
@@ -2010,7 +2024,7 @@ function downloadQuote(){
   var canvas=document.getElementById('quote-canvas');
   if(!canvas.width)return;
   var a=document.createElement('a');
-  a.download='VLA_Annuity_'+(currentInputs.policyholderName||'quote').replace(/\s+/g,'_')+'_'+new Date().toISOString().slice(0,10)+'.png';
+  a.download=_quoteFileName('png');
   a.href=canvas.toDataURL('image/png');a.click();
 }
 function downloadBcard(){
