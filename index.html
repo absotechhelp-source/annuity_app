@@ -1585,15 +1585,15 @@ function _drawQuotePage2(ctx,C,yOffset){
     Y+=12;
   }
   medTableTick('Medical Coverage Options \u2014 Medhealth',['CARE','CAREPLUS','MEDISAVE','MEDICARE'],
-    [{label:'Benefit Limit (MK)',vals:['7,000,000','13,500,000','31,500,000','74,000,000']},
-     {label:'Adult Contribution (MK)',vals:['10,800','24,780','35,400','54,000']},
-     {label:'Child Contribution (MK)',vals:['10,800','24,780','30,210','50,400']}]);
+    [{label:'Benefit Limit/yr (MK)',vals:['7,000,000','13,500,000','31,500,000','74,000,000']},
+     {label:'Adult Contribution/m (MK)',vals:['10,800','24,780','35,400','54,000']},
+     {label:'Child Contribution/m (MK)',vals:['10,800','24,780','30,210','50,400']}]);
   Y+=16; // extra gap between Medhealth and MASM
   Y+=14; // gap between Medhealth and MASM
   medTableTick('Medical Coverage Options \u2014 MASM',['ECO-2026','EXE-2026','VIP-2026'],
-    [{label:'Benefit Limit (MK)',vals:['8,000,000','32,000,000','90,000,000']},
-     {label:'Adult Contribution (MK)',vals:['9,000','30,000','63,000']},
-     {label:'Child Contribution (MK)',vals:['9,000','29,000','56,000']},
+    [{label:'Benefit Limit/yr (MK)',vals:['8,000,000','32,000,000','90,000,000']},
+     {label:'Adult Contribution/m (MK)',vals:['9,000','30,000','63,000']},
+     {label:'Child Contribution/m (MK)',vals:['9,000','29,000','56,000']},
      {label:'Territorial Limit',vals:['Malawi, Mission & Govt hospitals & GPs','SADC, India, Egypt, Kenya','SADC, India, Egypt, Kenya'],tall:true}]);
   ctx.fillStyle='#111';ctx.font='bold 12px '+SANS;ctx.textAlign='left';ctx.fillText('SPOUSE\u2019S PERSONAL DETAILS',MX,Y+4);Y+=20;
   var sp=[['First name','Surname'],['National ID','Contact telephone'],['Date of birth','']];
