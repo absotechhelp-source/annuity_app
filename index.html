@@ -1102,7 +1102,49 @@ function _warmGAS(){
 document.addEventListener('DOMContentLoaded',function(){_warmGAS();});
 
 
+function resetQuoteForm(){
+  // Clear all quote state so no previous user's data leaks to next login
+  currentInputs={};lastQuote=null;_reviseMode=false;_viewMode=false;
+  // Clear text / date / number inputs
+  ['policyholderName','dob1','dob2','name2','initialConsideration'].forEach(function(id){
+    var el=document.getElementById(id);if(el)el.value='';
+  });
+  // Reset selects to defaults
+  var selDefaults={paymentTiming:'Advance',frequency:'Monthly',
+                   basisName:'PA90',relationship:'Spouse',
+                   maxChildAge:'23',reversionPct:'50',fixedPeriod:'10'};
+  Object.keys(selDefaults).forEach(function(id){
+    var el=document.getElementById(id);if(el)el.value=selDefaults[id];
+  });
+  // Reset toggle groups (hidden inputs + button .on classes)
+  var togDefaults={gender1:'Male',gender2:'Male',annuityStructure:'Single'};
+  Object.keys(togDefaults).forEach(function(g){
+    var el=document.getElementById(g);if(el)el.value=togDefaults[g];
+    document.querySelectorAll('.tog[data-g="'+g+'"]').forEach(function(b){
+      b.classList.toggle('on',b.dataset.v===togDefaults[g]);
+    });
+  });
+  // Set dueDate to today
+  var dd=document.getElementById('dueDate');
+  if(dd)dd.value=new Date().toISOString().slice(0,10);
+  // Hide ANB display
+  var anbWrap=document.getElementById('anb1-wrap');
+  if(anbWrap)anbWrap.style.display='none';
+  // Show actions panel (may have been hidden during view-only mode)
+  var actDiv=document.querySelector('#panel-quote .actions');
+  if(actDiv)actDiv.style.display='';
+  // Reset Save button text
+  var saveBtn=document.getElementById('save-btn');
+  if(saveBtn)saveBtn.textContent='☁ Save';
+  // Clear done-badges from tabs
+  document.querySelectorAll('.q-tab').forEach(function(b){b.classList.remove('done');});
+  // Collapse joint/fixed-term sections, reset structure UI
+  handleStructureChange();
+  // Return to the form tab (don't show a blank quote canvas)
+  goQTab('panel-form');
+}
 function showApp(){
+  resetQuoteForm(); // clear any previous user's inputs
   var today=new Date().toISOString().slice(0,10);
   document.getElementById('dob1').max=today;
   document.getElementById('dob2').max=today;
@@ -1309,7 +1351,11 @@ async function runCalc(){
       body:JSON.stringify({token:APP_TOKEN,action:'getQuote',inputs:currentInputs})
     });
     var d=await resp.json();
-    if(!d.ok) throw new Error(d.error||'Server error');
+    if(!d.ok){
+      var msg=d.error||'Server error';
+      if(msg==='Unknown action')msg='Quote server not updated. Please deploy AppsScript.gs v4.0 via Manage Deployments.';
+      throw new Error(msg);
+    }
     lastQuote=d.quote;
     _viewMode=false;
     var _actEl=document.querySelector('#panel-quote .actions');if(_actEl)_actEl.style.display='';
