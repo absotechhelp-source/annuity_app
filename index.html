@@ -1344,12 +1344,12 @@ async function runCalc(){
   }
   var spin=document.getElementById('spin');spin.classList.add('show');
   try{
-    var resp=await fetch(APPS_SCRIPT_URL,{
-      method:'POST',
-      redirect:'follow',
-      headers:{'Content-Type':'text/plain;charset=utf-8'},
-      body:JSON.stringify({token:APP_TOKEN,action:'getQuote',inputs:currentInputs})
-    });
+    // GET avoids POST→GET redirect body-loss (GAS redirect drops POST body).
+    var _qUrl=APPS_SCRIPT_URL
+      +'?action=getQuote'
+      +'&token='+encodeURIComponent(APP_TOKEN)
+      +'&inputs='+encodeURIComponent(JSON.stringify(currentInputs));
+    var resp=await fetch(_qUrl,{redirect:'follow'});
     var d=await resp.json();
     if(!d.ok){
       var msg=d.error||'Server error';
