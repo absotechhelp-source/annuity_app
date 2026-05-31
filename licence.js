@@ -12,7 +12,7 @@
 //    on / after expiry date     : red banner, Sign In disabled
 // ================================================================
 
-var LICENCE_EXPIRY    = '2026-12-31';  // ← update this to renew
+var LICENCE_EXPIRY    = '2026-06-13';  // ← update this to renew
 var LICENCE_WARN_DAYS = 14;            // days before expiry to start warning
 
 function checkLicence() {
