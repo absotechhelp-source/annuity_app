@@ -706,6 +706,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
         <div class="grid-2">
           <div class="field span2"><label>Proposer name <sup>*</sup></label><input id="policyholderName" type="text" placeholder="Full legal name"/><span class="field-err">Required</span></div>
           
+          <div class="field admin-only-field span2" id="fa-sel-wrap"><label>Quote on behalf of FA</label><select id="quoteFA" onchange="onFASelect(this.value)"><option value="">— Myself —</option></select></div>
           <div class="field admin-only-field"><label>Mortality basis</label>
             <select id="basisName"><option value="PA90">PA90 &#8212; Pensioners 1990</option><option value="A55">A55 &#8212; Assured Lives 1955-60</option></select></div>
         </div>
@@ -981,6 +982,8 @@ var currentUser=null,currentInputs={},lastQuote=null,localQuotes=[];
 var _newWorker=null;
 var _reviseMode=false;
 var _viewMode=false;
+var _selectedFA=null;   // FA selected by Admin to quote on behalf of
+var _faList=[];         // cached FA list for admin dropdown
 
 // ── Offline / SW ─────────────────────────────────────────────
 function syncOnline(){document.body.classList.toggle('offline',!navigator.onLine);}
@@ -1011,9 +1014,33 @@ function goScreen(id){
   document.querySelectorAll('.screen').forEach(function(s){s.classList.remove('active');});
   document.getElementById(id).classList.add('active');
 }
+// ── Admin: FA selector for quoting on behalf of ────────────
+function loadFADropdown(){
+  if(!currentUser||currentUser.role!=='Admin')return;
+  var sel=document.getElementById('quoteFA');if(!sel)return;
+  fetch(APPS_SCRIPT_URL+'?action=getUsers&requesterId='+encodeURIComponent(currentUser.userId)+'&token='+encodeURIComponent(APP_TOKEN),{redirect:'follow'})
+    .then(function(r){return r.json();})
+    .then(function(d){
+      if(!d.ok||!d.users)return;
+      _faList=d.users.filter(function(u){return u.active;});
+      var opts='<option value="">— Myself —</option>';
+      _faList.filter(function(u){return u.role==='FA';})
+             .forEach(function(u){
+               opts+='<option value="'+escHtml(u.userId)+'">'+escHtml(u.name)+'</option>';
+             });
+      sel.innerHTML=opts; sel.value=''; _selectedFA=null;
+    }).catch(function(){});
+}
+function onFASelect(uid){
+  if(!uid){_selectedFA=null;return;}
+  var fa=_faList.find(function(u){return u.userId===uid;});
+  _selectedFA=fa?{userId:fa.userId,name:fa.name||'',title:fa.title||'Financial Advisor',
+                   faEmail:fa.faEmail||'',phone:fa.phone||'',employeeId:fa.employeeId||''}:null;
+}
 function navTo(dest){
   var map={home:'scr-home',quote:'scr-products',history:'scr-history',products:'scr-productinfo',profile:'scr-profile'};
   if(dest==='history') renderHistory();
+  if(dest==='quote'){resetQuoteForm();loadFADropdown();}
   goScreen(map[dest]||'scr-home');
 }
 
@@ -1104,7 +1131,8 @@ document.addEventListener('DOMContentLoaded',function(){_warmGAS();});
 
 function resetQuoteForm(){
   // Clear all quote state so no previous user's data leaks to next login
-  currentInputs={};lastQuote=null;_reviseMode=false;_viewMode=false;
+  currentInputs={};lastQuote=null;_reviseMode=false;_viewMode=false;_selectedFA=null;
+  var qfaSel=document.getElementById('quoteFA');if(qfaSel)qfaSel.value='';
   // Clear text / date / number inputs
   ['policyholderName','dob1','dob2','name2','initialConsideration'].forEach(function(id){
     var el=document.getElementById(id);if(el)el.value='';
@@ -1161,6 +1189,7 @@ function showApp(){
   document.querySelectorAll('.admin-only-field').forEach(function(el){el.style.display=isAdmin?'':'none';});
   document.querySelectorAll('.admin-only-tog').forEach(function(el){el.style.display=isAdmin?'':'none';});
   loadLocalQuotes();
+  if(currentUser&&currentUser.role==='Admin')loadFADropdown();
   updateSyncDot();
   updateStats();
   renderRecentQuotes();
@@ -1512,10 +1541,12 @@ function _drawQuotePage1(ctx,C,yOffset){
   ctx.fillStyle=MGRAY;ctx.font='13px '+SANS;ctx.fillText('Date',MX,DATE_Y+14);
   // FA block (right)
   ctx.strokeStyle='#555';ctx.beginPath();ctx.moveTo(RX,Y+34);ctx.lineTo(RX+halfW,Y+34);ctx.stroke();
-  var faName=(currentUser&&currentUser.name)||'',faTitle=(currentUser&&currentUser.title)||'Financial Advisor',faEmail=(currentUser&&currentUser.faEmail)||'';
+  var _fa=_selectedFA||currentUser;
+  var faName=(_fa&&_fa.name)||'',faTitle=(_fa&&_fa.title)||'Financial Advisor',faEmail=(_fa&&_fa.faEmail)||'',faPhone=(_fa&&_fa.phone)||'';
   ctx.fillStyle='#111';ctx.font='bold 14px '+SANS;ctx.fillText(faName.toUpperCase(),RX,Y+28);
   ctx.fillStyle=DGRAY;ctx.font='13px '+SANS;ctx.fillText(faTitle,RX,Y+46);
   if(faEmail){ctx.fillStyle=DRED;ctx.fillText('Email: '+faEmail,RX,Y+62);}
+  if(faPhone){ctx.fillStyle=DRED;ctx.fillText('Tel: '+faPhone,RX,Y+78);}
   ctx.strokeStyle='#555';ctx.beginPath();ctx.moveTo(RX,DATE_Y);ctx.lineTo(RX+halfW,DATE_Y);ctx.stroke();
   ctx.fillStyle=MGRAY;ctx.font='13px '+SANS;ctx.fillText('Date',RX,DATE_Y+14);
   Y+=H.ACCEPT_H+H.GAP_FT;
@@ -1976,8 +2007,12 @@ function _doSave(){_reviseMode=false;
   var localId=genLocalId();
   var entry={localId,quoteId:null,syncStatus:'pending',quoteDate:lastQuote.generatedAt,
     inputs:JSON.parse(JSON.stringify(currentInputs)),results:lastQuote.results,anb1:lastQuote.anb1,
-    faSnapshot:{name:(currentUser&&currentUser.name)||'',title:(currentUser&&currentUser.title)||'Intermediary',
-      faEmail:(currentUser&&currentUser.faEmail)||'',phone:(currentUser&&currentUser.phone)||''}};
+    faSnapshot:(function(){
+      var _fs=_selectedFA||currentUser;
+      return {name:(_fs&&_fs.name)||'',title:(_fs&&_fs.title)||'Intermediary',
+              faEmail:(_fs&&_fs.faEmail)||'',phone:(_fs&&_fs.phone)||'',
+              quotedByAdmin:!!_selectedFA&&(currentUser.name||'')};
+    })()};
   localQuotes.unshift(entry);saveLocalQuotes();
   var btn=document.getElementById('save-btn');btn.textContent='\u2713 Saved';
   setTimeout(function(){btn.textContent='\u2601 Save';},1800);
@@ -1986,7 +2021,7 @@ function _doSave(){_reviseMode=false;
 function pushQuote(entry){
   if(!navigator.onLine)return;
   fetch(APPS_SCRIPT_URL,{method:'POST',body:JSON.stringify({token:APP_TOKEN,
-    action:'saveQuote',localId:entry.localId,userId:currentUser.userId,faName:currentUser.name,
+    action:'saveQuote',localId:entry.localId,userId:currentUser.userId,faName:(_selectedFA||currentUser).name,
     clientName:entry.inputs.policyholderName,clientDob:entry.inputs.dob1,clientGender:entry.inputs.gender1,
     anb:entry.anb1,consideration:entry.inputs.initialConsideration,dueDate:entry.inputs.dueDate||'',
     basis:entry.inputs.basisName,frequency:entry.inputs.frequency,timing:entry.inputs.paymentTiming,
@@ -2003,7 +2038,7 @@ async function syncAll(){
   for(var i=0;i<pending.length;i++){
     try{
       var r=await fetch(APPS_SCRIPT_URL,{method:'POST',body:JSON.stringify({token:APP_TOKEN,
-        action:'saveQuote',localId:pending[i].localId,userId:currentUser.userId,faName:currentUser.name,
+        action:'saveQuote',localId:pending[i].localId,userId:currentUser.userId,faName:(pending[i].faSnapshot&&pending[i].faSnapshot.name)||currentUser.name,
         clientName:pending[i].inputs.policyholderName,clientDob:pending[i].inputs.dob1,
         clientGender:pending[i].inputs.gender1,anb:pending[i].anb1,
         consideration:pending[i].inputs.initialConsideration,dueDate:pending[i].inputs.dueDate||'',
