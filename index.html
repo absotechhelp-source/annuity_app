@@ -36,6 +36,10 @@ body.offline .offline-bar{display:block}
 .login-btn{width:100%;padding:.62rem;background:var(--red);color:#fff;border:none;border-radius:7px;font-family:inherit;font-size:.8rem;letter-spacing:.1em;text-transform:uppercase;cursor:pointer;margin-top:.45rem}
 .login-btn:disabled{opacity:.6;cursor:not-allowed}
 .login-err{color:#c00;font-size:.72rem;margin-top:.45rem;text-align:center;min-height:.9rem}
+.lic-warn{background:#fff8e1;border:1px solid #f5a623;border-radius:7px;padding:.55rem .8rem;font-size:.72rem;color:#7a5300;text-align:center;margin-top:.55rem;line-height:1.45;display:none}
+.lic-warn strong{display:block;font-size:.78rem;color:#5a3a00;margin-bottom:.18rem}
+.lic-expired{background:#fff0f0;border:1px solid #c00;border-radius:7px;padding:.7rem .8rem;font-size:.73rem;color:#8b0000;text-align:center;margin-top:.55rem;line-height:1.45;display:none}
+.lic-expired strong{display:block;font-size:.8rem;color:#5c0000;margin-bottom:.18rem}
 .home-scroll{flex:1;overflow-y:auto;padding:.85rem .8rem .8rem}
 .stats-grid{display:grid;grid-template-columns:1fr 1fr;gap:.65rem;margin-bottom:1.1rem}
 .stat-card{background:#fff;border-radius:var(--radius);box-shadow:var(--shadow);padding:.85rem .95rem}
@@ -595,6 +599,16 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
     <div class="lf"><label>Password</label><input id="login-pass" type="password" autocomplete="current-password" placeholder="&#x2022;&#x2022;&#x2022;&#x2022;&#x2022;&#x2022;&#x2022;&#x2022;"/></div>
     <button class="login-btn" id="login-btn" onclick="doLogin()">Sign In</button>
     <div class="login-err" id="login-err"></div>
+    <div class="lic-warn" id="lic-warn">
+      <strong>⚠ Licence Expiring Soon</strong>
+      This application licence expires on <span id="lic-exp-date"></span>.
+      Please contact your system administrator to renew.
+    </div>
+    <div class="lic-expired" id="lic-expired">
+      <strong>🔒 Licence Expired</strong>
+      This application licence expired on <span id="lic-exp-date2"></span>.
+      Sign-in is disabled. Contact your system administrator to renew.
+    </div>
   </div>
 </div>
 
@@ -948,8 +962,9 @@ function computeANB(dob){
   return Math.ceil((Date.now()-d.getTime())/(365.25*24*3600*1000));
 }
 </script>
+<script src="licence.js"></script>
 <script>
-var APPS_SCRIPT_URL='https://script.google.com/macros/s/AKfycbypY6pjF2XkyFGJLaTB-kKMk6hICTuyfsppLkB1SUza21EFcI-QWRaEhWDdMGtP1IJw/exec';
+var APPS_SCRIPT_URL='https://script.google.com/macros/s/AKfycbyCEJgb6yP_Oz6uUEvnQSfRxTFc_icrEhx6ddO1LCAyHZAS7iV0bAQFcSo36eerboX9/exec';
 var APP_TOKEN='7c4d7639399fce9785df19a3152f27369895b0fb450c8574'; // must match API_TOKEN in AppsScript.gs
 var _lhImg=new Image(),_lhReady=false,_pendingRender=null;
 var _ftImg=new Image();
@@ -1013,6 +1028,7 @@ function _credHash(u,pw){
 }
 
 function doLogin(){
+  if(!checkLicence())return;  // hard block if expired
   var u=document.getElementById('login-user').value.trim();
   var pw=document.getElementById('login-pass').value.trim();
   var errEl=document.getElementById('login-err');
@@ -1021,12 +1037,42 @@ function doLogin(){
   var btn=document.getElementById('login-btn');
   btn.disabled=true;
   btn.innerHTML='<span class="spinner" style="border-top-color:#fff"></span>Signing in\u2026';
-  if(!APPS_SCRIPT_URL||APPS_SCRIPT_URL.indexOf('YOUR_APPS')===0){
-    var cached=localStorage.getItem('vla_ann_user');
-    var cred=localStorage.getItem('vla_ann_cred');
+
+  // ── Fast-path: returning user with valid cached credentials ──────────
+  // Show the app immediately from cache; re-validate with server silently.
+  // This eliminates the perceived wait for users who have logged in before.
+  var cached=localStorage.getItem('vla_ann_user');
+  var cred=localStorage.getItem('vla_ann_cred');
+  if(cached&&cred===_credHash(u,pw)){
+    currentUser=JSON.parse(cached);
+    showApp();
     btn.disabled=false;btn.textContent='Sign In';
-    if(cached&&cred===_credHash(u,pw)){currentUser=JSON.parse(cached);showApp();}
-    else errEl.textContent='Backend not configured. Contact your admin.';
+    // Silent background re-validation — refreshes user record & detects deactivation
+    if(APPS_SCRIPT_URL&&APPS_SCRIPT_URL.indexOf('YOUR_APPS')!==0){
+      fetch(APPS_SCRIPT_URL+'?action=login&u='+encodeURIComponent(u)+'&pw='+encodeURIComponent(pw)+'&token='+encodeURIComponent(APP_TOKEN),{redirect:'follow'})
+        .then(function(r){return r.ok?r.text():null;})
+        .then(function(raw){
+          if(!raw)return;
+          var d;try{d=JSON.parse(raw);}catch(e){return;}
+          if(d.ok){
+            // Refresh cached user record with latest data from server
+            localStorage.setItem('vla_ann_user',JSON.stringify(d.user));
+            currentUser=d.user;
+          } else {
+            // Account deactivated or password changed — force re-login next time
+            localStorage.removeItem('vla_ann_user');
+            localStorage.removeItem('vla_ann_cred');
+          }
+        })
+        .catch(function(){}); // silent — already inside the app
+    }
+    return;
+  }
+
+  // ── First login or credentials changed — must wait for server ─────────
+  if(!APPS_SCRIPT_URL||APPS_SCRIPT_URL.indexOf('YOUR_APPS')===0){
+    btn.disabled=false;btn.textContent='Sign In';
+    errEl.textContent='Backend not configured. Contact your admin.';
     return;
   }
   fetch(APPS_SCRIPT_URL+'?action=login&u='+encodeURIComponent(u)+'&pw='+encodeURIComponent(pw)+'&token='+encodeURIComponent(APP_TOKEN),{redirect:'follow'})
@@ -1037,14 +1083,27 @@ function doLogin(){
       else errEl.textContent=d.error||'Invalid credentials.';
     })
     .catch(function(err){
-      var cached=localStorage.getItem('vla_ann_user');
-      var cred=localStorage.getItem('vla_ann_cred');
-      if(cached&&cred===_credHash(u,pw)){currentUser=JSON.parse(cached);showApp();}
-      else errEl.textContent='Cannot connect. '+err.message;
+      errEl.textContent='Cannot connect. '+err.message;
     })
     .finally(function(){btn.disabled=false;btn.textContent='Sign In';});
 }
 document.getElementById('login-pass').addEventListener('keydown',function(e){if(e.key==='Enter')doLogin();});
+// Pre-warm the Apps Script runtime on first field focus so the cold-start
+// penalty is paid while the agent is typing, not after they click Sign In.
+(function(){
+  var _warmed=false;
+  function _warmGAS(){
+    if(_warmed||!APPS_SCRIPT_URL||APPS_SCRIPT_URL.indexOf('YOUR_APPS')===0)return;
+    _warmed=true;
+    fetch(APPS_SCRIPT_URL+'?action=ping&token='+encodeURIComponent(APP_TOKEN),{redirect:'follow'})
+      .catch(function(){});  // fire-and-forget — errors silently ignored
+  }
+  ['login-user','login-pass'].forEach(function(id){
+    var el=document.getElementById(id);
+    if(el){el.addEventListener('focus',_warmGAS,{once:true});}
+  });
+})();
+
 
 function showApp(){
   var today=new Date().toISOString().slice(0,10);
