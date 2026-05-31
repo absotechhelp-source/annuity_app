@@ -35,6 +35,8 @@ body.offline .offline-bar{display:block}
 .lf input:focus{outline:none;border-color:var(--red)}
 .login-btn{width:100%;padding:.62rem;background:var(--red);color:#fff;border:none;border-radius:7px;font-family:inherit;font-size:.8rem;letter-spacing:.1em;text-transform:uppercase;cursor:pointer;margin-top:.45rem}
 .login-btn:disabled{opacity:.6;cursor:not-allowed}
+.btn-danger{background:#b00;color:#fff;border:none;}
+.btn-danger:hover{background:#800;}
 .login-err{color:#c00;font-size:.72rem;margin-top:.45rem;text-align:center;min-height:.9rem}
 .lic-warn{background:#fff8e1;border:1px solid #f5a623;border-radius:7px;padding:.55rem .8rem;font-size:.72rem;color:#7a5300;text-align:center;margin-top:.55rem;line-height:1.45;display:none}
 .lic-warn strong{display:block;font-size:.78rem;color:#5a3a00;margin-bottom:.18rem}
@@ -124,7 +126,7 @@ input::placeholder{color:#ccc}
 .rev-item .rl{font-size:.62rem;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
 .rev-item .rv{font-size:.82rem;margin-top:.04rem}
 #panel-quote{text-align:center}
-#quote-canvas{max-width:100%;border-radius:7px;box-shadow:var(--shadow);cursor:pointer;display:block;margin:0 auto}
+#quote-canvas{max-width:100%;border-radius:7px;box-shadow:var(--shadow);cursor:default;display:block;margin:0 auto}
 .canvas-hint{font-size:.66rem;color:var(--muted);margin-top:.38rem}
 .share-row{display:flex;gap:.45rem;justify-content:center;margin-top:.6rem;flex-wrap:wrap}
 .share-btn{display:flex;align-items:center;gap:.35rem;padding:.38rem .82rem;border-radius:20px;font-size:.7rem;font-weight:600;cursor:pointer;border:none;transition:opacity .14s}
@@ -820,7 +822,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
 
     <div class="panel" id="panel-quote">
       <canvas id="quote-canvas"></canvas>
-      <p class="canvas-hint">Tap to download PNG &nbsp;&middot;&nbsp; Print for PDF</p>
+      <p class="canvas-hint">Use the buttons below to share or download.</p>
       <div class="share-row">
         <button class="share-btn share-wa" onclick="shareWhatsApp()"><svg width="14" height="14" fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.112.549 4.095 1.508 5.822L.057 23.43l5.744-1.507A11.946 11.946 0 0 0 12 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.818a9.818 9.818 0 0 1-5.007-1.369l-.359-.213-3.411.895.91-3.323-.234-.371A9.818 9.818 0 1 1 12 21.818z"/></svg>WhatsApp</button>
         <button class="share-btn share-email" onclick="shareEmail()"><svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>Email</button>
@@ -978,6 +980,7 @@ _ftImg.src='data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAABNgAAACICAIAAAC6FcHPAA
 var currentUser=null,currentInputs={},lastQuote=null,localQuotes=[];
 var _newWorker=null;
 var _reviseMode=false;
+var _viewMode=false;
 
 // ── Offline / SW ─────────────────────────────────────────────
 function syncOnline(){document.body.classList.toggle('offline',!navigator.onLine);}
@@ -1088,21 +1091,15 @@ function doLogin(){
     .finally(function(){btn.disabled=false;btn.textContent='Sign In';});
 }
 document.getElementById('login-pass').addEventListener('keydown',function(e){if(e.key==='Enter')doLogin();});
-// Pre-warm the Apps Script runtime on first field focus so the cold-start
-// penalty is paid while the agent is typing, not after they click Sign In.
-(function(){
-  var _warmed=false;
-  function _warmGAS(){
-    if(_warmed||!APPS_SCRIPT_URL||APPS_SCRIPT_URL.indexOf('YOUR_APPS')===0)return;
-    _warmed=true;
-    fetch(APPS_SCRIPT_URL+'?action=ping&token='+encodeURIComponent(APP_TOKEN),{redirect:'follow'})
-      .catch(function(){});  // fire-and-forget — errors silently ignored
-  }
-  ['login-user','login-pass'].forEach(function(id){
-    var el=document.getElementById(id);
-    if(el){el.addEventListener('focus',_warmGAS,{once:true});}
-  });
-})();
+// Pre-warm GAS runtime on page load — gives maximum time for cold-start.
+var _gasWarmed=false;
+function _warmGAS(){
+  if(_gasWarmed||!APPS_SCRIPT_URL||APPS_SCRIPT_URL.indexOf('YOUR_APPS')===0)return;
+  _gasWarmed=true;
+  fetch(APPS_SCRIPT_URL+'?action=ping&token='+encodeURIComponent(APP_TOKEN),{redirect:'follow'})
+    .catch(function(){});
+}
+document.addEventListener('DOMContentLoaded',function(){_warmGAS();});
 
 
 function showApp(){
@@ -1314,6 +1311,8 @@ async function runCalc(){
     var d=await resp.json();
     if(!d.ok) throw new Error(d.error||'Server error');
     lastQuote=d.quote;
+    _viewMode=false;
+    var _actEl=document.querySelector('#panel-quote .actions');if(_actEl)_actEl.style.display='';
     var doRender=function(){renderQuoteCanvas(lastQuote,currentInputs);};
     if(_lhReady) doRender(); else{_pendingRender=doRender;setTimeout(function(){if(_pendingRender){_pendingRender();_pendingRender=null;}},1200);}
     goQTab('panel-medical');
@@ -1353,10 +1352,10 @@ function _quoteCtx(q,inp){
   ];
   var TL=['No funeral benefit','Funeral Benefit Option 1','Funeral Benefit Option 2','Funeral Benefit Option 3','Funeral Benefit Option 4'];
   // Section heights
-  var H={GAP_LH:6,REF_H:36,GAP:8,BAND_H:32,DET_H:33,THEAD_H:44,ROW_H:33,SELECT_H:54,NOTE_H:34,ACCEPT_H:150,GAP_FT:10};
+  var H={GAP_LH:6,REF_H:36,GAP:8,BAND_H:32,DET_H:33,THEAD_H:44,ROW_H:33,SELECT_H:76,NOTE_H:34,ACCEPT_H:210,GAP_FT:10};
   var ACC_HDR=34; // rule-gap (12) + 'Acceptance of terms' header (22)
   var P1=LH_H+H.GAP_LH+H.REF_H+H.GAP+H.BAND_H+detailItems.length*H.DET_H+H.GAP+H.BAND_H+H.THEAD_H+10*H.ROW_H+H.GAP+H.SELECT_H+H.GAP+H.NOTE_H+ACC_HDR+H.ACCEPT_H+H.GAP_FT+FT_H;
-  var MED={BAND:33,Q:150,PLAN:30,SPOUSE:180,TABLE1:150,TABLE2:180,SIG:150};
+  var MED={BAND:33,Q:150,PLAN:30,SPOUSE:220,TABLE1:150,TABLE2:180,SIG:210};
   var P2TOP_=LH_H+H.GAP_LH;
   var P2content=46+MED.Q+MED.PLAN+MED.SPOUSE+MED.TABLE1+MED.TABLE2+MED.SIG+70;
   var P2=Math.max(P2TOP_+P2content+FT_H, Math.round(W*297/210)); // at least full A4 so footer sits at bottom
@@ -1421,8 +1420,8 @@ function _drawQuotePage1(ctx,C,yOffset){
   ctx.textAlign='left';Y+=H.THEAD_H;
   for(var tier=0;tier<5;tier++){
     var rws=q.results.filter(function(r){return r.funeralTier===tier;}).sort(function(a,b){return a.guarantee-b.guarantee;});
-    var ann=rws.map(function(r){return fmtN(r.perInstalmentAnnuity);});
-    var cov=rws[0].funeralCover>0?fmtN(rws[0].funeralCover):'0';
+    var ann=rws.map(function(r){return 'MK '+fmtN(r.perInstalmentAnnuity);});
+    var cov=rws[0].funeralCover>0?'MK '+fmtN(rws[0].funeralCover):'—';
     ctx.fillStyle='#fff';ctx.fillRect(MX,Y,CONTENT_W,H.ROW_H);
     drawCols(ctx,MX,Y,H.ROW_H,[cx1,cx2,cx3,MX+CONTENT_W],LINE);
     ctx.fillStyle=DRED;ctx.font='bold 14px '+SANS;ctx.textAlign='left';ctx.fillText(C.TL[tier],MX+8,Y+H.ROW_H/2+5);
@@ -1557,28 +1556,28 @@ function _drawQuotePage2(ctx,C,yOffset){
       ctx.fillStyle=DGRAY;ctx.font='11px '+SANS;ctx.textAlign='left';ctx.fillText(lbl,x0,Y+12);
       ctx.strokeStyle='#bbb';ctx.lineWidth=0.8;ctx.beginPath();ctx.moveTo(x0+lblW,Y+14);ctx.lineTo(col===0?MX+CONTENT_W/2-10:MX+CONTENT_W,Y+14);ctx.stroke();
     });
-    Y+=28;
+    Y+=42;
   });
   Y+=12;
   var sigW=(CONTENT_W-40)/2;
   // ── Premium deduction & net pension FIRST (before sign-offs) ──
-  ctx.fillStyle='#fdf8f2';ctx.fillRect(MX,Y,CONTENT_W,52);
-  ctx.strokeStyle=GOLD;ctx.lineWidth=1;ctx.strokeRect(MX,Y,CONTENT_W,52);
+  ctx.fillStyle='#fdf8f2';ctx.fillRect(MX,Y,CONTENT_W,72);
+  ctx.strokeStyle=GOLD;ctx.lineWidth=1;ctx.strokeRect(MX,Y,CONTENT_W,72);
   ctx.fillStyle=DRED;ctx.font='bold 12px '+SANS;ctx.textAlign='left';
   ctx.fillText('PREMIUM DEDUCTION (to be completed):',MX+10,Y+19);
   ctx.fillStyle='#111';ctx.font='12px '+SANS;
-  ctx.fillText('Total Monthly Deduction:',MX+10,Y+40);
+  ctx.fillText('Total Monthly Deduction (MK):',MX+10,Y+40);
   ctx.strokeStyle='#999';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(MX+165,Y+42);ctx.lineTo(MX+sigW,Y+42);ctx.stroke();
-  ctx.fillStyle='#111';ctx.fillText('Net Pension Amount:',MX+sigW+40,Y+40);
+  ctx.fillStyle='#111';ctx.fillText('Net Pension Amount (MK):',MX+sigW+40,Y+40);
   ctx.beginPath();ctx.moveTo(MX+sigW+175,Y+42);ctx.lineTo(MX+CONTENT_W,Y+42);ctx.stroke();
-  Y+=52+18;
+  Y+=72+18;
   // ── Sign-offs ────────────────────────────────────────────────
   ctx.strokeStyle='#555';ctx.lineWidth=1;
   ctx.beginPath();ctx.moveTo(MX,Y+16);ctx.lineTo(MX+sigW,Y+16);ctx.stroke();
   ctx.fillStyle='#333';ctx.font='11px '+SANS;ctx.textAlign='left';ctx.fillText('Pensioner\u2019s Signature',MX,Y+28);
-  ctx.beginPath();ctx.moveTo(MX+sigW+40,Y+16);ctx.lineTo(MX+CONTENT_W,Y+16);ctx.stroke();ctx.fillText('Date',MX+sigW+40,Y+28);Y+=42;
+  ctx.beginPath();ctx.moveTo(MX+sigW+40,Y+16);ctx.lineTo(MX+CONTENT_W,Y+16);ctx.stroke();ctx.fillText('Date',MX+sigW+40,Y+28);Y+=56;
   ctx.beginPath();ctx.moveTo(MX,Y+16);ctx.lineTo(MX+sigW,Y+16);ctx.stroke();ctx.fillText('Employer\u2019s Representative',MX,Y+28);
-  ctx.beginPath();ctx.moveTo(MX+sigW+40,Y+16);ctx.lineTo(MX+CONTENT_W,Y+16);ctx.stroke();ctx.fillText('Date',MX+sigW+40,Y+28);Y+=42;
+  ctx.beginPath();ctx.moveTo(MX+sigW+40,Y+16);ctx.lineTo(MX+CONTENT_W,Y+16);ctx.stroke();ctx.fillText('Date',MX+sigW+40,Y+28);Y+=56;
   ctx.fillText('Company Stamp',MX,Y+10);Y+=24;
   // ── Footer pinned to A4 bottom (not right after content) ─────
   var footY=(yOffset||0)+C.P2-C.FT_H;
@@ -1608,7 +1607,8 @@ function renderQuoteCanvas(q,inp){
   ctx.beginPath();ctx.moveTo(0,gy+PAGE_GAP/2);ctx.lineTo(C.W,gy+PAGE_GAP/2);ctx.stroke();ctx.setLineDash([]);
   _drawQuotePage2(ctx,C,C.P1+PAGE_GAP);
   ctx.textAlign='left';
-  canvas.onclick=downloadQuotePDF;
+  canvas.onclick=null;
+  canvas.style.cursor='default';
 }
 
 
@@ -1918,6 +1918,7 @@ function updateSyncDot(){var p=localQuotes.filter(function(q){return q.syncStatu
 
 function saveAndSync(){
   if(!lastQuote)return;
+  if(_viewMode){showToast('Already saved. Use Revise to create a new version.');return;}
   var today=new Date().toISOString().slice(0,10);
   var name=(currentInputs.policyholderName||'').trim().toLowerCase();
   var dup=localQuotes.find(function(q){return q.quoteDate&&q.quoteDate.slice(0,10)===today&&(q.inputs&&q.inputs.policyholderName||'').trim().toLowerCase()===name;});
@@ -2049,11 +2050,23 @@ function renderHistory(){
       +'<div class="qc-actions">'
         +'<button class="btn btn-ghost btn-sm" onclick="viewQuoteFromHistory('+i+')">View</button>'
         +'<button class="btn btn-primary btn-sm" onclick="reviseQuote('+i+')">Revise</button>'
+        +'<button class="btn btn-danger btn-sm" onclick="deleteQuote(event,\''+(entry.localId||entry.quoteId||'')+'\')">&times; Delete</button>'
       +'</div>'
     +'</div>';
   }).join('');
 }
+function deleteQuote(ev,lid){
+  if(ev&&ev.stopPropagation)ev.stopPropagation();
+  if(!lid){showToast('Cannot identify quote.');return;}
+  vlaConfirm('Delete this quote? This cannot be undone.',function(yes){
+    if(!yes)return;
+    var i=localQuotes.findIndex(function(q){return (q.localId&&q.localId===lid)||(q.quoteId&&q.quoteId===lid);});
+    if(i===-1){showToast('Quote not found.');return;}
+    localQuotes.splice(i,1);saveLocalQuotes();renderHistory();showToast('Quote deleted.');
+  });
+}
 function viewQuoteFromHistory(idx){
+  _viewMode=true;
   var entry=localQuotes[idx];
   if(!entry||!entry.results||!entry.results.length){vlaAlert('No result data for this quote.');return;}
   currentInputs=entry.inputs||{};
@@ -2063,8 +2076,9 @@ function viewQuoteFromHistory(idx){
   lastQuote=fakeQ; // so PDF/WhatsApp/Email work from history view
   var doRender=function(){renderQuoteCanvas(fakeQ,currentInputs);};
   if(_lhReady) doRender(); else{_pendingRender=doRender;setTimeout(function(){if(_pendingRender){_pendingRender();_pendingRender=null;}},1200);}
-  document.getElementById('quote-back-btn').onclick=function(){currentUser=savedUser;goScreen('scr-history');renderHistory();};
+  document.getElementById('quote-back-btn').onclick=function(){currentUser=savedUser;_viewMode=false;var ab=document.querySelector('#panel-quote .actions');if(ab)ab.style.display='';goScreen('scr-history');renderHistory();};
   document.getElementById('quote-product-title').textContent='WPA Quotation';
+  var _ab=document.querySelector('#panel-quote .actions');if(_ab)_ab.style.display='none';
   goScreen('scr-quote');goQTab('panel-quote');
 }
 function reviseQuote(idx){
@@ -2088,6 +2102,8 @@ function reviseQuote(idx){
   document.getElementById('quote-back-btn').onclick=function(){goScreen('scr-history');renderHistory();};
   document.getElementById('quote-product-title').textContent='WPA Quotation (Revise)';
   _reviseMode=true;
+  _viewMode=false;
+  var _actEl2=document.querySelector('#panel-quote .actions');if(_actEl2)_actEl2.style.display='';
   goQTab('panel-form');document.querySelectorAll('.q-tab').forEach(function(b){b.classList.remove('done');});
   goScreen('scr-quote');
 }
