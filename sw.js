@@ -6,7 +6,7 @@
 //  To trigger update on all devices: bump CACHE_VERSION below.
 // ================================================================
 
-const CACHE_VERSION = 'vla-annuity-v33';
+const CACHE_VERSION = 'vla-annuity-v34';
 
 const CORE_ASSETS = [
   './',

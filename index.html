@@ -2504,15 +2504,56 @@ function _faClientAccept(){
     }
     // Sync to sheet + notify Policy Servicing via email
     if(navigator.onLine&&APPS_SCRIPT_URL){
-      var _caUrl=APPS_SCRIPT_URL
-        +'?action=clientAccepted'
-        +'&token='+encodeURIComponent(APP_TOKEN)
-        +'&quoteId='+encodeURIComponent(lid)
-        +'&faName='+encodeURIComponent(currentUser.name||'')
-        +'&faEmail='+encodeURIComponent(currentUser.faEmail||'')
-        +'&clientName='+encodeURIComponent((i>-1&&localQuotes[i].inputs)?localQuotes[i].inputs.policyholderName||'Client':'Client')
-        +'&statusDate='+encodeURIComponent(new Date().toISOString().slice(0,10));
-      fetch(_caUrl,{redirect:'follow'}).catch(function(){});
+      var _entry=i>-1?localQuotes[i]:null;
+      var _clientName=(_entry&&_entry.inputs)?_entry.inputs.policyholderName||'Client':'Client';
+      var _faName=(_actingUser&&_actingUser.name)||currentUser.name||'';
+      // Step 1: ensure quote is saved to sheet first
+      var _saveBody={
+        token:APP_TOKEN, action:'saveQuote',
+        localId:_entry?_entry.localId||lid:lid,
+        userId:currentUser.userId||'',
+        faName:_faName,
+        clientName:_clientName,
+        clientDob:(_entry&&_entry.inputs)?_entry.inputs.dob1||'':'',
+        clientGender:(_entry&&_entry.inputs)?_entry.inputs.gender1||'':'',
+        anb:(_entry&&_entry.inputs)?_entry.inputs.anb1||0:0,
+        consideration:(_entry&&_entry.inputs)?_entry.inputs.initialConsideration||0:0,
+        dueDate:(_entry&&_entry.inputs)?_entry.inputs.dueDate||'':'',
+        basis:(_entry&&_entry.inputs)?_entry.inputs.basisName||'PA90':'PA90',
+        frequency:(_entry&&_entry.inputs)?_entry.inputs.frequency||'Monthly':'Monthly',
+        timing:(_entry&&_entry.inputs)?_entry.inputs.paymentTiming||'Advance':'Advance',
+        structure:(_entry&&_entry.inputs)?_entry.inputs.annuityStructure||'Single':'Single',
+        quoteDate:_entry?_entry.quoteDate||new Date().toISOString().slice(0,10):new Date().toISOString().slice(0,10),
+        resultsJson:_entry?JSON.stringify(_entry.results||[]):'[]',
+        inputsJson:_entry?JSON.stringify(_entry.inputs||{}):'{}',
+        faSnapshot:_entry?JSON.stringify(_entry.faSnapshot||{}):'{}'
+      };
+      var _saveUrl=APPS_SCRIPT_URL+'?action=saveQuote&token='+encodeURIComponent(APP_TOKEN)
+        +'&payload='+encodeURIComponent(JSON.stringify(_saveBody));
+      // Step 2: after save, fire clientAccepted with the confirmed quoteId
+      fetch(APPS_SCRIPT_URL,{method:'POST',redirect:'follow',
+        headers:{'Content-Type':'text/plain;charset=utf-8'},
+        body:JSON.stringify(_saveBody)
+      })
+      .then(function(r){return r.json();})
+      .then(function(saved){
+        var confirmedId=saved.quoteId||(_entry&&_entry.quoteId)||lid;
+        if(saved.quoteId&&_entry&&!_entry.quoteId){
+          _entry.quoteId=saved.quoteId;
+          _entry.syncStatus='synced';
+          saveLocalQuotes();
+        }
+        var _caUrl=APPS_SCRIPT_URL
+          +'?action=clientAccepted'
+          +'&token='+encodeURIComponent(APP_TOKEN)
+          +'&quoteId='+encodeURIComponent(confirmedId)
+          +'&faName='+encodeURIComponent(_faName)
+          +'&faEmail='+encodeURIComponent((_actingUser||currentUser).faEmail||'')
+          +'&clientName='+encodeURIComponent(_clientName)
+          +'&statusDate='+encodeURIComponent(new Date().toISOString().slice(0,10));
+        return fetch(_caUrl,{redirect:'follow'});
+      })
+      .catch(function(){});
     }
     // Update button state
     var btn=document.getElementById('fa-accept-btn');
