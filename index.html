@@ -722,7 +722,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
         <div class="grid-2">
           <div class="field span2"><label>Proposer name <sup>*</sup></label><input id="policyholderName" type="text" placeholder="Full legal name"/><span class="field-err">Required</span></div>
           
-          <div class="field admin-only-field span2" id="fa-sel-wrap"><label>Quote on behalf of FA</label><select id="quoteFA" onchange="onFASelect(this.value)"><option value="">— Myself —</option></select></div>
+          <div class="field fa-sel-field span2" id="fa-sel-wrap"><label>Quote on behalf of FA</label><select id="quoteFA" onchange="onFASelect(this.value)"><option value="">— Myself —</option></select></div>
           <div class="field admin-only-field"><label>Mortality basis</label>
             <select id="basisName"><option value="PA90">PA90 &#8212; Pensioners 1990</option><option value="A55">A55 &#8212; Assured Lives 1955-60</option></select></div>
         </div>
@@ -995,7 +995,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
           <div class="field"><label>Branch</label><input id="fa-branch" type="text" placeholder="e.g. Blantyre"/></div>
           <div class="field"><label>Title</label><input id="fa-title" type="text" value="Intermediary"/></div>
           <div class="field"><label>FA Email</label><input id="fa-email" type="email" placeholder="fa@vanguardlifemw.com"/></div>
-          <div class="field"><label>Role</label><select id="fa-role"><option value="FA">Financial Advisor</option><option value="Admin">Admin</option><option value="Administration">Policy Servicing</option></select></div>
+          <div class="field"><label>Role</label><select id="fa-role"><option value="FA">Financial Advisor</option><option value="Admin">Admin</option><option value="Administration">Policy Servicing</option><option value="Technical Services">Technical Services</option></select></div>
           <div class="field"><label>Password <sup>*</sup></label><input id="fa-pass" type="text" placeholder="Temporary password"/></div>
         </div>
         <div class="actions"><button class="btn btn-primary btn-sm" onclick="addFA()">Add FA</button></div>
@@ -1097,6 +1097,7 @@ var _reviseMode=false;
 var _viewMode=false;
 var _selectedFA=null;   // FA selected by Admin to quote on behalf of
 function isPS(r){return r==='Policy Servicing'||r==='Administration';}
+function isTS(r){return r==='Technical Services';}
 var _actingUser=null;   // original logged-in user preserved when currentUser is overwritten
 var _faList=[];         // cached FA list for admin dropdown
 
@@ -1308,10 +1309,16 @@ function showApp(){
     document.getElementById('qa-admin').style.display='';
   }
   var isAdmin=currentUser.role==='Admin';
+  var isTechServ=isTS(currentUser.role);
+  // Mortality basis, joint, fixed-term: Admin only
   document.querySelectorAll('.admin-only-field').forEach(function(el){el.style.display=isAdmin?'':'none';});
   document.querySelectorAll('.admin-only-tog').forEach(function(el){el.style.display=isAdmin?'':'none';});
+  // FA selector dropdown: Admin + Technical Services + Policy Servicing (for revisions)
+  document.querySelectorAll('.fa-sel-field').forEach(function(el){
+    el.style.display=(isAdmin||isTechServ||isPS(currentUser.role))?'':'none';
+  });
   loadLocalQuotes();
-  if(currentUser&&currentUser.role==='Admin')loadFADropdown();
+  if(currentUser&&(currentUser.role==='Admin'||isTechServ||isPS(currentUser.role)))loadFADropdown();
   _fetchAppSettings();
   updateSyncDot();
   updateStats();
@@ -2238,16 +2245,29 @@ async function retroSync(){
 // ── History ───────────────────────────────────────────────────
 function _populateAgentFilter(quotes){
   var sel=document.getElementById('hist-agent-filter');if(!sel)return;
-  var sfSel=document.getElementById('hist-status-filter'); // always visible
   if(!currentUser||currentUser.role!=='Admin'){sel.style.display='none';return;}
   sel.style.display='';
-  var names={};quotes.forEach(function(q){var n=q.faSnapshot&&q.faSnapshot.name;if(n)names[n]=1;});
   var current=sel.value;
   var opts='<option value="">All agents</option>';
-  Object.keys(names).sort().forEach(function(n){opts+='<option value="'+escHtml(n)+'"'+(n===current?' selected':'')+'>'+escHtml(n)+'</option>';});
+  // Prefer _faList (all FAs from server) so all agents appear even if no local quotes
+  if(_faList&&_faList.length){
+    _faList.filter(function(u){return u.role==='FA'&&u.active;})
+           .sort(function(a,b){return (a.name||'').localeCompare(b.name||'');})
+           .forEach(function(u){
+             opts+='<option value="'+escHtml(u.name)+'"'+(u.name===current?' selected':'')+'>'+escHtml(u.name)+'</option>';
+           });
+  } else {
+    // Fallback: build from local quotes if FA list not yet loaded
+    var names={};quotes.forEach(function(q){var n=q.faSnapshot&&q.faSnapshot.name;if(n)names[n]=1;});
+    Object.keys(names).sort().forEach(function(n){
+      opts+='<option value="'+escHtml(n)+'"'+(n===current?' selected':'')+'>'+escHtml(n)+'</option>';
+    });
+  }
   sel.innerHTML=opts;
 }
 function renderHistory(){
+  // Ensure FA list is loaded for agent filter
+  if(currentUser&&currentUser.role==='Admin'&&(!_faList||!_faList.length)) loadFADropdown();
   var list=document.getElementById('hist-list');
   var h3=document.getElementById('hist-count');
   var raw=currentUser&&(currentUser.role==='Admin'||isPS(currentUser.role))?localQuotes:localQuotes.filter(function(q){return !q.faSnapshot||!q.faSnapshot.name||q.faSnapshot.name===currentUser.name||!localQuotes[0].faSnapshot;});
@@ -2313,9 +2333,11 @@ function renderHistory(){
         +(currentUser&&currentUser.role==='Admin'
           // Admin: Delete only
           ?'<button class="btn btn-danger btn-sm" onclick="deleteQuote(event,\''+(entry.localId||entry.quoteId||'')+'\')">&times; Delete</button>'
-          :currentUser&&currentUser.role==='Policy Servicing'
-          // Administration: View only — activate/decline done in Policy Activation tab
-          ?''
+          :currentUser&&isPS(currentUser.role)
+          // Policy Servicing: Revise only — no withdraw/delete
+          ?(entry.policyStatus!=='Withdrawn'&&entry.policyStatus!=='Active'
+            ?'<button class="btn btn-primary btn-sm" onclick="reviseQuote('+i+')">Revise</button>'
+            :'')
           // FA: Revise + Withdraw
           :(entry.policyStatus!=='Withdrawn'?'<button class="btn btn-primary btn-sm" onclick="reviseQuote('+i+')">Revise</button>':'')
            +(entry.policyStatus==='Withdrawn'
@@ -2366,8 +2388,14 @@ async function loadActivationList(){
 }
 function _renderActivationList(){
   var el=document.getElementById('activation-list');if(!el)return;
+  var _psView=currentUser&&isPS(currentUser.role)&&currentUser.role!=='Admin';
   var term=((document.getElementById('act-search')||{}).value||'').trim().toLowerCase();
-  var statusF=((document.getElementById('act-status-filter')||{}).value||'');
+  var statusF=_psView?'':((document.getElementById('act-status-filter')||{}).value||'');
+  // Hide status filter for PS — they only see Accepted
+  var _actSf=document.getElementById('act-status-filter');
+  if(_actSf)_actSf.style.display=_psView?'none':'';
+  // Policy Servicing sees only Accepted quotes; Admin sees all
+  var _psOnly=currentUser&&isPS(currentUser.role)&&currentUser.role!=='Admin';
   var allQ=_activationCache.filter(function(q){
     var name=(q.clientName||q.policyholderName||'').toLowerCase();
     var fa=(q.faName||'').toLowerCase();
@@ -2376,7 +2404,8 @@ function _renderActivationList(){
     var matchTerm=!term||name.indexOf(term)>-1||name.split(' ').pop().indexOf(term)>-1||
                   fa.indexOf(term)>-1||ref.indexOf(term)>-1||amt.indexOf(term)>-1;
     var matchStatus=!statusF||(q.policyStatus||'Pending')===statusF;
-    return matchTerm&&matchStatus;
+    var matchPS=!_psOnly||(q.policyStatus||'Pending')==='Accepted';
+    return matchTerm&&matchStatus&&matchPS;
   });
   if(!_activationCache.length){el.innerHTML='<div class="empty-state">No quotes found.</div>';return;}
   if(!allQ.length){el.innerHTML='<div class="hist-no-results">No quotes match your search.</div>';return;}
@@ -2495,7 +2524,6 @@ function viewQuoteFromHistory(idx){
   goScreen('scr-quote');goQTab('panel-quote');
 }
 function reviseQuote(idx){
-  if(currentUser&&isPS(currentUser.role)){vlaAlert('Revise is not available for Policy Servicing users.');return;}
   var entry=localQuotes[idx];if(!entry||!entry.inputs)return;
   var inp=entry.inputs;
   function setVal(id,val){var el=document.getElementById(id);if(el&&val!==undefined&&val!==null)el.value=val;}
