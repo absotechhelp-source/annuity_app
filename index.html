@@ -2363,8 +2363,9 @@ function _renderActivationList(){
         +'</div>'
         +'<span class="act-status" style="color:'+statusCol+'">'+escHtml(status)+'</span>'
       +'</div>'
-      +(status==='Pending'
+      +((status==='Pending'||status==='Accepted')
         ?'<div class="act-actions">'
+          +(status==='Accepted'?'<span style="font-size:.68rem;color:#1565c0;align-self:center;margin-right:auto">✓ Client accepted — awaiting premium</span>':'')
           +'<button class="btn btn-primary btn-sm" onclick="setPolicyStatus(\'' +lid+ '\',\'Active\')">&#10003; Activate</button> '
           +'<button class="btn btn-danger btn-sm" onclick="setPolicyStatus(\'' +lid+ '\',\'Declined\')">&#10005; Decline</button>'
           +'</div>'
@@ -2433,7 +2434,7 @@ function viewQuoteFromHistory(idx){
   var _faAb=document.getElementById('fa-accept-actions');
   if(currentUser&&currentUser.role==='FA'&&_faAb){
     var _qs=entry.policyStatus||'Pending';
-    _faAb.style.display=(_qs==='Pending'||_qs==='Declined')?'':'none';
+    _faAb.style.display=(_qs==='Pending')?'':'none'; // hide once Accepted or beyond
     var _faStat=document.getElementById('fa-accept-status');
     var _faBtn=document.getElementById('fa-accept-btn');
     if(_faStat)_faStat.textContent=_qs!=='Pending'?'Status: '+_qs:'';
@@ -2441,7 +2442,9 @@ function viewQuoteFromHistory(idx){
   }
   // Policy Servicing: show Activate/Decline instead of Edit/Save
   var _actAb=document.getElementById('activation-actions');
-  if(currentUser&&currentUser.role==='Policy Servicing'&&_actAb){
+  var _qStatus=entry.policyStatus||'Pending';
+  var _showActBtns=(_qStatus==='Pending'||_qStatus==='Accepted'||_qStatus==='Declined');
+  if(currentUser&&currentUser.role==='Policy Servicing'&&_actAb&&_showActBtns){
     _actAb.style.display='';
     // Store quote reference for the action buttons
     var _lid=entry.localId||entry.quoteId||'';
@@ -2449,9 +2452,9 @@ function viewQuoteFromHistory(idx){
     document.getElementById('act-current-status').textContent='Status: '+_status;
     var actBtn=document.getElementById('act-activate-btn');
     var decBtn=document.getElementById('act-decline-btn');
-    if(_status==='Active'){actBtn.disabled=true;decBtn.disabled=false;}
+    if(_status==='Active'){actBtn.disabled=true;decBtn.disabled=true;}
     else if(_status==='Declined'){actBtn.disabled=false;decBtn.disabled=true;}
-    else{actBtn.disabled=false;decBtn.disabled=false;}
+    else{actBtn.disabled=false;decBtn.disabled=false;} // Pending or Accepted
     actBtn.dataset.lid=_lid;
     decBtn.dataset.lid=_lid;
   }
