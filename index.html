@@ -1073,6 +1073,7 @@ var _newWorker=null;
 var _reviseMode=false;
 var _viewMode=false;
 var _selectedFA=null;   // FA selected by Admin to quote on behalf of
+function isPS(r){return r==='Policy Servicing'||r==='Administration';}
 var _actingUser=null;   // original logged-in user preserved when currentUser is overwritten
 var _faList=[];         // cached FA list for admin dropdown
 
@@ -1279,7 +1280,7 @@ function showApp(){
   var _greet=_hr<12?'Good morning':_hr<17?'Good afternoon':'Good evening';
   var _gEl=document.getElementById('home-greeting');
   if(_gEl) _gEl.innerHTML=_greet+', <strong>'+escHtml(currentUser.name)+'</strong> <span style="font-size:.7rem;color:var(--muted);font-weight:400">&middot; '+escHtml(currentUser.role)+'</span>';
-  if(currentUser.role==='Admin'||currentUser.role==='Policy Servicing'){
+  if(currentUser.role==='Admin'||isPS(currentUser.role)){
     document.getElementById('qa-admin').style.display='';
   }
   var isAdmin=currentUser.role==='Admin';
@@ -1335,7 +1336,7 @@ function updateStats(){
 // ── Recent quotes on home ─────────────────────────────────────
 function renderRecentQuotes(){
   var el=document.getElementById('recent-quotes-list');
-  var myQ=currentUser&&(currentUser.role==='Admin'||currentUser.role==='Policy Servicing')?localQuotes:localQuotes.filter(function(q){return !q.faSnapshot||!q.faSnapshot.name||q.faSnapshot.name===currentUser.name;});
+  var myQ=currentUser&&(currentUser.role==='Admin'||isPS(currentUser.role))?localQuotes:localQuotes.filter(function(q){return !q.faSnapshot||!q.faSnapshot.name||q.faSnapshot.name===currentUser.name;});
   var recent=myQ.slice(0,3);
   if(!recent.length){el.innerHTML='<div style="font-size:.78rem;color:var(--muted);padding:.5rem 0">No quotes yet. Tap New Quote to get started.</div>';return;}
   el.innerHTML=recent.map(function(entry,i){
@@ -2216,7 +2217,7 @@ function _populateAgentFilter(quotes){
 function renderHistory(){
   var list=document.getElementById('hist-list');
   var h3=document.getElementById('hist-count');
-  var raw=currentUser&&(currentUser.role==='Admin'||currentUser.role==='Policy Servicing')?localQuotes:localQuotes.filter(function(q){return !q.faSnapshot||!q.faSnapshot.name||q.faSnapshot.name===currentUser.name||!localQuotes[0].faSnapshot;});
+  var raw=currentUser&&(currentUser.role==='Admin'||isPS(currentUser.role))?localQuotes:localQuotes.filter(function(q){return !q.faSnapshot||!q.faSnapshot.name||q.faSnapshot.name===currentUser.name||!localQuotes[0].faSnapshot;});
   _populateAgentFilter(raw);
   // ── Search ────────────────────────────────────────────────
   var term=((document.getElementById('hist-search')||{}).value||'').trim().toLowerCase();
@@ -2292,7 +2293,7 @@ function renderHistory(){
   }).join('');
 }
 function withdrawQuote(ev,lid){
-  if(currentUser&&currentUser.role==='Policy Servicing'){vlaAlert('Withdraw is not available for Policy Servicing users.');return;}
+  if(currentUser&&isPS(currentUser.role)){vlaAlert('Withdraw is not available for Policy Servicing users.');return;}
   if(ev&&ev.stopPropagation)ev.stopPropagation();
   if(!lid){showToast('Cannot identify quote.');return;}
   vlaConfirm('Withdraw this quote? It will be hidden from your list but kept for compliance records.',function(yes){
@@ -2444,7 +2445,7 @@ function viewQuoteFromHistory(idx){
   var _actAb=document.getElementById('activation-actions');
   var _qStatus=entry.policyStatus||'Pending';
   var _showActBtns=(_qStatus==='Pending'||_qStatus==='Accepted'||_qStatus==='Declined');
-  if(currentUser&&currentUser.role==='Policy Servicing'&&_actAb&&_showActBtns){
+  if(currentUser&&isPS(currentUser.role)&&_actAb&&_showActBtns){
     _actAb.style.display='';
     // Store quote reference for the action buttons
     var _lid=entry.localId||entry.quoteId||'';
@@ -2461,7 +2462,7 @@ function viewQuoteFromHistory(idx){
   goScreen('scr-quote');goQTab('panel-quote');
 }
 function reviseQuote(idx){
-  if(currentUser&&currentUser.role==='Policy Servicing'){vlaAlert('Revise is not available for Policy Servicing users.');return;}
+  if(currentUser&&isPS(currentUser.role)){vlaAlert('Revise is not available for Policy Servicing users.');return;}
   var entry=localQuotes[idx];if(!entry||!entry.inputs)return;
   var inp=entry.inputs;
   function setVal(id,val){var el=document.getElementById(id);if(el&&val!==undefined&&val!==null)el.value=val;}
@@ -2633,8 +2634,8 @@ function _renderPSDash(){
   +'<div style="font-size:.68rem;color:var(--muted);text-align:center;padding:.5rem">'+(rows.length)+' of '+_psLog.length+' entries</div>';
 }
 async function loadAdmin(){
-  if(currentUser.role!=='Admin'&&currentUser.role!=='Policy Servicing')return;
-  if(currentUser.role==='Policy Servicing'){
+  if(currentUser.role!=='Admin'&&!isPS(currentUser.role))return;
+  if(isPS(currentUser.role)){
     document.querySelectorAll('.admin-tab').forEach(function(b){b.classList.remove('on');});
     document.querySelectorAll('.admin-section').forEach(function(s){s.classList.remove('on');});
     // Hide admin-only tabs
