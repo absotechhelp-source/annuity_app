@@ -1300,7 +1300,7 @@ function updateStats(){
 // ── Recent quotes on home ─────────────────────────────────────
 function renderRecentQuotes(){
   var el=document.getElementById('recent-quotes-list');
-  var myQ=currentUser&&currentUser.role==='Admin'?localQuotes:localQuotes.filter(function(q){return !q.faSnapshot||!q.faSnapshot.name||q.faSnapshot.name===currentUser.name;});
+  var myQ=currentUser&&(currentUser.role==='Admin'||currentUser.role==='Administration')?localQuotes:localQuotes.filter(function(q){return !q.faSnapshot||!q.faSnapshot.name||q.faSnapshot.name===currentUser.name;});
   var recent=myQ.slice(0,3);
   if(!recent.length){el.innerHTML='<div style="font-size:.78rem;color:var(--muted);padding:.5rem 0">No quotes yet. Tap New Quote to get started.</div>';return;}
   el.innerHTML=recent.map(function(entry,i){
@@ -2180,7 +2180,7 @@ function _populateAgentFilter(quotes){
 function renderHistory(){
   var list=document.getElementById('hist-list');
   var h3=document.getElementById('hist-count');
-  var raw=currentUser&&currentUser.role==='Admin'?localQuotes:localQuotes.filter(function(q){return !q.faSnapshot||!q.faSnapshot.name||q.faSnapshot.name===currentUser.name||!localQuotes[0].faSnapshot;});
+  var raw=currentUser&&(currentUser.role==='Admin'||currentUser.role==='Administration')?localQuotes:localQuotes.filter(function(q){return !q.faSnapshot||!q.faSnapshot.name||q.faSnapshot.name===currentUser.name||!localQuotes[0].faSnapshot;});
   _populateAgentFilter(raw);
   // ── Search ────────────────────────────────────────────────
   var term=((document.getElementById('hist-search')||{}).value||'').trim().toLowerCase();
