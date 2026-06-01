@@ -664,7 +664,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
       <button class="qa-btn" onclick="goScreen('scr-productinfo')">
         <div class="qa-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg></div>
         <span class="qa-label">ToolKit</span></button>
-      <button class="qa-btn" id="qa-admin" style="display:none" onclick="if(currentUser&&(currentUser.role==='Admin'||isPS(currentUser.role)||isTS(currentUser.role))){goScreen('scr-admin');loadAdmin();}else{vlaAlert('Access restricted.');}">
+      <button class="qa-btn" id="qa-admin" style="display:none" onclick="if(currentUser&&(currentUser.role==='Admin'||isPS(currentUser.role))){goScreen('scr-admin');loadAdmin();}else{vlaAlert('Access restricted.');}">
         <div class="qa-icon"><svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></div>
         <span class="qa-label">Admin</span></button>
     </div>
@@ -977,12 +977,12 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
 
 <!-- ADMIN -->
 <div class="screen" id="scr-admin">
-  <div class="topbar"><button class="tb-back" onclick="goScreen('scr-home')">&#8592;</button><span class="tb-title">Admin Panel</span></div>
+  <div class="topbar"><button class="tb-back" onclick="goScreen('scr-home')">&#8592;</button><span class="tb-title" id="admin-panel-title">Admin Panel</span></div>
   <div class="admin-body">
     <div class="admin-tabs">
-      <button class="admin-tab on" onclick="showAdminTab('adm-fa',this)">Financial Advisors</button>
-      <button class="admin-tab"    onclick="showAdminTab('adm-quotes',this)">All Quotes</button>
-      <button class="admin-tab"    onclick="showAdminTab('adm-settings',this)" id="tab-btn-settings">App Settings</button>
+      <button class="admin-tab on" onclick="showAdminTab('adm-fa',this)" data-admin-only="true">Financial Advisors</button>
+      <button class="admin-tab"    onclick="showAdminTab('adm-quotes',this)" data-admin-only="true">All Quotes</button>
+      <button class="admin-tab"    onclick="showAdminTab('adm-settings',this)" id="tab-btn-settings" data-admin-only="true">App Settings</button>
       <button class="admin-tab"    onclick="showAdminTab('adm-activation',this)" id="tab-btn-activation">Policy Activation</button>
       <button class="admin-tab"    onclick="showAdminTab('adm-ps-dash',this)" id="tab-btn-ps-dash">My Dashboard</button>
     </div>
@@ -1309,6 +1309,13 @@ function showApp(){
   if(_gEl) _gEl.innerHTML=_greet+', <strong>'+escHtml(currentUser.name)+'</strong> <span style="font-size:.7rem;color:var(--muted);font-weight:400">&middot; '+escHtml(currentUser.role)+'</span>';
   if(currentUser.role==='Admin'||isPS(currentUser.role)){
     document.getElementById('qa-admin').style.display='';
+    // Rename tile to reflect actual access level
+    var _adminLabel=document.querySelector('#qa-admin .qa-label');
+    if(_adminLabel) _adminLabel.textContent=isPS(currentUser.role)?'Policy Activation':'Admin';
+  }
+  // TS: no Admin Panel access
+  if(isTS(currentUser.role)){
+    document.getElementById('qa-admin').style.display='none';
   }
   var isAdmin=currentUser.role==='Admin';
   var isTechServ=isTS(currentUser.role);
@@ -2734,17 +2741,23 @@ function _fetchAppSettings(){
 async function loadAdmin(){
   if(currentUser.role!=='Admin'&&!isPS(currentUser.role))return;
   if(isPS(currentUser.role)){
-    document.querySelectorAll('.admin-tab').forEach(function(b){b.classList.remove('on');});
-    document.querySelectorAll('.admin-section').forEach(function(s){s.classList.remove('on');});
-    // Hide admin-only tabs
-    ['tab-users','tab-quotes'].forEach(function(id){
-      var b=document.querySelector('.admin-tab[onclick*="'+id+'"]');
-      if(b)b.style.display='none';
+    // Rename screen title for PS
+    var _pt=document.getElementById('admin-panel-title');
+    if(_pt)_pt.textContent='Policy Activation';
+    // Hide all tabs first
+    document.querySelectorAll('.admin-tab').forEach(function(b){
+      b.classList.remove('on');
+      if(b.dataset.adminOnly==='true') b.style.display='none';
     });
+    document.querySelectorAll('.admin-section').forEach(function(s){s.classList.remove('on');});
+    // Activate Policy Activation tab
     var actBtn=document.getElementById('tab-btn-activation');
-    if(actBtn)actBtn.classList.add('on');
+    if(actBtn){actBtn.classList.add('on');actBtn.style.display='';}
     var actSec=document.getElementById('adm-activation');
     if(actSec)actSec.classList.add('on');
+    // Show My Dashboard tab too
+    var dashBtn=document.getElementById('tab-btn-ps-dash');
+    if(dashBtn)dashBtn.style.display='';
     loadActivationList();return;
   }
   try{
