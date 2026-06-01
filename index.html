@@ -982,6 +982,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
     <div class="admin-tabs">
       <button class="admin-tab on" onclick="showAdminTab('adm-fa',this)">Financial Advisors</button>
       <button class="admin-tab"    onclick="showAdminTab('adm-quotes',this)">All Quotes</button>
+      <button class="admin-tab"    onclick="showAdminTab('adm-settings',this)" id="tab-btn-settings">App Settings</button>
       <button class="admin-tab"    onclick="showAdminTab('adm-activation',this)" id="tab-btn-activation">Policy Activation</button>
       <button class="admin-tab"    onclick="showAdminTab('adm-ps-dash',this)" id="tab-btn-ps-dash">My Dashboard</button>
     </div>
@@ -1003,6 +1004,28 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
       <div id="fa-table-wrap"></div>
     </div>
     <div class="admin-section" id="adm-quotes"><div id="all-quotes-wrap"><div class="empty-state">Loading&hellip;</div></div></div>
+    <div class="admin-section" id="adm-settings">
+      <div class="admin-sect-title">App Settings</div>
+      <p style="font-size:.78rem;color:var(--muted);margin-bottom:1rem">Applied to all new quotes. FAs see the preset; Admin can override per quote.</p>
+      <div class="field" style="margin-bottom:.9rem">
+        <label style="font-weight:600;font-size:.82rem">Default Mortality Basis</label>
+        <select id="set-basis" class="hist-sel" style="margin-top:.35rem;max-width:300px">
+          <option value="PA90">PA90 — Pensioners 1990</option>
+          <option value="A55">A55 — Assured Lives 1955-60</option>
+        </select>
+      </div>
+      <div class="field" style="margin-bottom:1.2rem">
+        <label style="font-weight:600;font-size:.82rem">Mortality Gender Override</label>
+        <p style="font-size:.72rem;color:var(--muted);margin:.2rem 0 .4rem">Forces all quotes to use this mortality table regardless of client gender.</p>
+        <select id="set-mort-gender" class="hist-sel" style="margin-top:.35rem;max-width:300px">
+          <option value="">No override — use client gender</option>
+          <option value="Female">Always Female (PA90‑F / A55‑F)</option>
+          <option value="Male">Always Male (PA90‑M / A55‑M)</option>
+        </select>
+      </div>
+      <button class="btn btn-primary" onclick="saveAppSettings()" style="min-width:140px">✓ Save Settings</button>
+      <div id="settings-saved-msg" style="font-size:.75rem;color:#2e7d32;margin-top:.5rem;display:none">✓ Settings saved</div>
+    </div>
     <div class="admin-section" id="adm-activation">
       <p style="font-size:.78rem;color:var(--muted);margin-bottom:.6rem">Once premium is received, mark quote as <strong>Active</strong>.</p>
       <div class="hist-search-wrap" style="margin:0 0 .6rem;border-radius:8px;">
@@ -1236,8 +1259,9 @@ function resetQuoteForm(){
     var el=document.getElementById(id);if(el)el.value='';
   });
   // Reset selects to defaults
+  var _s=getAppSettings();
   var selDefaults={paymentTiming:'Advance',frequency:'Monthly',
-                   basisName:'PA90',relationship:'Spouse',
+                   basisName:_s.basis||'PA90',relationship:'Spouse',
                    maxChildAge:'23',reversionPct:'50',fixedPeriod:'10'};
   Object.keys(selDefaults).forEach(function(id){
     var el=document.getElementById(id);if(el)el.value=selDefaults[id];
@@ -1288,6 +1312,7 @@ function showApp(){
   document.querySelectorAll('.admin-only-tog').forEach(function(el){el.style.display=isAdmin?'':'none';});
   loadLocalQuotes();
   if(currentUser&&currentUser.role==='Admin')loadFADropdown();
+  _fetchAppSettings();
   updateSyncDot();
   updateStats();
   renderRecentQuotes();
@@ -1454,6 +1479,8 @@ function goReview(){
     ['Initial Consideration','MWK '+fmtN(inp.initialConsideration)],
   ];
   if(currentUser&&currentUser.role==='Admin'){items.splice(2,0,['Basis',inp.basisName]);}
+  var _aso=getAppSettings();
+  if(_aso.mortGender) items.push(['Mortality Table',inp.basisName+' '+_aso.mortGender+' (system default)']);
   if(inp.annuityStructure==='Reversionary last survivor'&&inp.dob2)
     items.push(['Second Life',(inp.name2||'\u2014')+' \xB7 '+inp.gender2],['Reversion %',(inp.reversionPct*100).toFixed(0)+'%']);
   if(inp.annuityStructure==='Fixed term') items.push(['Fixed Period',inp.fixedPeriod+' years']);
@@ -1471,6 +1498,12 @@ async function runCalc(){
   }
   var spin=document.getElementById('spin');spin.classList.add('show');
   try{
+    // Apply mortality gender override from admin settings
+    var _as=getAppSettings();
+    if(_as.mortGender){
+      currentInputs.gender1=_as.mortGender;
+      if(currentInputs.annuityStructure!=='Single') currentInputs.gender2=_as.mortGender;
+    }
     // GET avoids POST→GET redirect body-loss (GAS redirect drops POST body).
     var _qUrl=APPS_SCRIPT_URL
       +'?action=getQuote'
@@ -2590,6 +2623,7 @@ function showAdminTab(id,el){
   if(id==='adm-quotes') loadAllQuotes();
   if(id==='adm-activation') loadActivationList();
   if(id==='adm-ps-dash') loadPSDash();
+  if(id==='adm-settings') loadAppSettings();
 }
 // ── Policy Servicing dashboard ──────────────────────────────────
 var _psLog=[]; // cached activity log for PS dashboard
@@ -2632,6 +2666,40 @@ function _renderPSDash(){
     +'</div>';
   }).join('')
   +'<div style="font-size:.68rem;color:var(--muted);text-align:center;padding:.5rem">'+(rows.length)+' of '+_psLog.length+' entries</div>';
+}
+// ── App Settings ─────────────────────────────────────────────
+var _appSettings={basis:'PA90',mortGender:''};
+function loadAppSettings(){
+  try{var s=localStorage.getItem('vla_app_settings');if(s)_appSettings=JSON.parse(s);}catch(e){}
+  var bs=document.getElementById('set-basis');
+  var mg=document.getElementById('set-mort-gender');
+  if(bs)bs.value=_appSettings.basis||'PA90';
+  if(mg)mg.value=_appSettings.mortGender||'';
+}
+function saveAppSettings(){
+  _appSettings.basis=(document.getElementById('set-basis')||{}).value||'PA90';
+  _appSettings.mortGender=(document.getElementById('set-mort-gender')||{}).value||'';
+  localStorage.setItem('vla_app_settings',JSON.stringify(_appSettings));
+  if(APPS_SCRIPT_URL){
+    fetch(APPS_SCRIPT_URL+'?action=saveSettings&token='+encodeURIComponent(APP_TOKEN)
+      +'&basis='+encodeURIComponent(_appSettings.basis)
+      +'&mortGender='+encodeURIComponent(_appSettings.mortGender),
+    {redirect:'follow'}).catch(function(){});
+  }
+  var msg=document.getElementById('settings-saved-msg');
+  if(msg){msg.style.display='block';setTimeout(function(){msg.style.display='none';},2500);}
+  showToast('Settings saved ✓');
+}
+function getAppSettings(){
+  try{var s=localStorage.getItem('vla_app_settings');if(s)_appSettings=JSON.parse(s);}catch(e){}
+  return _appSettings;
+}
+function _fetchAppSettings(){
+  if(!APPS_SCRIPT_URL)return;
+  fetch(APPS_SCRIPT_URL+'?action=getSettings&token='+encodeURIComponent(APP_TOKEN),{redirect:'follow'})
+    .then(function(r){return r.json();})
+    .then(function(d){if(d.ok&&d.settings){_appSettings=d.settings;localStorage.setItem('vla_app_settings',JSON.stringify(_appSettings));}})
+    .catch(function(){});
 }
 async function loadAdmin(){
   if(currentUser.role!=='Admin'&&!isPS(currentUser.role))return;
