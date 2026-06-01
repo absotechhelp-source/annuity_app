@@ -664,7 +664,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
       <button class="qa-btn" onclick="goScreen('scr-productinfo')">
         <div class="qa-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg></div>
         <span class="qa-label">ToolKit</span></button>
-      <button class="qa-btn" id="qa-admin" style="display:none" onclick="if(currentUser&&(currentUser.role==='Admin'||isPS(currentUser.role))){goScreen('scr-admin');loadAdmin();}else{vlaAlert('Access restricted.');}">
+      <button class="qa-btn" id="qa-admin" style="display:none" onclick="if(currentUser&&currentUser.role==='Admin'){goScreen('scr-admin');loadAdmin();}else{vlaAlert('Admin access only.');}">
         <div class="qa-icon"><svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></div>
         <span class="qa-label">Admin</span></button>
     </div>
@@ -977,7 +977,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
 
 <!-- ADMIN -->
 <div class="screen" id="scr-admin">
-  <div class="topbar"><button class="tb-back" onclick="goScreen('scr-home')">&#8592;</button><span class="tb-title" id="admin-panel-title">Admin Panel</span></div>
+  <div class="topbar"><button class="tb-back" onclick="goScreen('scr-home')">&#8592;</button><span class="tb-title">Admin Panel</span></div>
   <div class="admin-body">
     <div class="admin-tabs">
       <button class="admin-tab on" onclick="showAdminTab('adm-fa',this)" data-admin-only="true">Financial Advisors</button>
@@ -1307,16 +1307,9 @@ function showApp(){
   var _greet=_hr<12?'Good morning':_hr<17?'Good afternoon':'Good evening';
   var _gEl=document.getElementById('home-greeting');
   if(_gEl) _gEl.innerHTML=_greet+', <strong>'+escHtml(currentUser.name)+'</strong> <span style="font-size:.7rem;color:var(--muted);font-weight:400">&middot; '+escHtml(currentUser.role)+'</span>';
-  if(currentUser.role==='Admin'||isPS(currentUser.role)){
-    document.getElementById('qa-admin').style.display='';
-    // Rename tile to reflect actual access level
-    var _adminLabel=document.querySelector('#qa-admin .qa-label');
-    if(_adminLabel) _adminLabel.textContent=isPS(currentUser.role)?'Policy Activation':'Admin';
-  }
-  // TS: no Admin Panel access
-  if(isTS(currentUser.role)){
-    document.getElementById('qa-admin').style.display='none';
-  }
+  // Admin tile: Admin only
+  document.getElementById('qa-admin').style.display=
+    currentUser.role==='Admin'?'':'none';
   var isAdmin=currentUser.role==='Admin';
   var isTechServ=isTS(currentUser.role);
   // Mortality basis, joint, fixed-term: Admin only
@@ -2343,10 +2336,14 @@ function renderHistory(){
           // Admin: Delete only
           ?'<button class="btn btn-danger btn-sm" onclick="deleteQuote(event,\''+(entry.localId||entry.quoteId||'')+'\')">&times; Delete</button>'
           :currentUser&&isPS(currentUser.role)
-          // Policy Servicing: Revise only — no withdraw/delete
-          ?(entry.policyStatus!=='Withdrawn'&&entry.policyStatus!=='Active'
-            ?'<button class="btn btn-primary btn-sm" onclick="reviseQuote('+i+')">Revise</button>'
-            :'')
+          // Policy Servicing: View + Revise + Activate/Decline
+          ?(
+            (entry.policyStatus!=='Withdrawn'&&entry.policyStatus!=='Active'?'<button class="btn btn-primary btn-sm" onclick="reviseQuote('+i+')">Revise</button>':'')
+           +(entry.policyStatus==='Accepted'||entry.policyStatus==='Pending'
+             ?'<button class="btn btn-primary btn-sm" style="background:#2e7d32;margin-left:.2rem" onclick="_cardActivate(event,\''+(entry.localId||entry.quoteId||'')+'\')">✓ Activate</button>'
+              +'<button class="btn btn-danger btn-sm" onclick="_cardDecline(event,\''+(entry.localId||entry.quoteId||'')+'\')">✕ Decline</button>'
+             :'')
+          )
           // FA: Revise + Withdraw
           :(entry.policyStatus!=='Withdrawn'?'<button class="btn btn-primary btn-sm" onclick="reviseQuote('+i+')">Revise</button>':'')
            +(entry.policyStatus==='Withdrawn'
@@ -2444,6 +2441,14 @@ function _renderActivationList(){
         :(status==='Active'?'<div class="act-meta" style="color:#2e7d32;margin-top:.3rem">Activated '+escHtml(q.statusDate||'')+' by '+escHtml(q.statusBy||'')+'</div>':''))
       +'</div>';
   }).join('');
+}
+function _cardActivate(ev,lid){
+  if(ev)ev.stopPropagation();
+  setPolicyStatus(lid,'Active');
+}
+function _cardDecline(ev,lid){
+  if(ev)ev.stopPropagation();
+  setPolicyStatus(lid,'Declined');
 }
 function setPolicyStatus(lid,status){
   var msg=status==='Active'?'Confirm premium received and activate this policy?':'Decline this policy?';
@@ -2739,11 +2744,8 @@ function _fetchAppSettings(){
     .catch(function(){});
 }
 async function loadAdmin(){
-  if(currentUser.role!=='Admin'&&!isPS(currentUser.role))return;
+  if(currentUser.role!=='Admin')return;
   if(isPS(currentUser.role)){
-    // Rename screen title for PS
-    var _pt=document.getElementById('admin-panel-title');
-    if(_pt)_pt.textContent='Policy Activation';
     // Hide all tabs first
     document.querySelectorAll('.admin-tab').forEach(function(b){
       b.classList.remove('on');
