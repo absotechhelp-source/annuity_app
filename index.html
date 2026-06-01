@@ -2305,12 +2305,14 @@ function withdrawQuote(ev,lid){
     saveLocalQuotes();
     var qid=localQuotes[i].quoteId||localQuotes[i].localId;
     if(navigator.onLine&&APPS_SCRIPT_URL&&qid){
-      fetch(APPS_SCRIPT_URL,{method:'POST',redirect:'follow',
-        headers:{'Content-Type':'text/plain;charset=utf-8'},
-        body:JSON.stringify({token:APP_TOKEN,action:'updatePolicyStatus',
-          quoteId:qid,status:'Withdrawn',
-          statusDate:localQuotes[i].statusDate,statusBy:localQuotes[i].statusBy})
-      }).catch(function(){});
+      var _wUrl=APPS_SCRIPT_URL
+        +'?action=updatePolicyStatus'
+        +'&token='+encodeURIComponent(APP_TOKEN)
+        +'&quoteId='+encodeURIComponent(qid)
+        +'&status=Withdrawn'
+        +'&statusDate='+encodeURIComponent(localQuotes[i].statusDate)
+        +'&statusBy='+encodeURIComponent(localQuotes[i].statusBy);
+      fetch(_wUrl,{redirect:'follow'}).catch(function(){});
     }
     renderHistory();showToast('Quote withdrawn.');
   });
@@ -2383,13 +2385,14 @@ function setPolicyStatus(lid,status){
       saveLocalQuotes();
     }
     if(navigator.onLine&&APPS_SCRIPT_URL&&lid){
-      fetch(APPS_SCRIPT_URL,{method:'POST',redirect:'follow',
-        headers:{'Content-Type':'text/plain;charset=utf-8'},
-        body:JSON.stringify({token:APP_TOKEN,action:'updatePolicyStatus',
-          quoteId:lid,status:status,
-          statusDate:new Date().toISOString().slice(0,10),
-          statusBy:_byName})
-      }).catch(function(){});
+      var _psUrl=APPS_SCRIPT_URL
+        +'?action=updatePolicyStatus'
+        +'&token='+encodeURIComponent(APP_TOKEN)
+        +'&quoteId='+encodeURIComponent(lid)
+        +'&status='+encodeURIComponent(status)
+        +'&statusDate='+encodeURIComponent(new Date().toISOString().slice(0,10))
+        +'&statusBy='+encodeURIComponent(_byName);
+      fetch(_psUrl,{redirect:'follow'}).catch(function(){});
     }
     showToast(status==='Active'?'Policy activated ✓':'Policy declined');
     loadActivationList();
@@ -2498,14 +2501,15 @@ function _faClientAccept(){
     }
     // Sync to sheet + notify Policy Servicing via email
     if(navigator.onLine&&APPS_SCRIPT_URL){
-      fetch(APPS_SCRIPT_URL,{method:'POST',redirect:'follow',
-        headers:{'Content-Type':'text/plain;charset=utf-8'},
-        body:JSON.stringify({token:APP_TOKEN,action:'clientAccepted',
-          quoteId:lid,faName:currentUser.name||'',
-          faEmail:currentUser.faEmail||'',
-          clientName:(i>-1&&localQuotes[i].inputs)?localQuotes[i].inputs.policyholderName||'Client':'Client',
-          statusDate:new Date().toISOString().slice(0,10)})
-      }).catch(function(){});
+      var _caUrl=APPS_SCRIPT_URL
+        +'?action=clientAccepted'
+        +'&token='+encodeURIComponent(APP_TOKEN)
+        +'&quoteId='+encodeURIComponent(lid)
+        +'&faName='+encodeURIComponent(currentUser.name||'')
+        +'&faEmail='+encodeURIComponent(currentUser.faEmail||'')
+        +'&clientName='+encodeURIComponent((i>-1&&localQuotes[i].inputs)?localQuotes[i].inputs.policyholderName||'Client':'Client')
+        +'&statusDate='+encodeURIComponent(new Date().toISOString().slice(0,10));
+      fetch(_caUrl,{redirect:'follow'}).catch(function(){});
     }
     // Update button state
     var btn=document.getElementById('fa-accept-btn');
