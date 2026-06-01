@@ -850,7 +850,12 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
         <button class="btn btn-ghost" onclick="goQTab('panel-form')">&#8592; Edit</button>
         <button class="btn btn-primary" onclick="saveAndSync()" id="save-btn">&#9729; Save</button>
       </div>
-      <!-- Administration: Activate/Decline shown when viewing from history -->
+      <!-- FA: Client Accepted button (shown when FA views their own saved quote) -->
+      <div class="actions" id="fa-accept-actions" style="display:none;margin-top:.45rem">
+        <div id="fa-accept-status" style="font-size:.72rem;color:var(--muted);align-self:center;margin-right:auto"></div>
+        <button class="btn btn-primary" id="fa-accept-btn" onclick="_faClientAccept()">&#10003; Client Accepted</button>
+      </div>
+      <!-- Policy Servicing: Activate/Decline shown when viewing from history -->
       <div class="actions" id="activation-actions" style="display:none;margin-top:.45rem">
         <div id="act-current-status" style="font-size:.72rem;color:var(--muted);align-self:center;margin-right:auto"></div>
         <button class="btn btn-primary" id="act-activate-btn" onclick="_quoteViewActivate()">&#10003; Activate</button>
@@ -977,6 +982,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
       <button class="admin-tab on" onclick="showAdminTab('adm-fa',this)">Financial Advisors</button>
       <button class="admin-tab"    onclick="showAdminTab('adm-quotes',this)">All Quotes</button>
       <button class="admin-tab"    onclick="showAdminTab('adm-activation',this)" id="tab-btn-activation">Policy Activation</button>
+      <button class="admin-tab"    onclick="showAdminTab('adm-ps-dash',this)" id="tab-btn-ps-dash">My Dashboard</button>
     </div>
     <div class="admin-section on" id="adm-fa">
       <div class="card"><div class="card-title">Add Financial Advisor</div>
@@ -987,7 +993,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
           <div class="field"><label>Branch</label><input id="fa-branch" type="text" placeholder="e.g. Blantyre"/></div>
           <div class="field"><label>Title</label><input id="fa-title" type="text" value="Intermediary"/></div>
           <div class="field"><label>FA Email</label><input id="fa-email" type="email" placeholder="fa@vanguardlifemw.com"/></div>
-          <div class="field"><label>Role</label><select id="fa-role"><option value="FA">Financial Advisor</option><option value="Admin">Admin</option><option value="Administration">Administration</option></select></div>
+          <div class="field"><label>Role</label><select id="fa-role"><option value="FA">Financial Advisor</option><option value="Admin">Admin</option><option value="Administration">Policy Servicing</option></select></div>
           <div class="field"><label>Password <sup>*</sup></label><input id="fa-pass" type="text" placeholder="Temporary password"/></div>
         </div>
         <div class="actions"><button class="btn btn-primary btn-sm" onclick="addFA()">Add FA</button></div>
@@ -1016,6 +1022,19 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
         </div>
       </div>
       <div id="activation-list"><div class="empty-state">Loading…</div></div>
+    </div>
+    <div class="admin-section" id="adm-ps-dash">
+      <div class="admin-sect-title" style="margin-bottom:.5rem">My Activity Log</div>
+      <div style="display:flex;gap:.45rem;margin-bottom:.6rem">
+        <select class="hist-sel" id="ps-dash-filter" onchange="_renderPSDash()" style="flex:1">
+          <option value="">All actions</option>
+          <option value="Active">Activated</option>
+          <option value="Declined">Declined</option>
+          <option value="Accepted">Accepted</option>
+        </select>
+        <input class="hist-search" id="ps-dash-search" type="search" placeholder="Search name or ref…" oninput="_renderPSDash()" style="flex:2;padding-left:.75rem;border-radius:8px" autocomplete="off"/>
+      </div>
+      <div id="ps-dash-list"><div class="empty-state">Loading…</div></div>
     </div>
   </div>
   <div class="bnav">
@@ -1259,7 +1278,7 @@ function showApp(){
   var _greet=_hr<12?'Good morning':_hr<17?'Good afternoon':'Good evening';
   var _gEl=document.getElementById('home-greeting');
   if(_gEl) _gEl.innerHTML=_greet+', <strong>'+escHtml(currentUser.name)+'</strong> <span style="font-size:.7rem;color:var(--muted);font-weight:400">&middot; '+escHtml(currentUser.role)+'</span>';
-  if(currentUser.role==='Admin'||currentUser.role==='Administration'){
+  if(currentUser.role==='Admin'||currentUser.role==='Policy Servicing'){
     document.getElementById('qa-admin').style.display='';
   }
   var isAdmin=currentUser.role==='Admin';
@@ -1315,7 +1334,7 @@ function updateStats(){
 // ── Recent quotes on home ─────────────────────────────────────
 function renderRecentQuotes(){
   var el=document.getElementById('recent-quotes-list');
-  var myQ=currentUser&&(currentUser.role==='Admin'||currentUser.role==='Administration')?localQuotes:localQuotes.filter(function(q){return !q.faSnapshot||!q.faSnapshot.name||q.faSnapshot.name===currentUser.name;});
+  var myQ=currentUser&&(currentUser.role==='Admin'||currentUser.role==='Policy Servicing')?localQuotes:localQuotes.filter(function(q){return !q.faSnapshot||!q.faSnapshot.name||q.faSnapshot.name===currentUser.name;});
   var recent=myQ.slice(0,3);
   if(!recent.length){el.innerHTML='<div style="font-size:.78rem;color:var(--muted);padding:.5rem 0">No quotes yet. Tap New Quote to get started.</div>';return;}
   el.innerHTML=recent.map(function(entry,i){
@@ -2197,7 +2216,7 @@ function _populateAgentFilter(quotes){
 function renderHistory(){
   var list=document.getElementById('hist-list');
   var h3=document.getElementById('hist-count');
-  var raw=currentUser&&(currentUser.role==='Admin'||currentUser.role==='Administration')?localQuotes:localQuotes.filter(function(q){return !q.faSnapshot||!q.faSnapshot.name||q.faSnapshot.name===currentUser.name||!localQuotes[0].faSnapshot;});
+  var raw=currentUser&&(currentUser.role==='Admin'||currentUser.role==='Policy Servicing')?localQuotes:localQuotes.filter(function(q){return !q.faSnapshot||!q.faSnapshot.name||q.faSnapshot.name===currentUser.name||!localQuotes[0].faSnapshot;});
   _populateAgentFilter(raw);
   // ── Search ────────────────────────────────────────────────
   var term=((document.getElementById('hist-search')||{}).value||'').trim().toLowerCase();
@@ -2260,7 +2279,7 @@ function renderHistory(){
         +(currentUser&&currentUser.role==='Admin'
           // Admin: Delete only
           ?'<button class="btn btn-danger btn-sm" onclick="deleteQuote(event,\''+(entry.localId||entry.quoteId||'')+'\')">&times; Delete</button>'
-          :currentUser&&currentUser.role==='Administration'
+          :currentUser&&currentUser.role==='Policy Servicing'
           // Administration: View only — activate/decline done in Policy Activation tab
           ?''
           // FA: Revise + Withdraw
@@ -2273,7 +2292,7 @@ function renderHistory(){
   }).join('');
 }
 function withdrawQuote(ev,lid){
-  if(currentUser&&currentUser.role==='Administration'){vlaAlert('Withdraw is not available for Administration users.');return;}
+  if(currentUser&&currentUser.role==='Policy Servicing'){vlaAlert('Withdraw is not available for Policy Servicing users.');return;}
   if(ev&&ev.stopPropagation)ev.stopPropagation();
   if(!lid){showToast('Cannot identify quote.');return;}
   vlaConfirm('Withdraw this quote? It will be hidden from your list but kept for compliance records.',function(yes){
@@ -2402,13 +2421,24 @@ function viewQuoteFromHistory(idx){
     currentUser=savedUser;_viewMode=false;_actingUser=null;
     var ab=document.querySelector('#panel-quote .actions');if(ab)ab.style.display='';
     var actAb=document.getElementById('activation-actions');if(actAb)actAb.style.display='none';
+    var faAb=document.getElementById('fa-accept-actions');if(faAb)faAb.style.display='none';
     goScreen('scr-history');renderHistory();
   };
   document.getElementById('quote-product-title').textContent='WPA Quotation';
   var _ab=document.querySelector('#panel-quote .actions');if(_ab)_ab.style.display='none';
-  // Administration: show Activate/Decline instead of Edit/Save
+  // FA: show Client Accepted button when quote is Pending
+  var _faAb=document.getElementById('fa-accept-actions');
+  if(currentUser&&currentUser.role==='FA'&&_faAb){
+    var _qs=entry.policyStatus||'Pending';
+    _faAb.style.display=(_qs==='Pending'||_qs==='Declined')?'':'none';
+    var _faStat=document.getElementById('fa-accept-status');
+    var _faBtn=document.getElementById('fa-accept-btn');
+    if(_faStat)_faStat.textContent=_qs!=='Pending'?'Status: '+_qs:'';
+    if(_faBtn){_faBtn.dataset.lid=entry.localId||entry.quoteId||'';}
+  }
+  // Policy Servicing: show Activate/Decline instead of Edit/Save
   var _actAb=document.getElementById('activation-actions');
-  if(currentUser&&currentUser.role==='Administration'&&_actAb){
+  if(currentUser&&currentUser.role==='Policy Servicing'&&_actAb){
     _actAb.style.display='';
     // Store quote reference for the action buttons
     var _lid=entry.localId||entry.quoteId||'';
@@ -2425,7 +2455,7 @@ function viewQuoteFromHistory(idx){
   goScreen('scr-quote');goQTab('panel-quote');
 }
 function reviseQuote(idx){
-  if(currentUser&&currentUser.role==='Administration'){vlaAlert('Revise is not available for Administration users.');return;}
+  if(currentUser&&currentUser.role==='Policy Servicing'){vlaAlert('Revise is not available for Policy Servicing users.');return;}
   var entry=localQuotes[idx];if(!entry||!entry.inputs)return;
   var inp=entry.inputs;
   function setVal(id,val){var el=document.getElementById(id);if(el&&val!==undefined&&val!==null)el.value=val;}
@@ -2453,6 +2483,39 @@ function reviseQuote(idx){
 }
 
 // ── Administration: Activate/Decline from quote view ──────────
+function _faClientAccept(){
+  var lid=document.getElementById('fa-accept-btn').dataset.lid;
+  if(!lid)return;
+  vlaConfirm('Confirm client has accepted this quote and proceed to Policy Servicing?',function(yes){
+    if(!yes)return;
+    // Update local status
+    var i=localQuotes.findIndex(function(q){return q.localId===lid||q.quoteId===lid;});
+    if(i>-1){
+      localQuotes[i].policyStatus='Accepted';
+      localQuotes[i].statusDate=new Date().toISOString().slice(0,10);
+      localQuotes[i].statusBy=currentUser.name||'';
+      saveLocalQuotes();
+    }
+    // Sync to sheet + notify Policy Servicing via email
+    if(navigator.onLine&&APPS_SCRIPT_URL){
+      fetch(APPS_SCRIPT_URL,{method:'POST',redirect:'follow',
+        headers:{'Content-Type':'text/plain;charset=utf-8'},
+        body:JSON.stringify({token:APP_TOKEN,action:'clientAccepted',
+          quoteId:lid,faName:currentUser.name||'',
+          faEmail:currentUser.faEmail||'',
+          clientName:(i>-1&&localQuotes[i].inputs)?localQuotes[i].inputs.policyholderName||'Client':'Client',
+          statusDate:new Date().toISOString().slice(0,10)})
+      }).catch(function(){});
+    }
+    // Update button state
+    var btn=document.getElementById('fa-accept-btn');
+    if(btn){btn.disabled=true;}
+    var stat=document.getElementById('fa-accept-status');
+    if(stat)stat.textContent='Status: Accepted — sent to Policy Servicing';
+    renderHistory();
+    showToast('Sent to Policy Servicing ✓');
+  });
+}
 function _quoteViewActivate(){
   var lid=document.getElementById('act-activate-btn').dataset.lid;
   if(!lid)return;
@@ -2477,12 +2540,60 @@ function showAdminTab(id,el){
   document.getElementById(id).classList.add('on');el.classList.add('on');
   if(id==='adm-quotes') loadAllQuotes();
   if(id==='adm-activation') loadActivationList();
+  if(id==='adm-ps-dash') loadPSDash();
+}
+// ── Policy Servicing dashboard ──────────────────────────────────
+var _psLog=[]; // cached activity log for PS dashboard
+async function loadPSDash(){
+  var el=document.getElementById('ps-dash-list');if(!el)return;
+  el.innerHTML='<div class="empty-state">Loading…</div>';
+  try{
+    var r=await fetch(APPS_SCRIPT_URL+'?action=getPSLog&requesterId='
+      +encodeURIComponent(currentUser.userId)+'&token='+encodeURIComponent(APP_TOKEN),{redirect:'follow'});
+    var d=await r.json();
+    _psLog=d.ok&&d.log?d.log:[];
+  }catch(e){_psLog=[];}
+  _renderPSDash();
+}
+function _renderPSDash(){
+  var el=document.getElementById('ps-dash-list');if(!el)return;
+  var term=((document.getElementById('ps-dash-search')||{}).value||'').trim().toLowerCase();
+  var filt=((document.getElementById('ps-dash-filter')||{}).value||'');
+  var rows=_psLog.filter(function(e){
+    var matchF=!filt||e.action===filt;
+    var matchT=!term||(e.clientName||'').toLowerCase().indexOf(term)>-1
+               ||(e.quoteId||'').toLowerCase().indexOf(term)>-1
+               ||(e.faName||'').toLowerCase().indexOf(term)>-1;
+    return matchF&&matchT;
+  });
+  if(!_psLog.length){el.innerHTML='<div class="empty-state">No activity yet.</div>';return;}
+  if(!rows.length){el.innerHTML='<div class="hist-no-results">No entries match.</div>';return;}
+  var _aCol={Active:'#2e7d32',Declined:'#b00',Accepted:'#1565c0',Withdrawn:'#777'};
+  el.innerHTML=rows.map(function(e){
+    var col=_aCol[e.action]||'#555';
+    return '<div class="act-card">'
+      +'<div class="act-card-top">'
+        +'<div>'
+          +'<div class="act-name">'+escHtml(e.clientName||'—')+'</div>'
+          +'<div class="act-meta">FA: '+escHtml(e.faName||'—')+' &middot; '+escHtml(e.quoteId||'')+'</div>'
+          +'<div class="act-meta">'+escHtml(e.actionDate||'')+'</div>'
+        +'</div>'
+        +'<span class="act-status" style="color:'+col+'">'+escHtml(e.action)+'</span>'
+      +'</div>'
+    +'</div>';
+  }).join('')
+  +'<div style="font-size:.68rem;color:var(--muted);text-align:center;padding:.5rem">'+(rows.length)+' of '+_psLog.length+' entries</div>';
 }
 async function loadAdmin(){
-  if(currentUser.role!=='Admin'&&currentUser.role!=='Administration')return;
-  if(currentUser.role==='Administration'){
+  if(currentUser.role!=='Admin'&&currentUser.role!=='Policy Servicing')return;
+  if(currentUser.role==='Policy Servicing'){
     document.querySelectorAll('.admin-tab').forEach(function(b){b.classList.remove('on');});
     document.querySelectorAll('.admin-section').forEach(function(s){s.classList.remove('on');});
+    // Hide admin-only tabs
+    ['tab-users','tab-quotes'].forEach(function(id){
+      var b=document.querySelector('.admin-tab[onclick*="'+id+'"]');
+      if(b)b.style.display='none';
+    });
     var actBtn=document.getElementById('tab-btn-activation');
     if(actBtn)actBtn.classList.add('on');
     var actSec=document.getElementById('adm-activation');
