@@ -147,11 +147,15 @@ input::placeholder{color:#ccc}
 .sync-badge{font-size:.56rem;padding:.07rem .35rem;border-radius:20px;font-weight:600;text-transform:uppercase}
 .sync-badge.synced{background:#e8f5e9;color:#2e7d32}.sync-badge.pending{background:#fff3e0;color:#e65100}
 .qc-actions{display:flex;gap:.35rem;margin-top:.5rem;justify-content:flex-end}
-.hist-search-wrap{padding:.6rem .9rem .2rem;position:sticky;top:0;background:var(--bg);z-index:10;}
-.hist-search{width:100%;padding:.52rem .75rem .52rem 2.1rem;border:1px solid var(--line);border-radius:20px;font-size:.78rem;font-family:inherit;background:#fff;box-sizing:border-box;outline:none;}
+.hist-search-wrap{padding:.55rem .9rem .45rem;position:sticky;top:0;background:var(--bg);z-index:10;border-bottom:1px solid var(--line);}
+.hist-search-row{display:flex;gap:.45rem;align-items:center;margin-bottom:.4rem;}
+.hist-search{flex:1;padding:.5rem .75rem .5rem 2.1rem;border:1px solid var(--line);border-radius:20px;font-size:.78rem;font-family:inherit;background:#fff;box-sizing:border-box;outline:none;min-width:0;}
 .hist-search:focus{border-color:var(--red);}
-.hist-search-icon{position:absolute;left:1.55rem;top:50%;transform:translateY(-50%);opacity:.4;pointer-events:none;font-size:.9rem;}
-.hist-search-wrap-inner{position:relative;}
+.hist-search-icon{position:absolute;left:.75rem;top:50%;transform:translateY(-50%);opacity:.4;pointer-events:none;font-size:.88rem;}
+.hist-search-wrap-inner{position:relative;flex:1;min-width:0;}
+.hist-filter-row{display:flex;gap:.45rem;}
+.hist-sel{flex:1;padding:.42rem .6rem;border:1.5px solid var(--line);border-radius:8px;font-size:.75rem;font-family:inherit;background:#fff;color:var(--text);outline:none;cursor:pointer;}
+.hist-sel:focus{border-color:var(--red);}
 .hist-no-results{text-align:center;color:var(--muted);font-size:.8rem;padding:2rem 1rem;}
 .empty-state{text-align:center;padding:2.2rem 1rem;color:var(--muted);font-size:.8rem}
 .pinfo-body,.profile-body,.admin-body,.bcard-body{flex:1;overflow-y:auto;padding:.95rem .8rem .8rem}
@@ -856,9 +860,22 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
   <div class="topbar"><button class="tb-back" onclick="goScreen('scr-home')">&#8592;</button><span class="tb-title">Quote History</span><button class="tb-btn" onclick="retroSync()">&#8635; Retrosync</button></div>
   <div class="hist-hdr"><h3 id="hist-count">Quotes</h3></div>
   <div class="hist-search-wrap">
-    <div class="hist-search-wrap-inner">
-      <span class="hist-search-icon">&#128269;</span>
-      <input class="hist-search" id="hist-search" type="search" placeholder="Search by name, ref, amount or FA…" oninput="renderHistory()" autocomplete="off"/>
+    <div class="hist-search-row">
+      <div class="hist-search-wrap-inner">
+        <span class="hist-search-icon">&#128269;</span>
+        <input class="hist-search" id="hist-search" type="search" placeholder="Search name or ref…" oninput="renderHistory()" autocomplete="off"/>
+      </div>
+    </div>
+    <div class="hist-filter-row">
+      <select class="hist-sel" id="hist-agent-filter" onchange="renderHistory()" style="display:none">
+        <option value="">All agents</option>
+      </select>
+      <select class="hist-sel" id="hist-sort" onchange="renderHistory()">
+        <option value="newest">Newest first</option>
+        <option value="oldest">Oldest first</option>
+        <option value="name">Name A–Z</option>
+        <option value="amount">Highest amount</option>
+      </select>
     </div>
   </div>
   <div class="hist-body" id="hist-list"></div>
@@ -1051,7 +1068,12 @@ function onFASelect(uid){
 }
 function navTo(dest){
   var map={home:'scr-home',quote:'scr-products',history:'scr-history',products:'scr-productinfo',profile:'scr-profile'};
-  if(dest==='history'){var hs=document.getElementById('hist-search');if(hs)hs.value='';renderHistory();}
+  if(dest==='history'){
+    var hs=document.getElementById('hist-search');if(hs)hs.value='';
+    var haf=document.getElementById('hist-agent-filter');if(haf)haf.value='';
+    var hsort=document.getElementById('hist-sort');if(hsort)hsort.value='newest';
+    renderHistory();
+  }
   if(dest==='quote'){resetQuoteForm();loadFADropdown();}
   goScreen(map[dest]||'scr-home');
 }
@@ -2117,28 +2139,54 @@ async function retroSync(){
 }
 
 // ── History ───────────────────────────────────────────────────
+function _populateAgentFilter(quotes){
+  var sel=document.getElementById('hist-agent-filter');if(!sel)return;
+  if(!currentUser||currentUser.role!=='Admin'){sel.style.display='none';return;}
+  sel.style.display='';
+  var names={};quotes.forEach(function(q){var n=q.faSnapshot&&q.faSnapshot.name;if(n)names[n]=1;});
+  var current=sel.value;
+  var opts='<option value="">All agents</option>';
+  Object.keys(names).sort().forEach(function(n){opts+='<option value="'+escHtml(n)+'"'+(n===current?' selected':'')+'>'+escHtml(n)+'</option>';});
+  sel.innerHTML=opts;
+}
 function renderHistory(){
   var list=document.getElementById('hist-list');
   var h3=document.getElementById('hist-count');
   var raw=currentUser&&currentUser.role==='Admin'?localQuotes:localQuotes.filter(function(q){return !q.faSnapshot||!q.faSnapshot.name||q.faSnapshot.name===currentUser.name||!localQuotes[0].faSnapshot;});
-  // ── Search filter ─────────────────────────────────────────
-  var searchEl=document.getElementById('hist-search');
-  var term=(searchEl&&searchEl.value||'').trim().toLowerCase();
-  var visibleQuotes=term?raw.filter(function(q){
+  _populateAgentFilter(raw);
+  // ── Search ────────────────────────────────────────────────
+  var term=((document.getElementById('hist-search')||{}).value||'').trim().toLowerCase();
+  // ── Agent filter (Admin only) ─────────────────────────────
+  var agentFilter=((document.getElementById('hist-agent-filter')||{}).value||'');
+  // ── Sort ──────────────────────────────────────────────────
+  var sortVal=((document.getElementById('hist-sort')||{}).value||'newest');
+  var filtered=raw.filter(function(q){
     var inp=q.inputs||{};
     var name=(inp.policyholderName||'').toLowerCase();
-    var surname=name.split(' ').pop();
     var ref=(q.quoteId||q.localId||'').toLowerCase();
     var faname=(q.faSnapshot&&q.faSnapshot.name||'').toLowerCase();
     var baseRes=q.results&&q.results.find(function(r){return r.funeralTier===0&&r.guarantee===0;});
     var amt=baseRes?fmtN(baseRes.perInstalmentAnnuity):'';
-    return name.indexOf(term)>-1||surname.indexOf(term)>-1||
-           ref.indexOf(term)>-1||faname.indexOf(term)>-1||
-           amt.indexOf(term)>-1;
-  }):raw;
-  h3.textContent='Quote History ('+visibleQuotes.length+(term?' matched':'')+')';
+    var matchSearch=!term||name.indexOf(term)>-1||name.split(' ').pop().indexOf(term)>-1||
+                    ref.indexOf(term)>-1||faname.indexOf(term)>-1||amt.indexOf(term)>-1;
+    var matchAgent=!agentFilter||(q.faSnapshot&&q.faSnapshot.name)===agentFilter;
+    return matchSearch&&matchAgent;
+  });
+  // ── Apply sort ────────────────────────────────────────────
+  var visibleQuotes=filtered.slice().sort(function(a,b){
+    if(sortVal==='oldest') return new Date(a.quoteDate)-new Date(b.quoteDate);
+    if(sortVal==='name')   return (a.inputs&&a.inputs.policyholderName||'').localeCompare(b.inputs&&b.inputs.policyholderName||'');
+    if(sortVal==='amount'){
+      var ga=a.results&&a.results.find(function(r){return r.funeralTier===0&&r.guarantee===0;});
+      var gb=b.results&&b.results.find(function(r){return r.funeralTier===0&&r.guarantee===0;});
+      return ((gb&&gb.perInstalmentAnnuity)||0)-((ga&&ga.perInstalmentAnnuity)||0);
+    }
+    return new Date(b.quoteDate)-new Date(a.quoteDate); // newest first (default)
+  });
+  var isFiltered=term||agentFilter;
+  h3.textContent='Quote History ('+visibleQuotes.length+(isFiltered?' matched of '+raw.length:'')+')';
   if(!raw.length){list.innerHTML='<div class="empty-state">No saved quotes yet.<br>Calculate and tap Save.</div>';return;}
-  if(!visibleQuotes.length){list.innerHTML='<div class="hist-no-results">No quotes match &ldquo;'+escHtml(term)+'&rdquo;</div>';return;}
+  if(!visibleQuotes.length){list.innerHTML='<div class="hist-no-results">No quotes match your filters.</div>';return;}
   list.innerHTML=visibleQuotes.map(function(entry,i){
     var inp=entry.inputs||{};
     var init=(inp.policyholderName||'?').split(' ').slice(0,2).map(function(w){return w[0];}).join('').toUpperCase();
