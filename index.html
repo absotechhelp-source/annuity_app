@@ -887,9 +887,10 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
       <select class="hist-sel" id="hist-agent-filter" onchange="renderHistory()" style="display:none">
         <option value="">All agents</option>
       </select>
-      <select class="hist-sel" id="hist-status-filter" onchange="renderHistory()" style="display:none">
+      <select class="hist-sel" id="hist-status-filter" onchange="renderHistory()">
         <option value="">All statuses</option>
         <option value="Pending">Pending</option>
+        <option value="Accepted">Accepted</option>
         <option value="Active">Active</option>
         <option value="Declined">Declined</option>
         <option value="Withdrawn">Withdrawn</option>
@@ -2203,8 +2204,7 @@ async function retroSync(){
 // ── History ───────────────────────────────────────────────────
 function _populateAgentFilter(quotes){
   var sel=document.getElementById('hist-agent-filter');if(!sel)return;
-  var sfSel=document.getElementById('hist-status-filter');
-  if(sfSel) sfSel.style.display='';
+  var sfSel=document.getElementById('hist-status-filter'); // always visible
   if(!currentUser||currentUser.role!=='Admin'){sel.style.display='none';return;}
   sel.style.display='';
   var names={};quotes.forEach(function(q){var n=q.faSnapshot&&q.faSnapshot.name;if(n)names[n]=1;});
@@ -2503,57 +2503,57 @@ function _faClientAccept(){
       saveLocalQuotes();
     }
     // Sync to sheet + notify Policy Servicing via email
-    if(navigator.onLine&&APPS_SCRIPT_URL){
+    if(APPS_SCRIPT_URL){
       var _entry=i>-1?localQuotes[i]:null;
       var _clientName=(_entry&&_entry.inputs)?_entry.inputs.policyholderName||'Client':'Client';
       var _faName=(_actingUser&&_actingUser.name)||currentUser.name||'';
-      // Step 1: ensure quote is saved to sheet first
-      var _saveBody={
-        token:APP_TOKEN, action:'saveQuote',
-        localId:_entry?_entry.localId||lid:lid,
-        userId:currentUser.userId||'',
-        faName:_faName,
-        clientName:_clientName,
-        clientDob:(_entry&&_entry.inputs)?_entry.inputs.dob1||'':'',
-        clientGender:(_entry&&_entry.inputs)?_entry.inputs.gender1||'':'',
-        anb:(_entry&&_entry.inputs)?_entry.inputs.anb1||0:0,
-        consideration:(_entry&&_entry.inputs)?_entry.inputs.initialConsideration||0:0,
-        dueDate:(_entry&&_entry.inputs)?_entry.inputs.dueDate||'':'',
-        basis:(_entry&&_entry.inputs)?_entry.inputs.basisName||'PA90':'PA90',
-        frequency:(_entry&&_entry.inputs)?_entry.inputs.frequency||'Monthly':'Monthly',
-        timing:(_entry&&_entry.inputs)?_entry.inputs.paymentTiming||'Advance':'Advance',
-        structure:(_entry&&_entry.inputs)?_entry.inputs.annuityStructure||'Single':'Single',
-        quoteDate:_entry?_entry.quoteDate||new Date().toISOString().slice(0,10):new Date().toISOString().slice(0,10),
-        resultsJson:_entry?JSON.stringify(_entry.results||[]):'[]',
-        inputsJson:_entry?JSON.stringify(_entry.inputs||{}):'{}',
-        faSnapshot:_entry?JSON.stringify(_entry.faSnapshot||{}):'{}'
-      };
-      var _saveUrl=APPS_SCRIPT_URL+'?action=saveQuote&token='+encodeURIComponent(APP_TOKEN)
-        +'&payload='+encodeURIComponent(JSON.stringify(_saveBody));
-      // Step 2: after save, fire clientAccepted with the confirmed quoteId
-      fetch(APPS_SCRIPT_URL,{method:'POST',redirect:'follow',
-        headers:{'Content-Type':'text/plain;charset=utf-8'},
-        body:JSON.stringify(_saveBody)
-      })
-      .then(function(r){return r.json();})
-      .then(function(saved){
-        var confirmedId=saved.quoteId||(_entry&&_entry.quoteId)||lid;
-        if(saved.quoteId&&_entry&&!_entry.quoteId){
-          _entry.quoteId=saved.quoteId;
-          _entry.syncStatus='synced';
-          saveLocalQuotes();
-        }
+      var _statusDate=new Date().toISOString().slice(0,10);
+      var _faEmail=(_actingUser||currentUser).faEmail||'';
+      // Helper: fire clientAccepted once we have a confirmed server quoteId
+      function _fireClientAccepted(qid){
         var _caUrl=APPS_SCRIPT_URL
           +'?action=clientAccepted'
           +'&token='+encodeURIComponent(APP_TOKEN)
-          +'&quoteId='+encodeURIComponent(confirmedId)
+          +'&quoteId='+encodeURIComponent(qid)
           +'&faName='+encodeURIComponent(_faName)
-          +'&faEmail='+encodeURIComponent((_actingUser||currentUser).faEmail||'')
+          +'&faEmail='+encodeURIComponent(_faEmail)
           +'&clientName='+encodeURIComponent(_clientName)
-          +'&statusDate='+encodeURIComponent(new Date().toISOString().slice(0,10));
-        return fetch(_caUrl,{redirect:'follow'});
-      })
-      .catch(function(){});
+          +'&statusDate='+encodeURIComponent(_statusDate);
+        fetch(_caUrl,{redirect:'follow'}).catch(function(){});
+      }
+      // If quote already has a server quoteId, fire directly
+      if(_entry&&_entry.quoteId){
+        _fireClientAccepted(_entry.quoteId);
+      } else {
+        // Quote not yet on server — push it first using the same method as saveAndSync
+        fetch(APPS_SCRIPT_URL,{method:'POST',body:JSON.stringify({
+          token:APP_TOKEN, action:'saveQuote',
+          localId:_entry?_entry.localId||lid:lid,
+          userId:currentUser.userId||'',
+          faName:_faName,
+          clientName:_clientName,
+          clientDob:(_entry&&_entry.inputs)?_entry.inputs.dob1||'':'',
+          clientGender:(_entry&&_entry.inputs)?_entry.inputs.gender1||'':'',
+          anb:(_entry&&_entry.anb1)||0,
+          consideration:(_entry&&_entry.inputs)?_entry.inputs.initialConsideration||0:0,
+          dueDate:(_entry&&_entry.inputs)?_entry.inputs.dueDate||'':'',
+          basis:(_entry&&_entry.inputs)?_entry.inputs.basisName||'PA90':'PA90',
+          frequency:(_entry&&_entry.inputs)?_entry.inputs.frequency||'Monthly':'Monthly',
+          timing:(_entry&&_entry.inputs)?_entry.inputs.paymentTiming||'Advance':'Advance',
+          structure:(_entry&&_entry.inputs)?_entry.inputs.annuityStructure||'Single':'Single',
+          quoteDate:_entry?_entry.quoteDate||_statusDate:_statusDate,
+          resultsJson:JSON.stringify(_entry?_entry.results||[]:[]),
+          inputsJson:JSON.stringify(_entry?_entry.inputs||{}:{})
+        })})
+        .then(function(r){return r.json();})
+        .then(function(saved){
+          if(saved.ok&&saved.quoteId){
+            if(_entry){_entry.quoteId=saved.quoteId;_entry.syncStatus='synced';saveLocalQuotes();}
+            _fireClientAccepted(saved.quoteId);
+          }
+        })
+        .catch(function(){});
+      }
     }
     // Update button state
     var btn=document.getElementById('fa-accept-btn');
