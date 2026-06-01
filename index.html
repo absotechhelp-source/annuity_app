@@ -1132,7 +1132,9 @@ function goScreen(id){
 }
 // ── Admin: FA selector for quoting on behalf of ────────────
 function loadFADropdown(){
-  if(!currentUser||currentUser.role!=='Admin')return;
+  if(!currentUser)return;
+  // Allow Admin, Technical Services and Policy Servicing to load the FA list
+  if(currentUser.role!=='Admin'&&!isTS(currentUser.role)&&!isPS(currentUser.role))return;
   var sel=document.getElementById('quoteFA');if(!sel)return;
   fetch(APPS_SCRIPT_URL+'?action=getUsers&requesterId='+encodeURIComponent(currentUser.userId)+'&token='+encodeURIComponent(APP_TOKEN),{redirect:'follow'})
     .then(function(r){return r.json();})
@@ -2267,7 +2269,7 @@ function _populateAgentFilter(quotes){
 }
 function renderHistory(){
   // Ensure FA list is loaded for agent filter
-  if(currentUser&&currentUser.role==='Admin'&&(!_faList||!_faList.length)) loadFADropdown();
+  if(currentUser&&(currentUser.role==='Admin'||isTS(currentUser.role)||isPS(currentUser.role))&&(!_faList||!_faList.length)) loadFADropdown();
   var list=document.getElementById('hist-list');
   var h3=document.getElementById('hist-count');
   var raw=currentUser&&(currentUser.role==='Admin'||isPS(currentUser.role))?localQuotes:localQuotes.filter(function(q){return !q.faSnapshot||!q.faSnapshot.name||q.faSnapshot.name===currentUser.name||!localQuotes[0].faSnapshot;});
