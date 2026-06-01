@@ -2237,10 +2237,15 @@ function renderHistory(){
       +'</div>'
       +'<div class="qc-actions">'
         +'<button class="btn btn-ghost btn-sm" onclick="viewQuoteFromHistory('+i+')">View</button>'
-        +(entry.policyStatus!=='Withdrawn'?'<button class="btn btn-primary btn-sm" onclick="reviseQuote('+i+')">Revise</button>':'')
         +(currentUser&&currentUser.role==='Admin'
+          // Admin: Delete only
           ?'<button class="btn btn-danger btn-sm" onclick="deleteQuote(event,\''+(entry.localId||entry.quoteId||'')+'\')">&times; Delete</button>'
-          :(entry.policyStatus==='Withdrawn'
+          :currentUser&&currentUser.role==='Administration'
+          // Administration: View only — activate/decline done in Policy Activation tab
+          ?''
+          // FA: Revise + Withdraw
+          :(entry.policyStatus!=='Withdrawn'?'<button class="btn btn-primary btn-sm" onclick="reviseQuote('+i+')">Revise</button>':'')
+           +(entry.policyStatus==='Withdrawn'
             ?'<span style="font-size:.65rem;color:var(--muted);align-self:center">⌀ Withdrawn</span>'
             :'<button class="btn btn-ghost btn-sm" style="border-color:#999;color:#666" onclick="withdrawQuote(event,\''+(entry.localId||entry.quoteId||'')+'\')">&oslash; Withdraw</button>'))
       +'</div>'
@@ -2248,6 +2253,7 @@ function renderHistory(){
   }).join('');
 }
 function withdrawQuote(ev,lid){
+  if(currentUser&&currentUser.role==='Administration'){vlaAlert('Withdraw is not available for Administration users.');return;}
   if(ev&&ev.stopPropagation)ev.stopPropagation();
   if(!lid){showToast('Cannot identify quote.');return;}
   vlaConfirm('Withdraw this quote? It will be hidden from your list but kept for compliance records.',function(yes){
@@ -2376,6 +2382,7 @@ function viewQuoteFromHistory(idx){
   goScreen('scr-quote');goQTab('panel-quote');
 }
 function reviseQuote(idx){
+  if(currentUser&&currentUser.role==='Administration'){vlaAlert('Revise is not available for Administration users.');return;}
   var entry=localQuotes[idx];if(!entry||!entry.inputs)return;
   var inp=entry.inputs;
   function setVal(id,val){var el=document.getElementById(id);if(el&&val!==undefined&&val!==null)el.value=val;}
