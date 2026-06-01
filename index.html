@@ -882,6 +882,13 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
       <select class="hist-sel" id="hist-agent-filter" onchange="renderHistory()" style="display:none">
         <option value="">All agents</option>
       </select>
+      <select class="hist-sel" id="hist-status-filter" onchange="renderHistory()" style="display:none">
+        <option value="">All statuses</option>
+        <option value="Pending">Pending</option>
+        <option value="Active">Active</option>
+        <option value="Declined">Declined</option>
+        <option value="Withdrawn">Withdrawn</option>
+      </select>
       <select class="hist-sel" id="hist-sort" onchange="renderHistory()">
         <option value="newest">Newest first</option>
         <option value="oldest">Oldest first</option>
@@ -1046,6 +1053,7 @@ var _newWorker=null;
 var _reviseMode=false;
 var _viewMode=false;
 var _selectedFA=null;   // FA selected by Admin to quote on behalf of
+var _actingUser=null;   // original logged-in user preserved when currentUser is overwritten
 var _faList=[];         // cached FA list for admin dropdown
 
 // ── Offline / SW ─────────────────────────────────────────────
@@ -1105,6 +1113,7 @@ function navTo(dest){
   if(dest==='history'){
     var hs=document.getElementById('hist-search');if(hs)hs.value='';
     var haf=document.getElementById('hist-agent-filter');if(haf)haf.value='';
+    var hsf=document.getElementById('hist-status-filter');if(hsf)hsf.value='';
     var hsort=document.getElementById('hist-sort');if(hsort)hsort.value='newest';
     renderHistory();
   }
@@ -2175,6 +2184,8 @@ async function retroSync(){
 // ── History ───────────────────────────────────────────────────
 function _populateAgentFilter(quotes){
   var sel=document.getElementById('hist-agent-filter');if(!sel)return;
+  var sfSel=document.getElementById('hist-status-filter');
+  if(sfSel) sfSel.style.display='';
   if(!currentUser||currentUser.role!=='Admin'){sel.style.display='none';return;}
   sel.style.display='';
   var names={};quotes.forEach(function(q){var n=q.faSnapshot&&q.faSnapshot.name;if(n)names[n]=1;});
@@ -2192,6 +2203,8 @@ function renderHistory(){
   var term=((document.getElementById('hist-search')||{}).value||'').trim().toLowerCase();
   // ── Agent filter (Admin only) ─────────────────────────────
   var agentFilter=((document.getElementById('hist-agent-filter')||{}).value||'');
+  // ── Status filter (Admin + Administration) ───────────────
+  var statusFilter=((document.getElementById('hist-status-filter')||{}).value||'');
   // ── Sort ──────────────────────────────────────────────────
   var sortVal=((document.getElementById('hist-sort')||{}).value||'newest');
   var filtered=raw.filter(function(q){
@@ -2204,7 +2217,8 @@ function renderHistory(){
     var matchSearch=!term||name.indexOf(term)>-1||name.split(' ').pop().indexOf(term)>-1||
                     ref.indexOf(term)>-1||faname.indexOf(term)>-1||amt.indexOf(term)>-1;
     var matchAgent=!agentFilter||(q.faSnapshot&&q.faSnapshot.name)===agentFilter;
-    return matchSearch&&matchAgent;
+    var matchStatus=!statusFilter||(q.policyStatus||'Pending')===statusFilter;
+    return matchSearch&&matchAgent&&matchStatus;
   });
   // ── Apply sort ────────────────────────────────────────────
   var visibleQuotes=filtered.slice().sort(function(a,b){
@@ -2217,7 +2231,7 @@ function renderHistory(){
     }
     return new Date(b.quoteDate)-new Date(a.quoteDate); // newest first (default)
   });
-  var isFiltered=term||agentFilter;
+  var isFiltered=term||agentFilter||statusFilter;
   h3.textContent='Quote History ('+visibleQuotes.length+(isFiltered?' matched of '+raw.length:'')+')';
   if(!raw.length){list.innerHTML='<div class="empty-state">No saved quotes yet.<br>Calculate and tap Save.</div>';return;}
   if(!visibleQuotes.length){list.innerHTML='<div class="hist-no-results">No quotes match your filters.</div>';return;}
@@ -2342,10 +2356,11 @@ function setPolicyStatus(lid,status){
   vlaConfirm(msg,function(yes){
     if(!yes)return;
     var i=localQuotes.findIndex(function(q){return q.localId===lid||q.quoteId===lid;});
+    var _byName=(_actingUser&&_actingUser.name)||currentUser.name||'';
     if(i>-1){
       localQuotes[i].policyStatus=status;
       localQuotes[i].statusDate=new Date().toISOString().slice(0,10);
-      localQuotes[i].statusBy=currentUser.name||'';
+      localQuotes[i].statusBy=_byName;
       saveLocalQuotes();
     }
     if(navigator.onLine&&APPS_SCRIPT_URL&&lid){
@@ -2354,7 +2369,7 @@ function setPolicyStatus(lid,status){
         body:JSON.stringify({token:APP_TOKEN,action:'updatePolicyStatus',
           quoteId:lid,status:status,
           statusDate:new Date().toISOString().slice(0,10),
-          statusBy:currentUser.name||currentUser.employeeId||''})
+          statusBy:_byName})
       }).catch(function(){});
     }
     showToast(status==='Active'?'Policy activated ✓':'Policy declined');
@@ -2377,13 +2392,14 @@ function viewQuoteFromHistory(idx){
   if(!entry||!entry.results||!entry.results.length){vlaAlert('No result data for this quote.');return;}
   currentInputs=entry.inputs||{};
   var savedUser=currentUser;
+  _actingUser=currentUser;
   if(entry.faSnapshot) currentUser=Object.assign({},currentUser,entry.faSnapshot);
   var fakeQ={anb1:entry.anb1,annuityStructure:(entry.inputs||{}).annuityStructure,results:entry.results,policyNumber:entry.quoteId||entry.localId,generatedAt:entry.quoteDate};
   lastQuote=fakeQ; // so PDF/WhatsApp/Email work from history view
   var doRender=function(){renderQuoteCanvas(fakeQ,currentInputs);};
   if(_lhReady) doRender(); else{_pendingRender=doRender;setTimeout(function(){if(_pendingRender){_pendingRender();_pendingRender=null;}},1200);}
   document.getElementById('quote-back-btn').onclick=function(){
-    currentUser=savedUser;_viewMode=false;
+    currentUser=savedUser;_viewMode=false;_actingUser=null;
     var ab=document.querySelector('#panel-quote .actions');if(ab)ab.style.display='';
     var actAb=document.getElementById('activation-actions');if(actAb)actAb.style.display='none';
     goScreen('scr-history');renderHistory();
