@@ -157,6 +157,12 @@ input::placeholder{color:#ccc}
 .hist-sel{flex:1;padding:.42rem .6rem;border:1.5px solid var(--line);border-radius:8px;font-size:.75rem;font-family:inherit;background:#fff;color:var(--text);outline:none;cursor:pointer;}
 .hist-sel:focus{border-color:var(--red);}
 .hist-no-results{text-align:center;color:var(--muted);font-size:.8rem;padding:2rem 1rem;}
+.act-card{background:#fff;border-radius:10px;box-shadow:var(--shadow);padding:.8rem .9rem;margin-bottom:.65rem;}
+.act-card-top{display:flex;justify-content:space-between;align-items:flex-start;}
+.act-name{font-weight:700;font-size:.88rem;color:var(--text);}
+.act-meta{font-size:.7rem;color:var(--muted);margin-top:.15rem;}
+.act-status{font-weight:700;font-size:.78rem;white-space:nowrap;margin-left:.5rem;padding-top:.1rem;}
+.act-actions{display:flex;gap:.4rem;margin-top:.5rem;}
 .empty-state{text-align:center;padding:2.2rem 1rem;color:var(--muted);font-size:.8rem}
 .pinfo-body,.profile-body,.admin-body,.bcard-body{flex:1;overflow-y:auto;padding:.95rem .8rem .8rem}
 .pinfo-card{background:#fff;border-radius:9px;box-shadow:var(--shadow);padding:1.1rem;margin-bottom:.85rem}
@@ -957,6 +963,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
     <div class="admin-tabs">
       <button class="admin-tab on" onclick="showAdminTab('adm-fa',this)">Financial Advisors</button>
       <button class="admin-tab"    onclick="showAdminTab('adm-quotes',this)">All Quotes</button>
+      <button class="admin-tab"    onclick="showAdminTab('adm-activation',this)" id="tab-btn-activation">Policy Activation</button>
     </div>
     <div class="admin-section on" id="adm-fa">
       <div class="card"><div class="card-title">Add Financial Advisor</div>
@@ -967,7 +974,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
           <div class="field"><label>Branch</label><input id="fa-branch" type="text" placeholder="e.g. Blantyre"/></div>
           <div class="field"><label>Title</label><input id="fa-title" type="text" value="Intermediary"/></div>
           <div class="field"><label>FA Email</label><input id="fa-email" type="email" placeholder="fa@vanguardlifemw.com"/></div>
-          <div class="field"><label>Role</label><select id="fa-role"><option value="FA">Financial Advisor</option><option value="Admin">Admin</option></select></div>
+          <div class="field"><label>Role</label><select id="fa-role"><option value="FA">Financial Advisor</option><option value="Admin">Admin</option><option value="Administration">Administration</option></select></div>
           <div class="field"><label>Password <sup>*</sup></label><input id="fa-pass" type="text" placeholder="Temporary password"/></div>
         </div>
         <div class="actions"><button class="btn btn-primary btn-sm" onclick="addFA()">Add FA</button></div>
@@ -976,6 +983,27 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
       <div id="fa-table-wrap"></div>
     </div>
     <div class="admin-section" id="adm-quotes"><div id="all-quotes-wrap"><div class="empty-state">Loading&hellip;</div></div></div>
+    <div class="admin-section" id="adm-activation">
+      <p style="font-size:.78rem;color:var(--muted);margin-bottom:.6rem">Once premium is received, mark quote as <strong>Active</strong>.</p>
+      <div class="hist-search-wrap" style="margin:0 0 .6rem;border-radius:8px;">
+        <div class="hist-search-row">
+          <div class="hist-search-wrap-inner">
+            <span class="hist-search-icon">&#128269;</span>
+            <input class="hist-search" id="act-search" type="search" placeholder="Search name, ref, FA, amount…" oninput="_renderActivationList()" autocomplete="off"/>
+          </div>
+        </div>
+        <div class="hist-filter-row" style="margin-top:.4rem">
+          <select class="hist-sel" id="act-status-filter" onchange="_renderActivationList()">
+            <option value="">All statuses</option>
+            <option value="Pending">Pending</option>
+            <option value="Active">Active</option>
+            <option value="Declined">Declined</option>
+            <option value="Withdrawn">Withdrawn</option>
+          </select>
+        </div>
+      </div>
+      <div id="activation-list"><div class="empty-state">Loading…</div></div>
+    </div>
   </div>
   <div class="bnav">
     <button class="bnav-btn" onclick="navTo('home')"><svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>Home</button>
@@ -1216,7 +1244,7 @@ function showApp(){
   var _greet=_hr<12?'Good morning':_hr<17?'Good afternoon':'Good evening';
   var _gEl=document.getElementById('home-greeting');
   if(_gEl) _gEl.innerHTML=_greet+', <strong>'+escHtml(currentUser.name)+'</strong> <span style="font-size:.7rem;color:var(--muted);font-weight:400">&middot; '+escHtml(currentUser.role)+'</span>';
-  if(currentUser.role==='Admin'){
+  if(currentUser.role==='Admin'||currentUser.role==='Administration'){
     document.getElementById('qa-admin').style.display='';
   }
   var isAdmin=currentUser.role==='Admin';
@@ -2193,6 +2221,8 @@ function renderHistory(){
     var baseRes=entry.results&&entry.results.length?entry.results.find(function(r){return r.funeralTier===0&&r.guarantee===0;}):null;
     var amt=baseRes?fmtN(baseRes.perInstalmentAnnuity):'\u2014';
     var badge='<span class="sync-badge '+(entry.syncStatus||'pending')+'">'+(entry.syncStatus==='synced'?'Synced':'Pending')+'</span>';
+    var _psCol=entry.policyStatus==='Active'?'#2e7d32':entry.policyStatus==='Withdrawn'?'#777':'#e65c00';
+    var polBadge=entry.policyStatus?'<span class="sync-badge" style="background:'+_psCol+';color:#fff;margin-left:.2rem">'+escHtml(entry.policyStatus)+'</span>':'';
     var ref=entry.quoteId||entry.localId||'';
     return '<div class="quote-card">'
       +'<div class="qc-top">'
@@ -2203,15 +2233,121 @@ function renderHistory(){
           +(entry.faSnapshot&&entry.faSnapshot.name&&currentUser&&currentUser.role==='Admin'?'<div class="qc-meta" style="color:var(--red);font-size:.65rem">FA: '+escHtml(entry.faSnapshot.name)+'</div>':'')
           +'<div class="qc-meta" style="font-size:.62rem">'+escHtml(ref.slice(0,18))+'</div>'
         +'</div>'
-        +'<div class="qc-right"><div class="qc-amount">'+amt+'</div><div style="margin-top:.2rem">'+badge+'</div></div>'
+        +'<div class="qc-right"><div class="qc-amount">'+amt+'</div><div style="margin-top:.2rem">'+badge+polBadge+'</div></div>'
       +'</div>'
       +'<div class="qc-actions">'
         +'<button class="btn btn-ghost btn-sm" onclick="viewQuoteFromHistory('+i+')">View</button>'
-        +'<button class="btn btn-primary btn-sm" onclick="reviseQuote('+i+')">Revise</button>'
-        +'<button class="btn btn-danger btn-sm" onclick="deleteQuote(event,\''+(entry.localId||entry.quoteId||'')+'\')">&times; Delete</button>'
+        +(entry.policyStatus!=='Withdrawn'?'<button class="btn btn-primary btn-sm" onclick="reviseQuote('+i+')">Revise</button>':'')
+        +(currentUser&&currentUser.role==='Admin'
+          ?'<button class="btn btn-danger btn-sm" onclick="deleteQuote(event,\''+(entry.localId||entry.quoteId||'')+'\')">&times; Delete</button>'
+          :(entry.policyStatus==='Withdrawn'
+            ?'<span style="font-size:.65rem;color:var(--muted);align-self:center">⌀ Withdrawn</span>'
+            :'<button class="btn btn-ghost btn-sm" style="border-color:#999;color:#666" onclick="withdrawQuote(event,\''+(entry.localId||entry.quoteId||'')+'\')">&oslash; Withdraw</button>'))
       +'</div>'
     +'</div>';
   }).join('');
+}
+function withdrawQuote(ev,lid){
+  if(ev&&ev.stopPropagation)ev.stopPropagation();
+  if(!lid){showToast('Cannot identify quote.');return;}
+  vlaConfirm('Withdraw this quote? It will be hidden from your list but kept for compliance records.',function(yes){
+    if(!yes)return;
+    var i=localQuotes.findIndex(function(q){return (q.localId&&q.localId===lid)||(q.quoteId&&q.quoteId===lid);});
+    if(i===-1){showToast('Quote not found.');return;}
+    localQuotes[i].policyStatus='Withdrawn';
+    localQuotes[i].statusDate=new Date().toISOString().slice(0,10);
+    localQuotes[i].statusBy=currentUser.name||'';
+    saveLocalQuotes();
+    var qid=localQuotes[i].quoteId||localQuotes[i].localId;
+    if(navigator.onLine&&APPS_SCRIPT_URL&&qid){
+      fetch(APPS_SCRIPT_URL,{method:'POST',redirect:'follow',
+        headers:{'Content-Type':'text/plain;charset=utf-8'},
+        body:JSON.stringify({token:APP_TOKEN,action:'updatePolicyStatus',
+          quoteId:qid,status:'Withdrawn',
+          statusDate:localQuotes[i].statusDate,statusBy:localQuotes[i].statusBy})
+      }).catch(function(){});
+    }
+    renderHistory();showToast('Quote withdrawn.');
+  });
+}
+var _activationCache=[];
+async function loadActivationList(){
+  var el=document.getElementById('activation-list');if(!el)return;
+  el.innerHTML='<div class="empty-state">Loading…</div>';
+  try{
+    var r=await fetch(APPS_SCRIPT_URL+'?action=getQuotesForActivation&requesterId='
+      +encodeURIComponent(currentUser.userId)+'&token='+encodeURIComponent(APP_TOKEN),{redirect:'follow'});
+    var d=await r.json();
+    _activationCache=d.ok&&d.quotes?d.quotes:localQuotes.slice();
+  }catch(e){_activationCache=localQuotes.slice();}
+  _activationCache.sort(function(a,b){return new Date(b.quoteDate)-new Date(a.quoteDate);});
+  _renderActivationList();
+}
+function _renderActivationList(){
+  var el=document.getElementById('activation-list');if(!el)return;
+  var term=((document.getElementById('act-search')||{}).value||'').trim().toLowerCase();
+  var statusF=((document.getElementById('act-status-filter')||{}).value||'');
+  var allQ=_activationCache.filter(function(q){
+    var name=(q.clientName||q.policyholderName||'').toLowerCase();
+    var fa=(q.faName||'').toLowerCase();
+    var ref=(q.quoteId||q.localId||'').toLowerCase();
+    var amt=q.annuity0?fmtN(q.annuity0):'';
+    var matchTerm=!term||name.indexOf(term)>-1||name.split(' ').pop().indexOf(term)>-1||
+                  fa.indexOf(term)>-1||ref.indexOf(term)>-1||amt.indexOf(term)>-1;
+    var matchStatus=!statusF||(q.policyStatus||'Pending')===statusF;
+    return matchTerm&&matchStatus;
+  });
+  if(!_activationCache.length){el.innerHTML='<div class="empty-state">No quotes found.</div>';return;}
+  if(!allQ.length){el.innerHTML='<div class="hist-no-results">No quotes match your search.</div>';return;}
+  el.innerHTML=allQ.map(function(q){
+    var name=q.clientName||q.policyholderName||'—';
+    var fa=q.faName||'—';
+    var ref=q.quoteId||q.localId||'';
+    var amt=q.annuity0?'MK '+fmtN(q.annuity0)+'/m':'—';
+    var status=q.policyStatus||'Pending';
+    var statusCol=status==='Active'?'#2e7d32':status==='Withdrawn'?'#777':status==='Declined'?'#b00':'#e65c00';
+    var lid=q.quoteId||q.localId||'';
+    return '<div class="act-card">'
+      +'<div class="act-card-top">'
+        +'<div>'
+          +'<div class="act-name">'+escHtml(name)+'</div>'
+          +'<div class="act-meta">FA: '+escHtml(fa)+' &middot; '+fmtDate(q.quoteDate)+'</div>'
+          +'<div class="act-meta">'+escHtml(ref.slice(0,22))+' &middot; '+escHtml(amt)+'</div>'
+        +'</div>'
+        +'<span class="act-status" style="color:'+statusCol+'">'+escHtml(status)+'</span>'
+      +'</div>'
+      +(status==='Pending'
+        ?'<div class="act-actions">'
+          +'<button class="btn btn-primary btn-sm" onclick="setPolicyStatus(\'' +lid+ '\',\'Active\')">&#10003; Activate</button> '
+          +'<button class="btn btn-danger btn-sm" onclick="setPolicyStatus(\'' +lid+ '\',\'Declined\')">&#10005; Decline</button>'
+          +'</div>'
+        :(status==='Active'?'<div class="act-meta" style="color:#2e7d32;margin-top:.3rem">Activated '+escHtml(q.statusDate||'')+' by '+escHtml(q.statusBy||'')+'</div>':''))
+      +'</div>';
+  }).join('');
+}
+function setPolicyStatus(lid,status){
+  var msg=status==='Active'?'Confirm premium received and activate this policy?':'Decline this policy?';
+  vlaConfirm(msg,function(yes){
+    if(!yes)return;
+    var i=localQuotes.findIndex(function(q){return q.localId===lid||q.quoteId===lid;});
+    if(i>-1){
+      localQuotes[i].policyStatus=status;
+      localQuotes[i].statusDate=new Date().toISOString().slice(0,10);
+      localQuotes[i].statusBy=currentUser.name||'';
+      saveLocalQuotes();
+    }
+    if(navigator.onLine&&APPS_SCRIPT_URL&&lid){
+      fetch(APPS_SCRIPT_URL,{method:'POST',redirect:'follow',
+        headers:{'Content-Type':'text/plain;charset=utf-8'},
+        body:JSON.stringify({token:APP_TOKEN,action:'updatePolicyStatus',
+          quoteId:lid,status:status,
+          statusDate:new Date().toISOString().slice(0,10),
+          statusBy:currentUser.name||currentUser.employeeId||''})
+      }).catch(function(){});
+    }
+    showToast(status==='Active'?'Policy activated ✓':'Policy declined');
+    loadActivationList();
+  });
 }
 function deleteQuote(ev,lid){
   if(ev&&ev.stopPropagation)ev.stopPropagation();
@@ -2272,9 +2408,19 @@ function showAdminTab(id,el){
   document.querySelectorAll('.admin-tab').forEach(function(b){b.classList.remove('on');});
   document.getElementById(id).classList.add('on');el.classList.add('on');
   if(id==='adm-quotes') loadAllQuotes();
+  if(id==='adm-activation') loadActivationList();
 }
 async function loadAdmin(){
-  if(currentUser.role!=='Admin')return;
+  if(currentUser.role!=='Admin'&&currentUser.role!=='Administration')return;
+  if(currentUser.role==='Administration'){
+    document.querySelectorAll('.admin-tab').forEach(function(b){b.classList.remove('on');});
+    document.querySelectorAll('.admin-section').forEach(function(s){s.classList.remove('on');});
+    var actBtn=document.getElementById('tab-btn-activation');
+    if(actBtn)actBtn.classList.add('on');
+    var actSec=document.getElementById('adm-activation');
+    if(actSec)actSec.classList.add('on');
+    loadActivationList();return;
+  }
   try{
     var r=await fetch(APPS_SCRIPT_URL+'?action=getUsers&requesterId='+currentUser.userId+'&token='+encodeURIComponent(APP_TOKEN),{redirect:'follow'});
     var raw=await r.text();var d;try{d=JSON.parse(raw);}catch(e){document.getElementById('fa-table-wrap').innerHTML='<div class="empty-state">Server error: '+escHtml(raw.slice(0,120))+'</div>';return;}if(!d.ok)return;
