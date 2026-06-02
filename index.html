@@ -1380,7 +1380,7 @@ function renderRecentQuotes(){
     var baseRes=entry.results&&entry.results.length?entry.results.find(function(r){return r.funeralTier===0&&r.guarantee===0;}):null;
     var amt=baseRes?'MK '+fmtN(baseRes.perInstalmentAnnuity)+'/'+inp.frequency.slice(0,2).toLowerCase():'\u2014';
     var age=timeAgo(entry.quoteDate);
-    return '<div class="rq-card" onclick="viewQuoteFromHistory('+i+')">'
+    return '<div class="rq-card" onclick="viewQuoteById(\''+(entry.localId||entry.quoteId||'')+'\')">'
       +'<div class="rq-avatar">'+escHtml(init)+'</div>'
       +'<div class="rq-info">'
         +'<div class="rq-name">'+escHtml(inp.policyholderName||'\u2014')+'</div>'
@@ -2366,21 +2366,21 @@ function renderHistory(){
         +'<div class="qc-right"><div class="qc-amount">'+amt+'</div><div style="margin-top:.2rem">'+badge+polBadge+'</div></div>'
       +'</div>'
       +'<div class="qc-actions">'
-        +'<button class="btn btn-ghost btn-sm" onclick="viewQuoteFromHistory('+i+')">View</button>'
+        +'<button class="btn btn-ghost btn-sm" onclick="viewQuoteById(\''+(entry.localId||entry.quoteId||'')+'\')">View</button>'
         +(currentUser&&currentUser.role==='Admin'
           // Admin: Delete only
           ?'<button class="btn btn-danger btn-sm" onclick="deleteQuote(event,\''+(entry.localId||entry.quoteId||'')+'\')">&times; Delete</button>'
           :currentUser&&isPS(currentUser.role)
           // Policy Servicing: View + Revise + Activate/Decline
           ?(
-            (entry.policyStatus!=='Withdrawn'&&entry.policyStatus!=='Active'?'<button class="btn btn-primary btn-sm" onclick="reviseQuote('+i+')">Revise</button>':'')
+            (entry.policyStatus!=='Withdrawn'&&entry.policyStatus!=='Active'?'<button class="btn btn-primary btn-sm" onclick="reviseQuoteById(\''+(entry.localId||entry.quoteId||'')+'\')">Revise</button>':'')
            +(entry.policyStatus==='Accepted'||entry.policyStatus==='Pending'
              ?'<button class="btn btn-primary btn-sm" style="background:#2e7d32;margin-left:.2rem" onclick="_cardActivate(event,\''+(entry.localId||entry.quoteId||'')+'\')">✓ Activate</button>'
               +'<button class="btn btn-danger btn-sm" onclick="_cardDecline(event,\''+(entry.localId||entry.quoteId||'')+'\')">✕ Decline</button>'
              :'')
           )
           // FA: Revise + Withdraw
-          :(entry.policyStatus!=='Withdrawn'?'<button class="btn btn-primary btn-sm" onclick="reviseQuote('+i+')">Revise</button>':'')
+          :(entry.policyStatus!=='Withdrawn'?'<button class="btn btn-primary btn-sm" onclick="reviseQuoteById(\''+(entry.localId||entry.quoteId||'')+'\')">Revise</button>':'')
            +(entry.policyStatus==='Withdrawn'
             ?'<span style="font-size:.65rem;color:var(--muted);align-self:center">⌀ Withdrawn</span>'
             :'<button class="btn btn-ghost btn-sm" style="border-color:#999;color:#666" onclick="withdrawQuote(event,\''+(entry.localId||entry.quoteId||'')+'\')">&oslash; Withdraw</button>'))
@@ -2521,6 +2521,22 @@ function deleteQuote(ev,lid){
     if(i===-1){showToast('Quote not found.');return;}
     localQuotes.splice(i,1);saveLocalQuotes();renderHistory();showToast('Quote deleted.');
   });
+}
+// Resolve a quote by its stable localId/quoteId, then delegate to index-based fns.
+// Fixes sorted-index vs raw-index mismatch when History is filtered/sorted.
+function _findQuoteIndexById(lid){
+  if(!lid)return -1;
+  return localQuotes.findIndex(function(q){return q.localId===lid||q.quoteId===lid;});
+}
+function viewQuoteById(lid){
+  var idx=_findQuoteIndexById(lid);
+  if(idx===-1){showToast('Quote not found.');return;}
+  viewQuoteFromHistory(idx);
+}
+function reviseQuoteById(lid){
+  var idx=_findQuoteIndexById(lid);
+  if(idx===-1){showToast('Quote not found.');return;}
+  reviseQuote(idx);
 }
 function viewQuoteFromHistory(idx){
   _viewMode=true;
