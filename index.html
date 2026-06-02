@@ -2857,13 +2857,16 @@ async function _ocrExtract(){
   btn.disabled=true;btn.textContent='Extracting…';
   st.textContent='Sending to AI…';
   try{
-    // GET to GAS proxy — image resized to keep URL under limits
-    var _ocrUrl=APPS_SCRIPT_URL
-      +'?action=ocrExtract'
-      +'&token='+encodeURIComponent(APP_TOKEN)
-      +'&mime='+encodeURIComponent(_ocrMime)
-      +'&img='+encodeURIComponent(_ocrB64);
-    var resp=await fetch(_ocrUrl,{redirect:'follow'});
+    // POST without redirect:follow — avoids GAS body-drop bug
+    var resp=await fetch(APPS_SCRIPT_URL,{
+      method:'POST',
+      body:JSON.stringify({token:APP_TOKEN,action:'ocrExtract',mime:_ocrMime,img:_ocrB64})
+    });
+    // GAS returns redirect — follow it manually
+    if(resp.status===302||resp.redirected){
+      var loc=resp.headers.get('location')||resp.url;
+      if(loc) resp=await fetch(loc,{redirect:'follow'});
+    }
     var data=await resp.json();
     var txt=(data.ok&&data.result)||'';
     var fields=JSON.parse(txt.replace(/```json|```/g,'').trim());
