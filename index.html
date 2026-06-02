@@ -1530,6 +1530,8 @@ async function runCalc(){
     var doRender=function(){renderQuoteCanvas(lastQuote,currentInputs);};
     if(_lhReady) doRender(); else{_pendingRender=doRender;setTimeout(function(){if(_pendingRender){_pendingRender();_pendingRender=null;}},1200);}
     goQTab('panel-medical');
+    // Auto-save after every successful calculation
+    setTimeout(function(){_autoSaveQuote();},300);
     document.getElementById('tab-quote').classList.add('done');
   }catch(e){
     showToast('Calculation error: '+(e.message||'network error'));
@@ -2146,6 +2148,11 @@ function loadLocalQuotes(){try{localQuotes=JSON.parse(localStorage.getItem('vla_
 function saveLocalQuotes(){localStorage.setItem('vla_ann_quotes',JSON.stringify(localQuotes));updateSyncDot();updateStats();renderRecentQuotes();}
 function updateSyncDot(){var p=localQuotes.filter(function(q){return q.syncStatus==='pending';}).length;var dot=document.getElementById('sync-dot');if(dot)dot.className='sync-dot'+(p>0?' pending':'');}
 
+function _autoSaveQuote(){
+  if(!lastQuote||!currentInputs||!currentInputs.policyholderName)return;
+  _doSave();
+  showToast('✓ Quote auto-saved — '+(currentInputs.policyholderName||'client'));
+}
 function saveAndSync(){
   if(!lastQuote)return;
   if(_viewMode){showToast('Already saved. Use Revise to create a new version.');return;}
@@ -2530,7 +2537,16 @@ function deleteQuote(ev,lid){
     if(!yes)return;
     var i=localQuotes.findIndex(function(q){return (q.localId&&q.localId===lid)||(q.quoteId&&q.quoteId===lid);});
     if(i===-1){showToast('Quote not found.');return;}
-    localQuotes.splice(i,1);saveLocalQuotes();renderHistory();showToast('Quote deleted.');
+    var _dq=localQuotes.splice(i,1)[0];
+    saveLocalQuotes();renderHistory();showToast('Quote deleted.');
+    var _qid=_dq&&(_dq.quoteId||_dq.localId);
+    if(_qid&&navigator.onLine&&APPS_SCRIPT_URL){
+      fetch(APPS_SCRIPT_URL+'?action=deleteQuote'
+        +'&token='+encodeURIComponent(APP_TOKEN)
+        +'&quoteId='+encodeURIComponent(_qid)
+        +'&requesterId='+encodeURIComponent(currentUser.userId||''),
+      {redirect:'follow'}).catch(function(){});
+    }
   });
 }
 // Resolve a quote by its stable localId/quoteId, then delegate to index-based fns.
