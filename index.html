@@ -1509,15 +1509,12 @@ async function runCalc(){
   }
   var spin=document.getElementById('spin');spin.classList.add('show');
   try{
-    // Apply mortality gender override from admin settings
+    // Pass mortality gender override as separate param — do NOT overwrite client gender
     var _as=getAppSettings();
-    if(_as.mortGender){
-      currentInputs.gender1=_as.mortGender;
-      if(currentInputs.annuityStructure!=='Single') currentInputs.gender2=_as.mortGender;
-    }
     // GET avoids POST→GET redirect body-loss (GAS redirect drops POST body).
     var _qUrl=APPS_SCRIPT_URL
       +'?action=getQuote'
+      +(_as.mortGender?'&mortGender='+encodeURIComponent(_as.mortGender):'')
       +'&token='+encodeURIComponent(APP_TOKEN)
       +'&inputs='+encodeURIComponent(JSON.stringify(currentInputs));
     var resp=await fetch(_qUrl,{redirect:'follow'});
