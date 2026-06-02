@@ -2089,13 +2089,25 @@ async function shareEmail(){
   if(!blob){showToast('PDF not ready');return;}
   var fname=_quoteFileName('pdf');
   var file=new File([blob],fname,{type:'application/pdf'});
+  // Try Web Share API first (mobile — can attach files directly)
   if(navigator.share&&navigator.canShare&&navigator.canShare({files:[file]})){
-    try{await navigator.share({files:[file],title:'VLA Annuity Quote'});return;}catch(e){}
+    try{await navigator.share({files:[file],title:'VLA Annuity Quote',text:'Please find your Vanguard Life Annuity Quotation attached.'});return;}catch(e){}
   }
-  var a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=fname;a.click();
-  var sub=encodeURIComponent('VLA Annuity Quotation - '+(currentInputs.policyholderName||''));
-  var body=encodeURIComponent('Dear Client,\n\nPlease find your Vanguard Life Annuity Quotation attached.\n\nKind regards,\n'+(currentUser?currentUser.name:'VLA'));
-  setTimeout(function(){window.open('mailto:?subject='+sub+'&body='+body);},500);
+  // Desktop: download PDF first, then open pre-filled email
+  // Step 1: download the PDF
+  var a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=fname;document.body.appendChild(a);a.click();document.body.removeChild(a);
+  // Step 2: after download completes, open email with instructions
+  var clientName=currentInputs.policyholderName||'Client';
+  var faName=currentUser?currentUser.name:'VLA';
+  var sub=encodeURIComponent('VLA Annuity Quotation — '+clientName);
+  var body=encodeURIComponent(
+    'Dear '+clientName+',\n\n'+
+    'Please find your Vanguard Life Annuity Quotation attached.\n\n'+
+    'Kind regards,\n'+faName+'\n'+
+    'Vanguard Life Assurance Company Limited\n\n'+
+    '\u201cYour financial light for life\u201d'
+  );
+  setTimeout(function(){window.open('mailto:?subject='+sub+'&body='+body);},800);
 }
 async function shareBcardWhatsApp(){
   var d=await _shareCanvas('bcard-canvas','VLA_BusinessCard.png','VLA Business Card');
