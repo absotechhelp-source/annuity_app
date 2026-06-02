@@ -774,10 +774,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
           <div class="field"><label>Due date for payment</label><input id="dueDate" type="date"/></div>
         </div>
       </div>
-      <div class="actions">
-        <button class="btn btn-ghost" onclick="_showOcrModal()" style="margin-right:auto">&#128247; Extract</button>
-        <button class="btn btn-primary" onclick="goReview()">Review &rarr;</button>
-      </div>
+      <div class="actions"><button class="btn btn-primary" onclick="goReview()">Review &rarr;</button></div>
     </div>
     <div class="panel" id="panel-review">
       <div class="card"><div class="card-title">Review &#8212; confirm all details</div>
@@ -2798,124 +2795,6 @@ function _quoteViewDecline(){
   document.getElementById('act-activate-btn').disabled=false;
   document.getElementById('act-decline-btn').disabled=true;
 }
-// ── OCR: Extract quote from image ───────────────────────────────
-var _ocrB64=null,_ocrMime='image/jpeg';
-function _showOcrModal(){
-  _ocrB64=null;
-  document.getElementById('ocr-preview').style.display='none';
-  document.getElementById('ocr-extract-btn').style.display='none';
-  document.getElementById('ocr-status').textContent='';
-  document.getElementById('ocr-file-input').value='';
-  document.getElementById('ocr-modal').style.display='flex';
-}
-function _hideOcrModal(){document.getElementById('ocr-modal').style.display='none';}
-function _ocrHandleFile(inp){
-  var file=inp.files[0];if(!file)return;
-  _ocrMime='image/jpeg'; // always compress to jpeg
-  var r=new FileReader();
-  r.onload=function(e){
-    // Resize to max 1024px to keep base64 under URL limits
-    var img=new Image();
-    img.onload=function(){
-      var MAX=1024;
-      var w=img.width,h=img.height;
-      if(w>MAX||h>MAX){if(w>h){h=Math.round(h*MAX/w);w=MAX;}else{w=Math.round(w*MAX/h);h=MAX;}}
-      var canvas=document.createElement('canvas');canvas.width=w;canvas.height=h;
-      canvas.getContext('2d').drawImage(img,0,0,w,h);
-      var dataUrl=canvas.toDataURL('image/jpeg',0.85);
-      _ocrB64=dataUrl.split(',')[1];
-      document.getElementById('ocr-img-preview').src=dataUrl;
-      document.getElementById('ocr-preview').style.display='block';
-      document.getElementById('ocr-extract-btn').style.display='';
-      document.getElementById('ocr-status').textContent='Image ready — tap Extract & Fill';
-    };
-    img.src=e.target.result;
-  };
-  r.readAsDataURL(file);
-}
-async function _ocrPasteClipboard(){
-  try{
-    var items=await navigator.clipboard.read();
-    for(var it of items){
-      for(var tp of it.types){
-        if(tp.startsWith('image/')){
-          var blob=await it.getType(tp);
-          _ocrHandleFile({files:[new File([blob],'paste',{type:tp})]});
-          return;
-        }
-      }
-    }
-    document.getElementById('ocr-status').textContent='No image in clipboard — choose a file.';
-  }catch(e){
-    document.getElementById('ocr-status').textContent='Clipboard access denied — choose a file.';
-  }
-}
-async function _ocrExtract(){
-  if(!_ocrB64){vlaAlert('Please select an image first.');return;}
-  var st=document.getElementById('ocr-status');
-  var btn=document.getElementById('ocr-extract-btn');
-  btn.disabled=true;btn.textContent='Extracting…';
-  st.textContent='Sending to AI…';
-  try{
-    // Upload image in chunks via GET (avoids POST body-drop bug)
-    var _cacheKey='ocr_'+Date.now();
-    var _chunkSize=1500; // safe GET param size
-    var _chunks=[];
-    for(var _ci=0;_ci<_ocrB64.length;_ci+=_chunkSize) _chunks.push(_ocrB64.slice(_ci,_ci+_chunkSize));
-    st.textContent='Uploading image ('+_chunks.length+' parts)…';
-    for(var _ci2=0;_ci2<_chunks.length;_ci2++){
-      var _cu=APPS_SCRIPT_URL
-        +'?action=storeOcrChunk'
-        +'&token='+encodeURIComponent(APP_TOKEN)
-        +'&key='+encodeURIComponent(_cacheKey)
-        +'&idx='+_ci2
-        +'&total='+_chunks.length
-        +'&mime='+encodeURIComponent(_ocrMime)
-        +'&chunk='+encodeURIComponent(_chunks[_ci2]);
-      var _cr=await fetch(_cu,{redirect:'follow'});
-      var _cd=await _cr.json();
-      if(!_cd.ok) throw new Error('Chunk '+_ci2+' failed: '+(_cd.error||''));
-    }
-    st.textContent='Processing image…';
-    // Step 2: GET ocrExtract with cacheKey
-    var resp=await fetch(APPS_SCRIPT_URL
-      +'?action=ocrExtract'
-      +'&token='+encodeURIComponent(APP_TOKEN)
-      +'&cacheKey='+encodeURIComponent(_cacheKey),
-      {redirect:'follow'});
-    var rawText=await resp.text();
-    if(!rawText||!rawText.trim()){throw new Error('Empty response from server');}
-    var data;
-    try{data=JSON.parse(rawText);}catch(e){throw new Error('Server response not JSON: '+rawText.substring(0,100));}
-    if(!data.ok)throw new Error(data.error||'Server error');
-    var txt=(data.result||'').replace(/```json|```/g,'').trim();
-    if(!txt)throw new Error('No text extracted from image');
-    var fields;
-    try{fields=JSON.parse(txt);}catch(e){throw new Error('Could not parse extracted fields: '+txt.substring(0,100));}
-    st.textContent='✓ Extracted! Filling form…';
-    _ocrFillForm(fields);
-    setTimeout(_hideOcrModal,800);
-  }catch(e){
-    st.textContent='Error: '+(e.message||'Could not extract. Try again.');
-    btn.disabled=false;btn.textContent='✓ Extract & Fill';
-  }
-}
-function _ocrFillForm(f){
-  if(!f)return;
-  if(f.name){var el=document.getElementById('proposer-name');if(el)el.value=f.name;}
-  if(f.dob){try{var p=String(f.dob).split('/');if(p.length===3){var iso=p[2]+'-'+p[1].padStart(2,'0')+'-'+p[0].padStart(2,'0');var d=document.getElementById('dob1');if(d){d.value=iso;d.dispatchEvent(new Event('change'));}}}catch(e){}}
-  if(f.gender){var gv=f.gender.charAt(0).toUpperCase()+f.gender.slice(1).toLowerCase();document.querySelectorAll('.tog[data-g="gender1"]').forEach(function(b){b.classList.toggle('on',b.dataset.v===gv);if(b.dataset.v===gv)currentInputs.gender1=gv;});}
-  if(f.amount){var a=document.getElementById('consideration');if(a)a.value=parseFloat(String(f.amount).replace(/[^0-9.]/g,'')).toFixed(2);}
-  if(f.frequency){var fm={monthly:'Monthly',quarterly:'Quarterly','half yearly':'Half Yearly',annual:'Annual',annually:'Annual'};var fv=fm[String(f.frequency).toLowerCase().trim()]||'Monthly';document.querySelectorAll('.tog[data-g="frequency"]').forEach(function(b){b.classList.toggle('on',b.dataset.v===fv);if(b.dataset.v===fv)currentInputs.frequency=fv;});}
-  if(f.spouseName||f.spouseDob){
-    document.querySelectorAll('.admin-only-tog[data-g="annuityStructure"]').forEach(function(b){if(b.dataset.v==='Reversionary last survivor'){b.classList.add('on');currentInputs.annuityStructure='Reversionary last survivor';}else b.classList.remove('on');});
-    handleStructureChange();
-    if(f.spouseName){var sn=document.getElementById('spouse-name');if(sn)sn.value=f.spouseName;}
-    if(f.spouseDob){try{var sp=String(f.spouseDob).split('/');if(sp.length===3){var siso=sp[2]+'-'+sp[1].padStart(2,'0')+'-'+sp[0].padStart(2,'0');var d2=document.getElementById('dob2');if(d2){d2.value=siso;d2.dispatchEvent(new Event('change'));}}}catch(e){}}
-    if(f.spouseGender){var sgv=f.spouseGender.charAt(0).toUpperCase()+f.spouseGender.slice(1).toLowerCase();document.querySelectorAll('.tog[data-g="gender2"]').forEach(function(b){b.classList.toggle('on',b.dataset.v===sgv);if(b.dataset.v===sgv)currentInputs.gender2=sgv;});}
-  }
-  showToast('✓ Form filled from image');
-}
 // ── Admin ─────────────────────────────────────────────────────
 function showAdminTab(id,el){
   document.querySelectorAll('.admin-section').forEach(function(s){s.classList.remove('on');});
@@ -3223,24 +3102,6 @@ function vlaPrompt(msg, cb){
 <div id="vla-toast" style="display:none;position:fixed;bottom:72px;left:50%;transform:translateX(-50%);background:#641414;color:#fff;padding:.45rem 1.1rem;border-radius:20px;font-size:.76rem;font-weight:600;z-index:9998;white-space:nowrap;box-shadow:0 3px 12px rgba(0,0,0,.25)"></div>
 
 <!-- Custom confirm/alert modal -->
-<!-- OCR Extract Modal -->
-<div id="ocr-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:1100;align-items:center;justify-content:center;padding:1rem">
-  <div style="background:#fff;border-radius:14px;padding:1.2rem;width:100%;max-width:340px;box-shadow:0 8px 32px rgba(0,0,0,.18)">
-    <div style="font-weight:700;font-size:.95rem;margin-bottom:.5rem">&#128247; Extract from Image</div>
-    <p style="font-size:.72rem;color:#888;margin-bottom:.7rem">Upload or paste a quote request image.</p>
-    <input type="file" id="ocr-file-input" accept="image/*" style="display:none" onchange="_ocrHandleFile(this)">
-    <div style="display:flex;flex-direction:column;gap:.4rem;margin-bottom:.6rem">
-      <button class="btn btn-primary" onclick="document.getElementById('ocr-file-input').click()">&#128247; Choose Image</button>
-      <button class="btn btn-ghost" onclick="_ocrPasteClipboard()">&#128203; Paste from Clipboard</button>
-    </div>
-    <div id="ocr-preview" style="display:none;margin-bottom:.5rem"><img id="ocr-img-preview" style="max-width:100%;border-radius:6px;border:1px solid #ddd"/></div>
-    <div id="ocr-status" style="font-size:.72rem;color:#888;min-height:1rem;margin-bottom:.5rem"></div>
-    <div style="display:flex;gap:.4rem">
-      <button class="btn btn-ghost" onclick="_hideOcrModal()" style="flex:1">Cancel</button>
-      <button class="btn btn-primary" id="ocr-extract-btn" onclick="_ocrExtract()" style="flex:2;display:none">&#10003; Extract &amp; Fill</button>
-    </div>
-  </div>
-</div>
 <div id="vla-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:9999;align-items:center;justify-content:center;padding:1rem">
   <div style="background:#fff;border-radius:12px;padding:1.5rem 1.6rem;max-width:300px;width:100%;box-shadow:0 6px 28px rgba(0,0,0,.18)">
     <p id="vla-modal-msg" style="font-size:.88rem;color:#1a1a1a;line-height:1.55;margin-bottom:1.2rem"></p>
