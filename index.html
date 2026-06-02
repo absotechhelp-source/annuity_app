@@ -2811,14 +2811,25 @@ function _showOcrModal(){
 function _hideOcrModal(){document.getElementById('ocr-modal').style.display='none';}
 function _ocrHandleFile(inp){
   var file=inp.files[0];if(!file)return;
-  _ocrMime=file.type||'image/jpeg';
+  _ocrMime='image/jpeg'; // always compress to jpeg
   var r=new FileReader();
   r.onload=function(e){
-    _ocrB64=e.target.result.split(',')[1];
-    document.getElementById('ocr-img-preview').src=e.target.result;
-    document.getElementById('ocr-preview').style.display='block';
-    document.getElementById('ocr-extract-btn').style.display='';
-    document.getElementById('ocr-status').textContent='Image ready — tap Extract & Fill';
+    // Resize to max 1024px to keep base64 under URL limits
+    var img=new Image();
+    img.onload=function(){
+      var MAX=1024;
+      var w=img.width,h=img.height;
+      if(w>MAX||h>MAX){if(w>h){h=Math.round(h*MAX/w);w=MAX;}else{w=Math.round(w*MAX/h);h=MAX;}}
+      var canvas=document.createElement('canvas');canvas.width=w;canvas.height=h;
+      canvas.getContext('2d').drawImage(img,0,0,w,h);
+      var dataUrl=canvas.toDataURL('image/jpeg',0.85);
+      _ocrB64=dataUrl.split(',')[1];
+      document.getElementById('ocr-img-preview').src=dataUrl;
+      document.getElementById('ocr-preview').style.display='block';
+      document.getElementById('ocr-extract-btn').style.display='';
+      document.getElementById('ocr-status').textContent='Image ready — tap Extract & Fill';
+    };
+    img.src=e.target.result;
   };
   r.readAsDataURL(file);
 }
@@ -2846,7 +2857,7 @@ async function _ocrExtract(){
   btn.disabled=true;btn.textContent='Extracting…';
   st.textContent='Sending to AI…';
   try{
-    // Route via GAS proxy to avoid CORS — GAS calls Anthropic server-side
+    // GET to GAS proxy — image resized to keep URL under limits
     var _ocrUrl=APPS_SCRIPT_URL
       +'?action=ocrExtract'
       +'&token='+encodeURIComponent(APP_TOKEN)
