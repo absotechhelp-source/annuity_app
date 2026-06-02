@@ -2857,19 +2857,31 @@ async function _ocrExtract(){
   btn.disabled=true;btn.textContent='Extracting…';
   st.textContent='Sending to AI…';
   try{
-    // Step 1: store image in GAS cache via POST (saveQuote pattern - no redirect:follow)
-    var storeResp=await fetch(APPS_SCRIPT_URL,{
-      method:'POST',
-      body:JSON.stringify({token:APP_TOKEN,action:'storeOcrImage',mime:_ocrMime,img:_ocrB64})
-    });
-    var storeData=await storeResp.json();
-    if(!storeData.ok||!storeData.cacheKey) throw new Error(storeData.error||'Failed to store image');
-    st.textContent='Image uploaded, extracting text…';
-    // Step 2: GET ocrExtract with cacheKey - no body needed
+    // Upload image in chunks via GET (avoids POST body-drop bug)
+    var _cacheKey='ocr_'+Date.now();
+    var _chunkSize=1500; // safe GET param size
+    var _chunks=[];
+    for(var _ci=0;_ci<_ocrB64.length;_ci+=_chunkSize) _chunks.push(_ocrB64.slice(_ci,_ci+_chunkSize));
+    st.textContent='Uploading image ('+_chunks.length+' parts)…';
+    for(var _ci2=0;_ci2<_chunks.length;_ci2++){
+      var _cu=APPS_SCRIPT_URL
+        +'?action=storeOcrChunk'
+        +'&token='+encodeURIComponent(APP_TOKEN)
+        +'&key='+encodeURIComponent(_cacheKey)
+        +'&idx='+_ci2
+        +'&total='+_chunks.length
+        +'&mime='+encodeURIComponent(_ocrMime)
+        +'&chunk='+encodeURIComponent(_chunks[_ci2]);
+      var _cr=await fetch(_cu,{redirect:'follow'});
+      var _cd=await _cr.json();
+      if(!_cd.ok) throw new Error('Chunk '+_ci2+' failed: '+(_cd.error||''));
+    }
+    st.textContent='Processing image…';
+    // Step 2: GET ocrExtract with cacheKey
     var resp=await fetch(APPS_SCRIPT_URL
       +'?action=ocrExtract'
       +'&token='+encodeURIComponent(APP_TOKEN)
-      +'&cacheKey='+encodeURIComponent(storeData.cacheKey),
+      +'&cacheKey='+encodeURIComponent(_cacheKey),
       {redirect:'follow'});
     var rawText=await resp.text();
     if(!rawText||!rawText.trim()){throw new Error('Empty response from server');}
