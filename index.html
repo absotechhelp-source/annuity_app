@@ -774,7 +774,10 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
           <div class="field"><label>Due date for payment</label><input id="dueDate" type="date"/></div>
         </div>
       </div>
-      <div class="actions"><button class="btn btn-primary" onclick="goReview()">Review &rarr;</button></div>
+      <div class="actions">
+        <button class="btn btn-ghost" onclick="_showPasteModal()" style="margin-right:auto">&#128203; Paste</button>
+        <button class="btn btn-primary" onclick="goReview()">Review &rarr;</button>
+      </div>
     </div>
     <div class="panel" id="panel-review">
       <div class="card"><div class="card-title">Review &#8212; confirm all details</div>
@@ -2795,6 +2798,123 @@ function _quoteViewDecline(){
   document.getElementById('act-activate-btn').disabled=false;
   document.getElementById('act-decline-btn').disabled=true;
 }
+// ── Paste quote request text ────────────────────────────────────
+function _showPasteModal(){
+  document.getElementById('paste-input').value='';
+  document.getElementById('paste-status').textContent='';
+  document.getElementById('paste-modal').style.display='flex';
+  setTimeout(function(){document.getElementById('paste-input').focus();},100);
+}
+function _hidePasteModal(){document.getElementById('paste-modal').style.display='none';}
+function _parsePastedText(){
+  var raw=document.getElementById('paste-input').value;
+  if(!raw.trim()){document.getElementById('paste-status').textContent='Please paste some text first.';return;}
+  var fields=_extractFieldsFromText(raw);
+  var filled=[];
+  // Name
+  if(fields.name){
+    var el=document.getElementById('proposer-name');if(el){el.value=fields.name;filled.push('Name');}
+  }
+  // DOB
+  if(fields.dob){
+    try{
+      var p=fields.dob.split('/');
+      if(p.length===3){
+        var iso=p[2]+'-'+p[1].padStart(2,'0')+'-'+p[0].padStart(2,'0');
+        var d=document.getElementById('dob1');
+        if(d){d.value=iso;d.dispatchEvent(new Event('change'));filled.push('DOB');}
+      }
+    }catch(e){}
+  }
+  // Gender
+  if(fields.gender){
+    var gv=fields.gender;
+    document.querySelectorAll('.tog[data-g="gender1"]').forEach(function(b){
+      b.classList.toggle('on',b.dataset.v===gv);
+      if(b.dataset.v===gv){currentInputs.gender1=gv;filled.push('Gender');}
+    });
+  }
+  // Amount
+  if(fields.amount){
+    var a=document.getElementById('initialConsideration');
+    if(a){a.value=fields.amount;filled.push('Amount');}
+  }
+  // Frequency
+  if(fields.frequency){
+    document.querySelectorAll('.tog[data-g="frequency"]').forEach(function(b){
+      b.classList.toggle('on',b.dataset.v===fields.frequency);
+      if(b.dataset.v===fields.frequency){currentInputs.frequency=fields.frequency;filled.push('Frequency');}
+    });
+  }
+  if(filled.length===0){
+    document.getElementById('paste-status').textContent='No fields recognised. Use the standard format.';
+    return;
+  }
+  document.getElementById('paste-status').textContent='✓ Filled: '+filled.join(', ');
+  setTimeout(function(){_hidePasteModal();showToast('✓ Form filled from pasted text');},700);
+}
+function _extractFieldsFromText(text){
+  var fields={name:null,dob:null,gender:null,amount:null,frequency:'Monthly'};
+  var lines=text.split(/\n|\r/).map(function(l){return l.trim();}).filter(Boolean);
+  function val(line){var i=line.indexOf(':');return i>=0?line.substring(i+1).trim():null;}
+  var _months={jan:'01',feb:'02',mar:'03',apr:'04',may:'05',jun:'06',
+               jul:'07',aug:'08',sep:'09',oct:'10',nov:'11',dec:'12'};
+  function normDate(s){
+    if(!s)return null;
+    s=s.trim();
+    var m;
+    // DD-Mon-YYYY or DD/Mon/YYYY e.g. 24-Sep-1966, 24/Sep/1966
+    if((m=s.match(/(\d{1,2})[\-\/]([A-Za-z]{3,9})[\-\/](\d{4})/))){
+      var mo=_months[m[2].toLowerCase().slice(0,3)];
+      if(mo)return m[1].padStart(2,'0')+'/'+mo+'/'+m[3];
+    }
+    // Mon-DD-YYYY or Mon DD YYYY e.g. Sep 24 1966
+    if((m=s.match(/([A-Za-z]{3,9})[\s\-\/](\d{1,2})[,\s\-\/]+(\d{4})/))){
+      var mo2=_months[m[1].toLowerCase().slice(0,3)];
+      if(mo2)return m[2].padStart(2,'0')+'/'+mo2+'/'+m[3];
+    }
+    // DD/MM/YYYY or DD.MM.YYYY or DD-MM-YYYY
+    if((m=s.match(/(\d{1,2})[.\/\-](\d{1,2})[.\/\-](\d{4})/)))
+      return m[1].padStart(2,'0')+'/'+m[2].padStart(2,'0')+'/'+m[3];
+    // YYYY-MM-DD
+    if((m=s.match(/(\d{4})[.\/\-](\d{1,2})[.\/\-](\d{1,2})/)))
+      return m[3].padStart(2,'0')+'/'+m[2].padStart(2,'0')+'/'+m[1];
+    return null;
+  }
+  lines.forEach(function(line){
+    var lo=line.toLowerCase();
+    var v=val(line);
+    if(!v)return;
+    if(lo.startsWith('name'))fields.name=v;
+    else if(lo.startsWith('dob')||lo.startsWith('date of birth')||lo.startsWith('date of b'))
+      fields.dob=normDate(v)||fields.dob;
+    else if(lo.startsWith('gender')){
+      fields.gender=v.toLowerCase().indexOf('f')>=0?'Female':'Male';
+    }
+    else if(lo.indexOf('amount')>=0||lo.startsWith('consideration')){
+      var num=v.replace(/[^0-9.]/g,'');
+      if(num)fields.amount=parseFloat(num).toFixed(2);
+    }
+    else if(lo.startsWith('freq')){
+      var fv=v.toLowerCase();
+      if(fv.indexOf('quarter')>=0)fields.frequency='Quarterly';
+      else if(fv.indexOf('half')>=0)fields.frequency='Half Yearly';
+      else if(fv.indexOf('annual')>=0||fv.indexOf('yearly')>=0)fields.frequency='Annual';
+      else fields.frequency='Monthly';
+    }
+  });
+  // Fallback: scan for standalone date if dob not found
+  if(!fields.dob){
+    var allText=lines.join(' ');
+    var dm=allText.match(/(\d{1,2})[\-\/]([A-Za-z]{3,9})[\-\/](\d{4})/);
+    if(dm){var mo=_months[dm[2].toLowerCase().slice(0,3)];if(mo)fields.dob=dm[1].padStart(2,'0')+'/'+mo+'/'+dm[3];}
+    if(!fields.dob){
+      var dm2=allText.match(/(\d{1,2})[.\/\-](\d{1,2})[.\/\-](\d{4})/);
+      if(dm2)fields.dob=dm2[1].padStart(2,'0')+'/'+dm2[2].padStart(2,'0')+'/'+dm2[3];
+    }
+  }
+  return fields;
+}
 // ── Admin ─────────────────────────────────────────────────────
 function showAdminTab(id,el){
   document.querySelectorAll('.admin-section').forEach(function(s){s.classList.remove('on');});
@@ -3102,6 +3222,19 @@ function vlaPrompt(msg, cb){
 <div id="vla-toast" style="display:none;position:fixed;bottom:72px;left:50%;transform:translateX(-50%);background:#641414;color:#fff;padding:.45rem 1.1rem;border-radius:20px;font-size:.76rem;font-weight:600;z-index:9998;white-space:nowrap;box-shadow:0 3px 12px rgba(0,0,0,.25)"></div>
 
 <!-- Custom confirm/alert modal -->
+<!-- Paste Request Modal -->
+<div id="paste-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:1100;align-items:center;justify-content:center;padding:1rem">
+  <div style="background:#fff;border-radius:14px;padding:1.2rem;width:100%;max-width:360px;box-shadow:0 8px 32px rgba(0,0,0,.18)">
+    <div style="font-weight:700;font-size:.95rem;margin-bottom:.4rem">&#128203; Paste Quote Request</div>
+    <p style="font-size:.72rem;color:#888;margin-bottom:.5rem">Paste the WhatsApp or email request below:</p>
+    <textarea id="paste-input" rows="8" style="width:100%;box-sizing:border-box;border:1px solid #ddd;border-radius:8px;padding:.6rem;font-size:.78rem;font-family:inherit;resize:vertical" placeholder="Name        : Grace Banda&#10;DOB         : 05/03/1966&#10;Gender      : Female&#10;Amount (MWK): 431,986,237&#10;Frequency   : Monthly"></textarea>
+    <div id="paste-status" style="font-size:.72rem;color:#888;min-height:1rem;margin:.4rem 0"></div>
+    <div style="display:flex;gap:.4rem;margin-top:.3rem">
+      <button class="btn btn-ghost" onclick="_hidePasteModal()" style="flex:1">Cancel</button>
+      <button class="btn btn-primary" onclick="_parsePastedText()" style="flex:2">&#10003; Fill Form</button>
+    </div>
+  </div>
+</div>
 <div id="vla-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:9999;align-items:center;justify-content:center;padding:1rem">
   <div style="background:#fff;border-radius:12px;padding:1.5rem 1.6rem;max-width:300px;width:100%;box-shadow:0 6px 28px rgba(0,0,0,.18)">
     <p id="vla-modal-msg" style="font-size:.88rem;color:#1a1a1a;line-height:1.55;margin-bottom:1.2rem"></p>
