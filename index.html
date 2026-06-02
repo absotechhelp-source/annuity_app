@@ -774,7 +774,10 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
           <div class="field"><label>Due date for payment</label><input id="dueDate" type="date"/></div>
         </div>
       </div>
-      <div class="actions"><button class="btn btn-primary" onclick="goReview()">Review &rarr;</button></div>
+      <div class="actions">
+        <button class="btn btn-ghost" onclick="_showOcrModal()" style="margin-right:auto">&#128247; Extract</button>
+        <button class="btn btn-primary" onclick="goReview()">Review &rarr;</button>
+      </div>
     </div>
     <div class="panel" id="panel-review">
       <div class="card"><div class="card-title">Review &#8212; confirm all details</div>
