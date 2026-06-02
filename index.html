@@ -1099,6 +1099,7 @@ var _selectedFA=null;   // FA selected by Admin to quote on behalf of
 function isPS(r){return r==='Policy Servicing'||r==='Administration';}
 function isTS(r){return r==='Technical Services';}
 var _actingUser=null;   // original logged-in user preserved when currentUser is overwritten
+var _viewFASnap=null;   // FA snapshot of the quote currently being viewed (for signature block)
 var _faList=[];         // cached FA list for admin dropdown
 
 // ── Offline / SW ─────────────────────────────────────────────
@@ -1255,7 +1256,7 @@ document.addEventListener('DOMContentLoaded',function(){_warmGAS();});
 
 function resetQuoteForm(){
   // Clear all quote state so no previous user's data leaks to next login
-  currentInputs={};lastQuote=null;_reviseMode=false;_viewMode=false;_selectedFA=null;
+  currentInputs={};lastQuote=null;_reviseMode=false;_viewMode=false;_selectedFA=null;_viewFASnap=null;
   var qfaSel=document.getElementById('quoteFA');if(qfaSel)qfaSel.value='';
   // Clear text / date / number inputs
   ['policyholderName','dob1','dob2','name2','initialConsideration'].forEach(function(id){
@@ -1682,7 +1683,7 @@ function _drawQuotePage1(ctx,C,yOffset){
   ctx.fillStyle=MGRAY;ctx.font='13px '+SANS;ctx.fillText('Date',MX,DATE_Y+14);
   // FA block (right)
   ctx.strokeStyle='#555';ctx.beginPath();ctx.moveTo(RX,Y+34);ctx.lineTo(RX+halfW,Y+34);ctx.stroke();
-  var _fa=_selectedFA||currentUser;
+  var _fa=_viewFASnap||_selectedFA||currentUser;
   var faName=(_fa&&_fa.name)||'',faTitle=(_fa&&_fa.title)||'Financial Advisor',faEmail=(_fa&&_fa.faEmail)||'',faPhone=(_fa&&_fa.phone)||'';
   ctx.fillStyle='#111';ctx.font='bold 14px '+SANS;ctx.fillText(faName.toUpperCase(),RX,Y+28);
   ctx.fillStyle=DGRAY;ctx.font='13px '+SANS;ctx.fillText(faTitle,RX,Y+46);
@@ -2215,7 +2216,7 @@ async function _autoSyncQuotes(){
         localQuotes.push({localId:rq.localId||genLocalId(),quoteId:rq.quoteId,syncStatus:'synced',
           quoteDate:rq.quoteDate,inputs:inp,results:res,anb1:rq.anb,
           policyStatus:rq.policyStatus||'Pending',statusDate:rq.statusDate||'',statusBy:rq.statusBy||'',
-          faSnapshot:{name:rq.faName||''}});
+          faSnapshot:{name:rq.faName||'',title:rq.faTitle||'Intermediary',faEmail:rq.faEmail||'',phone:rq.faPhone||''}});
       }catch(e){}
     });
     saveLocalQuotes();
@@ -2270,7 +2271,7 @@ async function retroSync(){
         localQuotes.push({localId:rq.localId||genLocalId(),quoteId:rq.quoteId,syncStatus:'synced',
           quoteDate:rq.quoteDate,inputs:inp,results:res,anb1:rq.anb,
           policyStatus:rq.policyStatus||'Pending',statusDate:rq.statusDate||'',statusBy:rq.statusBy||'',
-          faSnapshot:{name:rq.faName||''}});
+          faSnapshot:{name:rq.faName||'',title:rq.faTitle||'Intermediary',faEmail:rq.faEmail||'',phone:rq.faPhone||''}});
         added++;
       }catch(rowErr){skipped++;}
     });
@@ -2545,6 +2546,7 @@ function viewQuoteFromHistory(idx){
   currentInputs=entry.inputs||{};
   var savedUser=currentUser;
   _actingUser=currentUser;
+  _viewFASnap=entry.faSnapshot||null;
   if(entry.faSnapshot) currentUser=Object.assign({},currentUser,entry.faSnapshot);
   var fakeQ={anb1:entry.anb1,annuityStructure:(entry.inputs||{}).annuityStructure,results:entry.results,policyNumber:entry.quoteId||entry.localId,generatedAt:entry.quoteDate};
   lastQuote=fakeQ; // so PDF/WhatsApp/Email work from history view
