@@ -2857,19 +2857,29 @@ async function _ocrExtract(){
   btn.disabled=true;btn.textContent='Extracting…';
   st.textContent='Sending to AI…';
   try{
-    // POST without redirect:follow — avoids GAS body-drop bug
-    var resp=await fetch(APPS_SCRIPT_URL,{
+    // Step 1: store image in GAS cache via POST (saveQuote pattern - no redirect:follow)
+    var storeResp=await fetch(APPS_SCRIPT_URL,{
       method:'POST',
-      body:JSON.stringify({token:APP_TOKEN,action:'ocrExtract',mime:_ocrMime,img:_ocrB64})
+      body:JSON.stringify({token:APP_TOKEN,action:'storeOcrImage',mime:_ocrMime,img:_ocrB64})
     });
-    // GAS returns redirect — follow it manually
-    if(resp.status===302||resp.redirected){
-      var loc=resp.headers.get('location')||resp.url;
-      if(loc) resp=await fetch(loc,{redirect:'follow'});
-    }
-    var data=await resp.json();
-    var txt=(data.ok&&data.result)||'';
-    var fields=JSON.parse(txt.replace(/```json|```/g,'').trim());
+    var storeData=await storeResp.json();
+    if(!storeData.ok||!storeData.cacheKey) throw new Error(storeData.error||'Failed to store image');
+    st.textContent='Image uploaded, extracting text…';
+    // Step 2: GET ocrExtract with cacheKey - no body needed
+    var resp=await fetch(APPS_SCRIPT_URL
+      +'?action=ocrExtract'
+      +'&token='+encodeURIComponent(APP_TOKEN)
+      +'&cacheKey='+encodeURIComponent(storeData.cacheKey),
+      {redirect:'follow'});
+    var rawText=await resp.text();
+    if(!rawText||!rawText.trim()){throw new Error('Empty response from server');}
+    var data;
+    try{data=JSON.parse(rawText);}catch(e){throw new Error('Server response not JSON: '+rawText.substring(0,100));}
+    if(!data.ok)throw new Error(data.error||'Server error');
+    var txt=(data.result||'').replace(/```json|```/g,'').trim();
+    if(!txt)throw new Error('No text extracted from image');
+    var fields;
+    try{fields=JSON.parse(txt);}catch(e){throw new Error('Could not parse extracted fields: '+txt.substring(0,100));}
     st.textContent='✓ Extracted! Filling form…';
     _ocrFillForm(fields);
     setTimeout(_hideOcrModal,800);
