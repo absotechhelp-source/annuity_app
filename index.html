@@ -2846,19 +2846,15 @@ async function _ocrExtract(){
   btn.disabled=true;btn.textContent='Extracting…';
   st.textContent='Sending to AI…';
   try{
-    var resp=await fetch('https://api.anthropic.com/v1/messages',{
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({
-        model:'claude-sonnet-4-20250514',max_tokens:500,
-        messages:[{role:'user',content:[
-          {type:'image',source:{type:'base64',media_type:_ocrMime,data:_ocrB64}},
-          {type:'text',text:'Extract annuity quote request fields. Return ONLY a JSON object with: name (string), dob (DD/MM/YYYY string), gender (Male or Female), amount (number no commas), frequency (Monthly/Quarterly/Half Yearly/Annual default Monthly), spouseName (string or null), spouseDob (DD/MM/YYYY or null), spouseGender (Male/Female or null). Convert any DOB format to DD/MM/YYYY. Strip currency symbols from amount. Return ONLY valid JSON, no markdown.'}
-        ]}]
-      })
-    });
+    // Route via GAS proxy to avoid CORS — GAS calls Anthropic server-side
+    var _ocrUrl=APPS_SCRIPT_URL
+      +'?action=ocrExtract'
+      +'&token='+encodeURIComponent(APP_TOKEN)
+      +'&mime='+encodeURIComponent(_ocrMime)
+      +'&img='+encodeURIComponent(_ocrB64);
+    var resp=await fetch(_ocrUrl,{redirect:'follow'});
     var data=await resp.json();
-    var txt=(data.content&&data.content[0]&&data.content[0].text)||'';
+    var txt=(data.ok&&data.result)||'';
     var fields=JSON.parse(txt.replace(/```json|```/g,'').trim());
     st.textContent='✓ Extracted! Filling form…';
     _ocrFillForm(fields);
