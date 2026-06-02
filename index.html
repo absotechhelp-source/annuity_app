@@ -1320,6 +1320,7 @@ function showApp(){
     el.style.display=(isAdmin||isTechServ||isPS(currentUser.role))?'':'none';
   });
   loadLocalQuotes();
+  if(currentUser&&(currentUser.role==='Admin'||isPS(currentUser.role)||isTechServ)&&navigator.onLine){_autoSyncQuotes();}
   if(currentUser&&(currentUser.role==='Admin'||isTechServ||isPS(currentUser.role)))loadFADropdown();
   _fetchAppSettings();
   updateSyncDot();
@@ -2194,6 +2195,35 @@ async function syncAll(){
   btn.innerHTML='<span class="sync-dot" id="sync-dot"></span>Sync';showToast(count>0?'✓ '+count+' quote(s) synced':'Nothing to sync');
   btn.disabled=false;updateSyncDot();
 }
+async function _autoSyncQuotes(){
+  if(!navigator.onLine||!APPS_SCRIPT_URL)return;
+  try{
+    var r=await fetch(APPS_SCRIPT_URL+'?action=getQuotes&userId='+encodeURIComponent(currentUser.userId)+'&role='+encodeURIComponent(currentUser.role)+'&token='+encodeURIComponent(APP_TOKEN),{redirect:'follow'});
+    var d=await r.json();
+    if(!d.ok||!d.quotes)return;
+    function _sp(s,fb){if(!s||typeof s!=='string')return s||fb;var t=s.trim();if(t[0]!=='{'&&t[0]!=='[')return fb;try{return JSON.parse(t);}catch(e){return fb;}}
+    d.quotes.forEach(function(rq){
+      try{
+        var exists=localQuotes.find(function(q){return q.localId===rq.localId||q.quoteId===rq.quoteId;});
+        if(exists){
+          if(rq.policyStatus){exists.policyStatus=rq.policyStatus;exists.statusDate=rq.statusDate||exists.statusDate;exists.statusBy=rq.statusBy||exists.statusBy;}
+          if(rq.quoteId&&!exists.quoteId)exists.quoteId=rq.quoteId;
+          return;
+        }
+        var inp=_sp(rq.inputsJson,{policyholderName:rq.clientName,dob1:rq.clientDob,gender1:rq.clientGender,initialConsideration:rq.consideration,dueDate:rq.dueDate,basisName:rq.basis,frequency:rq.frequency,paymentTiming:rq.timing,annuityStructure:rq.structure});
+        var res=_sp(rq.resultsJson,[]);
+        localQuotes.push({localId:rq.localId||genLocalId(),quoteId:rq.quoteId,syncStatus:'synced',
+          quoteDate:rq.quoteDate,inputs:inp,results:res,anb1:rq.anb,
+          policyStatus:rq.policyStatus||'Pending',statusDate:rq.statusDate||'',statusBy:rq.statusBy||'',
+          faSnapshot:{name:rq.faName||''}});
+      }catch(e){}
+    });
+    saveLocalQuotes();
+    if(document.getElementById('scr-history')&&document.getElementById('scr-history').classList.contains('on'))renderHistory();
+    if(typeof renderRecentQuotes==='function')renderRecentQuotes();
+    if(typeof updateStats==='function')updateStats();
+  }catch(e){}
+}
 async function retroSync(){
   if(!navigator.onLine){showToast('Offline — retrosync needs a connection');return;}
   try{
@@ -2230,11 +2260,16 @@ async function retroSync(){
     (d.quotes||[]).forEach(function(rq){
       try{
         var exists=localQuotes.find(function(q){return q.localId===rq.localId||q.quoteId===rq.quoteId;});
-        if(exists)return;
+        if(exists){
+          if(rq.policyStatus){exists.policyStatus=rq.policyStatus;exists.statusDate=rq.statusDate||exists.statusDate;exists.statusBy=rq.statusBy||exists.statusBy;}
+          if(rq.quoteId&&!exists.quoteId)exists.quoteId=rq.quoteId;
+          return;
+        }
         var inp=safeParse(rq.inputsJson,{policyholderName:rq.clientName,dob1:rq.clientDob,gender1:rq.clientGender,initialConsideration:rq.consideration,dueDate:rq.dueDate,basisName:rq.basis,frequency:rq.frequency,paymentTiming:rq.timing,annuityStructure:rq.structure});
         var res=safeParse(rq.resultsJson,[]);
         localQuotes.push({localId:rq.localId||genLocalId(),quoteId:rq.quoteId,syncStatus:'synced',
           quoteDate:rq.quoteDate,inputs:inp,results:res,anb1:rq.anb,
+          policyStatus:rq.policyStatus||'Pending',statusDate:rq.statusDate||'',statusBy:rq.statusBy||'',
           faSnapshot:{name:rq.faName||''}});
         added++;
       }catch(rowErr){skipped++;}
@@ -2472,8 +2507,9 @@ function setPolicyStatus(lid,status){
         +'&statusBy='+encodeURIComponent(_byName);
       fetch(_psUrl,{redirect:'follow'}).catch(function(){});
     }
-    showToast(status==='Active'?'Policy activated ✓':'Policy declined');
-    loadActivationList();
+    showToast(status==='Active'?'Policy activated ✓':status==='Declined'?'Policy declined':'Updated');
+    if(document.getElementById('adm-activation')&&document.getElementById('adm-activation').classList.contains('on'))loadActivationList();
+    renderHistory();
   });
 }
 function deleteQuote(ev,lid){
