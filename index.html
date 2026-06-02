@@ -2546,8 +2546,23 @@ function viewQuoteFromHistory(idx){
   currentInputs=entry.inputs||{};
   var savedUser=currentUser;
   _actingUser=currentUser;
-  _viewFASnap=entry.faSnapshot||null;
-  if(entry.faSnapshot) currentUser=Object.assign({},currentUser,entry.faSnapshot);
+  // Build the richest possible FA snapshot for the signature block
+  var _snap=entry.faSnapshot||{};
+  // Enrich from _faList if title/email/phone are missing (old synced quotes)
+  if(_faList&&_faList.length){
+    var _faMatch=null;
+    if(_snap.userId) _faMatch=_faList.find(function(u){return u.userId===_snap.userId;});
+    if(!_faMatch&&_snap.name) _faMatch=_faList.find(function(u){return u.name===_snap.name;});
+    if(_faMatch){
+      _snap=Object.assign({},_snap,{
+        title:_snap.title||_faMatch.title||'Financial Advisor',
+        faEmail:_snap.faEmail||_faMatch.faEmail||'',
+        phone:_snap.phone||_faMatch.phone||''
+      });
+    }
+  }
+  _viewFASnap=Object.keys(_snap).length?_snap:null;
+  if(entry.faSnapshot) currentUser=Object.assign({},currentUser,_snap);
   var fakeQ={anb1:entry.anb1,annuityStructure:(entry.inputs||{}).annuityStructure,results:entry.results,policyNumber:entry.quoteId||entry.localId,generatedAt:entry.quoteDate};
   lastQuote=fakeQ; // so PDF/WhatsApp/Email work from history view
   var doRender=function(){renderQuoteCanvas(fakeQ,currentInputs);};
