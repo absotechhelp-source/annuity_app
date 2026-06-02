@@ -2151,7 +2151,7 @@ function _doSave(){_reviseMode=false;
     inputs:JSON.parse(JSON.stringify(currentInputs)),results:lastQuote.results,anb1:lastQuote.anb1,
     faSnapshot:(function(){
       var _fs=_selectedFA||currentUser;
-      return {name:(_fs&&_fs.name)||'',title:(_fs&&_fs.title)||'Intermediary',
+      return {userId:(_fs&&_fs.userId)||'',name:(_fs&&_fs.name)||'',title:(_fs&&_fs.title)||'Intermediary',
               faEmail:(_fs&&_fs.faEmail)||'',phone:(_fs&&_fs.phone)||'',
               quotedByAdmin:!!_selectedFA&&(currentUser.name||'')};
     })()};
@@ -2163,7 +2163,7 @@ function _doSave(){_reviseMode=false;
 function pushQuote(entry){
   if(!navigator.onLine)return;
   fetch(APPS_SCRIPT_URL,{method:'POST',body:JSON.stringify({token:APP_TOKEN,
-    action:'saveQuote',localId:entry.localId,userId:currentUser.userId,faName:(_selectedFA||currentUser).name,
+    action:'saveQuote',localId:entry.localId,userId:(_selectedFA||currentUser).userId,faName:(_selectedFA||currentUser).name,
     clientName:entry.inputs.policyholderName,clientDob:entry.inputs.dob1,clientGender:entry.inputs.gender1,
     anb:entry.anb1,consideration:entry.inputs.initialConsideration,dueDate:entry.inputs.dueDate||'',
     basis:entry.inputs.basisName,frequency:entry.inputs.frequency,timing:entry.inputs.paymentTiming,
@@ -2180,7 +2180,7 @@ async function syncAll(){
   for(var i=0;i<pending.length;i++){
     try{
       var r=await fetch(APPS_SCRIPT_URL,{method:'POST',body:JSON.stringify({token:APP_TOKEN,
-        action:'saveQuote',localId:pending[i].localId,userId:currentUser.userId,faName:(pending[i].faSnapshot&&pending[i].faSnapshot.name)||currentUser.name,
+        action:'saveQuote',localId:pending[i].localId,userId:(pending[i].faSnapshot&&pending[i].faSnapshot.userId)||currentUser.userId,faName:(pending[i].faSnapshot&&pending[i].faSnapshot.name)||currentUser.name,
         clientName:pending[i].inputs.policyholderName,clientDob:pending[i].inputs.dob1,
         clientGender:pending[i].inputs.gender1,anb:pending[i].anb1,
         consideration:pending[i].inputs.initialConsideration,dueDate:pending[i].inputs.dueDate||'',
@@ -2216,7 +2216,7 @@ async function _autoSyncQuotes(){
         localQuotes.push({localId:rq.localId||genLocalId(),quoteId:rq.quoteId,syncStatus:'synced',
           quoteDate:rq.quoteDate,inputs:inp,results:res,anb1:rq.anb,
           policyStatus:rq.policyStatus||'Pending',statusDate:rq.statusDate||'',statusBy:rq.statusBy||'',
-          faSnapshot:{name:rq.faName||'',title:rq.faTitle||'Intermediary',faEmail:rq.faEmail||'',phone:rq.faPhone||''}});
+          faSnapshot:{userId:rq.userId||'',name:rq.faName||'',title:rq.faTitle||'Intermediary',faEmail:rq.faEmail||'',phone:rq.faPhone||''}});
       }catch(e){}
     });
     saveLocalQuotes();
@@ -2271,7 +2271,7 @@ async function retroSync(){
         localQuotes.push({localId:rq.localId||genLocalId(),quoteId:rq.quoteId,syncStatus:'synced',
           quoteDate:rq.quoteDate,inputs:inp,results:res,anb1:rq.anb,
           policyStatus:rq.policyStatus||'Pending',statusDate:rq.statusDate||'',statusBy:rq.statusBy||'',
-          faSnapshot:{name:rq.faName||'',title:rq.faTitle||'Intermediary',faEmail:rq.faEmail||'',phone:rq.faPhone||''}});
+          faSnapshot:{userId:rq.userId||'',name:rq.faName||'',title:rq.faTitle||'Intermediary',faEmail:rq.faEmail||'',phone:rq.faPhone||''}});
         added++;
       }catch(rowErr){skipped++;}
     });
@@ -2659,7 +2659,7 @@ function _faClientAccept(){
         fetch(APPS_SCRIPT_URL,{method:'POST',body:JSON.stringify({
           token:APP_TOKEN, action:'saveQuote',
           localId:_entry?_entry.localId||lid:lid,
-          userId:currentUser.userId||'',
+          userId:(_entry&&_entry.faSnapshot&&_entry.faSnapshot.userId)||currentUser.userId||'',
           faName:_faName,
           clientName:_clientName,
           clientDob:(_entry&&_entry.inputs)?_entry.inputs.dob1||'':'',
