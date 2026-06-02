@@ -1329,8 +1329,11 @@ function showApp(){
   renderRecentQuotes();
   renderProfile();
   goScreen('scr-home');
+  // Start background sync: every 3 minutes + on tab/window focus
+  _startBackgroundSync();
 }
 function doLogout(){
+  _stopBackgroundSync();
   currentUser=null;
   localStorage.removeItem('vla_ann_user');
   localStorage.removeItem('vla_ann_cred');
@@ -2211,6 +2214,46 @@ async function syncAll(){
   saveLocalQuotes();
   btn.innerHTML='<span class="sync-dot" id="sync-dot"></span>Sync';showToast(count>0?'✓ '+count+' quote(s) synced':'Nothing to sync');
   btn.disabled=false;updateSyncDot();
+}
+// ── Background sync: periodic + on focus ────────────────────
+var _bgSyncTimer=null;
+var _bgSyncBound=false;
+function _startBackgroundSync(){
+  // Clear any existing timer from previous session
+  if(_bgSyncTimer) clearInterval(_bgSyncTimer);
+  // Only sync roles that see server quotes
+  if(!currentUser)return;
+  var syncable=currentUser.role==='Admin'||isPS(currentUser.role)||isTS(currentUser.role)||currentUser.role==='FA';
+  if(!syncable)return;
+  // Poll every 3 minutes
+  _bgSyncTimer=setInterval(function(){
+    if(navigator.onLine&&currentUser) _bgSyncQuiet();
+  },3*60*1000);
+  // Sync on window/tab focus (user returns to app)
+  if(!_bgSyncBound){
+    _bgSyncBound=true;
+    document.addEventListener('visibilitychange',function(){
+      if(!document.hidden&&navigator.onLine&&currentUser) _bgSyncQuiet();
+    });
+    window.addEventListener('focus',function(){
+      if(navigator.onLine&&currentUser) _bgSyncQuiet();
+    });
+  }
+}
+function _stopBackgroundSync(){
+  if(_bgSyncTimer){clearInterval(_bgSyncTimer);_bgSyncTimer=null;}
+}
+// Quiet sync — same as _autoSyncQuotes but throttled (no double-fire within 30s)
+var _lastSyncTime=0;
+function _bgSyncQuiet(){
+  var now=Date.now();
+  if(now-_lastSyncTime<30000)return; // throttle: no more than once per 30s
+  _lastSyncTime=now;
+  _autoSyncQuotes();
+  // Also refresh FA list if needed
+  if(currentUser&&(currentUser.role==='Admin'||isTS(currentUser.role)||isPS(currentUser.role))){
+    loadFADropdown();
+  }
 }
 async function _autoSyncQuotes(){
   if(!navigator.onLine||!APPS_SCRIPT_URL)return;
