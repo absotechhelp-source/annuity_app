@@ -1258,7 +1258,7 @@ document.addEventListener('DOMContentLoaded',function(){_warmGAS();});
 
 function resetQuoteForm(){
   // Clear all quote state so no previous user's data leaks to next login
-  currentInputs={};lastQuote=null;_reviseMode=false;_viewMode=false;_selectedFA=null;_viewFASnap=null;
+  currentInputs={};lastQuote=null;_reviseMode=false;_viewMode=false;_selectedFA=null;_viewFASnap=null;_actingUser=null;
   var qfaSel=document.getElementById('quoteFA');if(qfaSel)qfaSel.value='';
   // Clear text / date / number inputs
   ['policyholderName','dob1','dob2','name2','initialConsideration'].forEach(function(id){
@@ -1324,6 +1324,8 @@ function showApp(){
   });
   loadLocalQuotes();
   if(currentUser&&(currentUser.role==='Admin'||isPS(currentUser.role)||isTechServ)&&navigator.onLine){_autoSyncQuotes();}
+  // Clean orphaned local quotes (deleted from sheet, still in local storage)
+  _cleanLocalOrphans();
   if(currentUser&&(currentUser.role==='Admin'||isTechServ||isPS(currentUser.role)))loadFADropdown();
   _fetchAppSettings();
   updateSyncDot();
@@ -2257,6 +2259,22 @@ function _bgSyncQuiet(){
     loadFADropdown();
   }
 }
+// Remove locally stored quotes that were deleted from the sheet
+function _cleanLocalOrphans(){
+  try{
+    var deleted=JSON.parse(localStorage.getItem('vla_deleted_quotes')||'[]');
+    if(!deleted.length)return;
+    var before=localQuotes.length;
+    localQuotes=localQuotes.filter(function(q){
+      var qid=q.quoteId||q.localId;
+      return !qid||deleted.indexOf(qid)<0;
+    });
+    if(localQuotes.length<before){
+      saveLocalQuotes();
+      console.log('Cleaned '+(before-localQuotes.length)+' deleted quotes from local storage');
+    }
+  }catch(e){}
+}
 async function _autoSyncQuotes(){
   if(!navigator.onLine||!APPS_SCRIPT_URL)return;
   try{
@@ -2272,6 +2290,9 @@ async function _autoSyncQuotes(){
           quoteDate:rq.quoteDate,inputs:inp,results:res,anb1:rq.anb,
           policyStatus:rq.policyStatus||'Pending',statusDate:rq.statusDate||'',statusBy:rq.statusBy||'',
           faSnapshot:{userId:rq.userId||'',name:rq.faName||'',title:rq.faTitle||'Intermediary',faEmail:rq.faEmail||'',phone:rq.faPhone||''}};
+        var _dIds=JSON.parse(localStorage.getItem('vla_deleted_quotes')||'[]');
+        var _rqId=rq.quoteId||rq.localId;
+        if(_rqId&&_dIds.indexOf(_rqId)>=0)return; // skip deleted
         var exIdx=localQuotes.findIndex(function(q){return q.localId===rq.localId||q.quoteId===rq.quoteId;});
         if(exIdx>-1){
           if(localQuotes[exIdx].syncStatus==='pending')return;
@@ -2310,8 +2331,11 @@ async function hardSync(){
           policyStatus:rq.policyStatus||'Pending',statusDate:rq.statusDate||'',statusBy:rq.statusBy||'',
           faSnapshot:{userId:rq.userId||'',name:rq.faName||'',title:rq.faTitle||'Intermediary',faEmail:rq.faEmail||'',phone:rq.faPhone||''}};
       });
-      // Merge pending back (avoid duplicates)
+      // Merge pending back (skip any that were deleted)
+      var _delIds=JSON.parse(localStorage.getItem('vla_deleted_quotes')||'[]');
       pending.forEach(function(p){
+        var pid=p.quoteId||p.localId;
+        if(_delIds.indexOf(pid)>=0)return; // skip deleted
         if(!fresh.find(function(q){return q.localId===p.localId;})) fresh.unshift(p);
       });
       localQuotes=fresh;
@@ -2362,11 +2386,13 @@ async function retroSync(){
           quoteDate:rq.quoteDate,inputs:inp,results:res,anb1:rq.anb,
           policyStatus:rq.policyStatus||'Pending',statusDate:rq.statusDate||'',statusBy:rq.statusBy||'',
           faSnapshot:{userId:rq.userId||'',name:rq.faName||'',title:rq.faTitle||'Intermediary',faEmail:rq.faEmail||'',phone:rq.faPhone||''}};
+        var _dIds2=JSON.parse(localStorage.getItem('vla_deleted_quotes')||'[]');
+        var _eqId=rq.quoteId||rq.localId;
+        if(_eqId&&_dIds2.indexOf(_eqId)>=0)return; // skip deleted
         var existsIdx=localQuotes.findIndex(function(q){return q.localId===rq.localId||q.quoteId===rq.quoteId;});
         if(existsIdx>-1){
-          // Full refresh from server — preserve pending local changes only
           var old=localQuotes[existsIdx];
-          if(old.syncStatus==='pending'){return;} // keep unsaved local version
+          if(old.syncStatus==='pending'){return;}
           localQuotes[existsIdx]=Object.assign({},freshEntry,{localId:old.localId});
           return;
         }
@@ -2627,6 +2653,11 @@ function deleteQuote(ev,lid){
     var _dq=localQuotes.splice(i,1)[0];
     saveLocalQuotes();renderHistory();showToast('Quote deleted.');
     var _qid=_dq&&(_dq.quoteId||_dq.localId);
+    // Track deleted quoteIds so sync doesn't re-add them
+    try{
+      var _deleted=JSON.parse(localStorage.getItem('vla_deleted_quotes')||'[]');
+      if(_qid&&_deleted.indexOf(_qid)<0){_deleted.push(_qid);localStorage.setItem('vla_deleted_quotes',JSON.stringify(_deleted.slice(-200)));}
+    }catch(e){}
     if(_qid&&navigator.onLine&&APPS_SCRIPT_URL){
       fetch(APPS_SCRIPT_URL+'?action=deleteQuote'
         +'&token='+encodeURIComponent(APP_TOKEN)
@@ -2676,6 +2707,12 @@ function viewQuoteFromHistory(idx){
   }
   _viewFASnap=Object.keys(_snap).length?_snap:null;
   if(entry.faSnapshot) currentUser=Object.assign({},currentUser,_snap);
+  // Restore _selectedFA for Admin/TS viewing FA's quote (keeps signature correct)
+  if(entry.faSnapshot&&entry.faSnapshot.userId&&_actingUser&&(_actingUser.role==='Admin'||isTS(_actingUser.role))){
+    _selectedFA={userId:entry.faSnapshot.userId,name:entry.faSnapshot.name||'',
+      title:entry.faSnapshot.title||'Financial Advisor',
+      faEmail:entry.faSnapshot.faEmail||'',phone:entry.faSnapshot.phone||''};
+  }
   var fakeQ={anb1:entry.anb1,annuityStructure:(entry.inputs||{}).annuityStructure,results:entry.results,policyNumber:entry.quoteId||entry.localId,generatedAt:entry.quoteDate};
   lastQuote=fakeQ; // so PDF/WhatsApp/Email work from history view
   var doRender=function(){renderQuoteCanvas(fakeQ,currentInputs);};
@@ -2741,6 +2778,23 @@ function reviseQuote(idx){
   document.getElementById('quote-product-title').textContent='WPA Quotation (Revise)';
   _reviseMode=true;
   _viewMode=false;
+  // Restore FA selection from faSnapshot so signature stays correct
+  if(entry.faSnapshot&&entry.faSnapshot.userId&&currentUser&&currentUser.role!=='FA'){
+    _selectedFA={userId:entry.faSnapshot.userId,name:entry.faSnapshot.name||'',
+      title:entry.faSnapshot.title||'Financial Advisor',
+      faEmail:entry.faSnapshot.faEmail||'',phone:entry.faSnapshot.phone||''};
+    // Enrich from live _faList if available
+    if(_faList&&_faList.length){
+      var _rm=_faList.find(function(u){return u.userId===entry.faSnapshot.userId;});
+      if(_rm) _selectedFA=Object.assign({},_selectedFA,{title:_rm.title||_selectedFA.title,faEmail:_rm.faEmail||_selectedFA.faEmail,phone:_rm.phone||_selectedFA.phone});
+    }
+    // Set FA dropdown to match
+    var _qfaSel=document.getElementById('quoteFA');
+    if(_qfaSel) _qfaSel.value=entry.faSnapshot.userId||'';
+  } else {
+    _selectedFA=null;
+    var _qfaSel2=document.getElementById('quoteFA');if(_qfaSel2)_qfaSel2.value='';
+  }
   var _actEl2=document.querySelector('#panel-quote .actions');if(_actEl2)_actEl2.style.display='';
   goQTab('panel-form');document.querySelectorAll('.q-tab').forEach(function(b){b.classList.remove('done');});
   goScreen('scr-quote');
