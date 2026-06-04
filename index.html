@@ -1163,6 +1163,8 @@ function navTo(dest){
     var haf=document.getElementById('hist-agent-filter');if(haf)haf.value='';
     var hsf=document.getElementById('hist-status-filter');if(hsf)hsf.value='';
     var hsort=document.getElementById('hist-sort');if(hsort)hsort.value='newest';
+    // Sync when navigating to history
+    if(currentUser&&(currentUser.role==='Admin'||isPS(currentUser.role)||isTS(currentUser.role))&&navigator.onLine) _bgSyncQuiet();
     renderHistory();
   }
   if(dest==='quote'){resetQuoteForm();loadFADropdown();}
@@ -1346,7 +1348,7 @@ function doLogout(){
 // ── Stats ─────────────────────────────────────────────────────
 function updateStats(){
   // Filter to current user's quotes only for stats
-  var myQ=currentUser&&currentUser.role==='Admin'
+  var myQ=currentUser&&(currentUser.role==='Admin'||isPS(currentUser.role)||isTS(currentUser.role))
     ? localQuotes
     : localQuotes.filter(function(q){
         return !q.faSnapshot||!q.faSnapshot.name||q.faSnapshot.name===currentUser.name;
@@ -1375,7 +1377,7 @@ function updateStats(){
 // ── Recent quotes on home ─────────────────────────────────────
 function renderRecentQuotes(){
   var el=document.getElementById('recent-quotes-list');
-  var myQ=currentUser&&(currentUser.role==='Admin'||isPS(currentUser.role))?localQuotes:localQuotes.filter(function(q){return !q.faSnapshot||!q.faSnapshot.name||q.faSnapshot.name===currentUser.name;});
+  var myQ=currentUser&&(currentUser.role==='Admin'||isPS(currentUser.role)||isTS(currentUser.role))?localQuotes:localQuotes.filter(function(q){return !q.faSnapshot||!q.faSnapshot.name||q.faSnapshot.name===currentUser.name;});
   var recent=myQ.slice(0,3);
   if(!recent.length){el.innerHTML='<div style="font-size:.78rem;color:var(--muted);padding:.5rem 0">No quotes yet. Tap New Quote to get started.</div>';return;}
   el.innerHTML=recent.map(function(entry,i){
@@ -2264,18 +2266,19 @@ async function _autoSyncQuotes(){
     function _sp(s,fb){if(!s||typeof s!=='string')return s||fb;var t=s.trim();if(t[0]!=='{'&&t[0]!=='[')return fb;try{return JSON.parse(t);}catch(e){return fb;}}
     d.quotes.forEach(function(rq){
       try{
-        var exists=localQuotes.find(function(q){return q.localId===rq.localId||q.quoteId===rq.quoteId;});
-        if(exists){
-          if(rq.policyStatus){exists.policyStatus=rq.policyStatus;exists.statusDate=rq.statusDate||exists.statusDate;exists.statusBy=rq.statusBy||exists.statusBy;}
-          if(rq.quoteId&&!exists.quoteId)exists.quoteId=rq.quoteId;
-          return;
-        }
         var inp=_sp(rq.inputsJson,{policyholderName:rq.clientName,dob1:rq.clientDob,gender1:rq.clientGender,initialConsideration:rq.consideration,dueDate:rq.dueDate,basisName:rq.basis,frequency:rq.frequency,paymentTiming:rq.timing,annuityStructure:rq.structure});
         var res=_sp(rq.resultsJson,[]);
-        localQuotes.push({localId:rq.localId||genLocalId(),quoteId:rq.quoteId,syncStatus:'synced',
+        var freshQ={localId:rq.localId||genLocalId(),quoteId:rq.quoteId,syncStatus:'synced',
           quoteDate:rq.quoteDate,inputs:inp,results:res,anb1:rq.anb,
           policyStatus:rq.policyStatus||'Pending',statusDate:rq.statusDate||'',statusBy:rq.statusBy||'',
-          faSnapshot:{userId:rq.userId||'',name:rq.faName||'',title:rq.faTitle||'Intermediary',faEmail:rq.faEmail||'',phone:rq.faPhone||''}});
+          faSnapshot:{userId:rq.userId||'',name:rq.faName||'',title:rq.faTitle||'Intermediary',faEmail:rq.faEmail||'',phone:rq.faPhone||''}};
+        var exIdx=localQuotes.findIndex(function(q){return q.localId===rq.localId||q.quoteId===rq.quoteId;});
+        if(exIdx>-1){
+          if(localQuotes[exIdx].syncStatus==='pending')return;
+          localQuotes[exIdx]=Object.assign({},freshQ,{localId:localQuotes[exIdx].localId});
+          return;
+        }
+        localQuotes.push(freshQ);
       }catch(e){}
     });
     saveLocalQuotes();
@@ -2319,18 +2322,21 @@ async function retroSync(){
     }
     (d.quotes||[]).forEach(function(rq){
       try{
-        var exists=localQuotes.find(function(q){return q.localId===rq.localId||q.quoteId===rq.quoteId;});
-        if(exists){
-          if(rq.policyStatus){exists.policyStatus=rq.policyStatus;exists.statusDate=rq.statusDate||exists.statusDate;exists.statusBy=rq.statusBy||exists.statusBy;}
-          if(rq.quoteId&&!exists.quoteId)exists.quoteId=rq.quoteId;
-          return;
-        }
         var inp=safeParse(rq.inputsJson,{policyholderName:rq.clientName,dob1:rq.clientDob,gender1:rq.clientGender,initialConsideration:rq.consideration,dueDate:rq.dueDate,basisName:rq.basis,frequency:rq.frequency,paymentTiming:rq.timing,annuityStructure:rq.structure});
         var res=safeParse(rq.resultsJson,[]);
-        localQuotes.push({localId:rq.localId||genLocalId(),quoteId:rq.quoteId,syncStatus:'synced',
+        var freshEntry={localId:rq.localId||genLocalId(),quoteId:rq.quoteId,syncStatus:'synced',
           quoteDate:rq.quoteDate,inputs:inp,results:res,anb1:rq.anb,
           policyStatus:rq.policyStatus||'Pending',statusDate:rq.statusDate||'',statusBy:rq.statusBy||'',
-          faSnapshot:{userId:rq.userId||'',name:rq.faName||'',title:rq.faTitle||'Intermediary',faEmail:rq.faEmail||'',phone:rq.faPhone||''}});
+          faSnapshot:{userId:rq.userId||'',name:rq.faName||'',title:rq.faTitle||'Intermediary',faEmail:rq.faEmail||'',phone:rq.faPhone||''}};
+        var existsIdx=localQuotes.findIndex(function(q){return q.localId===rq.localId||q.quoteId===rq.quoteId;});
+        if(existsIdx>-1){
+          // Full refresh from server — preserve pending local changes only
+          var old=localQuotes[existsIdx];
+          if(old.syncStatus==='pending'){return;} // keep unsaved local version
+          localQuotes[existsIdx]=Object.assign({},freshEntry,{localId:old.localId});
+          return;
+        }
+        localQuotes.push(freshEntry);
         added++;
       }catch(rowErr){skipped++;}
     });
@@ -2365,9 +2371,13 @@ function _populateAgentFilter(quotes){
 function renderHistory(){
   // Ensure FA list is loaded for agent filter
   if(currentUser&&(currentUser.role==='Admin'||isTS(currentUser.role)||isPS(currentUser.role))&&(!_faList||!_faList.length)) loadFADropdown();
+  // Trigger background sync for roles that see all quotes — ensures latest quotes visible
+  if(currentUser&&(currentUser.role==='Admin'||isPS(currentUser.role)||isTS(currentUser.role))&&navigator.onLine){
+    _bgSyncQuiet();
+  }
   var list=document.getElementById('hist-list');
   var h3=document.getElementById('hist-count');
-  var raw=currentUser&&(currentUser.role==='Admin'||isPS(currentUser.role))?localQuotes:localQuotes.filter(function(q){return !q.faSnapshot||!q.faSnapshot.name||q.faSnapshot.name===currentUser.name||!localQuotes[0].faSnapshot;});
+  var raw=currentUser&&(currentUser.role==='Admin'||isPS(currentUser.role)||isTS(currentUser.role))?localQuotes:localQuotes.filter(function(q){return !q.faSnapshot||!q.faSnapshot.name||q.faSnapshot.name===currentUser.name||!localQuotes[0].faSnapshot;});
   _populateAgentFilter(raw);
   // ── Search ────────────────────────────────────────────────
   var term=((document.getElementById('hist-search')||{}).value||'').trim().toLowerCase();
