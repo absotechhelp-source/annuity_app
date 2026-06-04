@@ -874,7 +874,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
 
 <!-- HISTORY -->
 <div class="screen" id="scr-history">
-  <div class="topbar"><button class="tb-back" onclick="goScreen('scr-home')">&#8592;</button><span class="tb-title">Quote History</span><button class="tb-btn" onclick="retroSync()">&#8635; Retrosync</button></div>
+  <div class="topbar"><button class="tb-back" onclick="goScreen('scr-home')">&#8592;</button><span class="tb-title">Quote History</span><button class="tb-btn" onclick="retroSync()">&#8635; Retrosync</button><button class="tb-btn" onclick="hardSync()" style="margin-left:.3rem;background:rgba(255,255,255,.15)" title="Clear local &amp; rebuild from server">&#9881;</button></div>
   <div class="hist-hdr"><h3 id="hist-count">Quotes</h3></div>
   <div class="hist-search-wrap">
     <div class="hist-search-row">
@@ -2286,6 +2286,40 @@ async function _autoSyncQuotes(){
     if(typeof renderRecentQuotes==='function')renderRecentQuotes();
     if(typeof updateStats==='function')updateStats();
   }catch(e){}
+}
+// Hard sync — clears all local quotes and rebuilds from server
+// Use when local storage is out of sync with the sheet
+async function hardSync(){
+  if(!navigator.onLine){showToast('Offline — hard sync needs a connection');return;}
+  vlaConfirm('Clear all local quotes and rebuild from server? This cannot be undone.',async function(yes){
+    if(!yes)return;
+    try{
+      showToast('Fetching from server…');
+      var r=await fetch(APPS_SCRIPT_URL+'?action=getQuotes&userId='+encodeURIComponent(currentUser.userId)+'&role='+encodeURIComponent(currentUser.role)+'&token='+encodeURIComponent(APP_TOKEN),{redirect:'follow'});
+      var d=await r.json();
+      if(!d.ok||!d.quotes){showToast('Hard sync failed: '+(d.error||'no data'));return;}
+      // Keep only pending (unsaved) local quotes
+      var pending=localQuotes.filter(function(q){return q.syncStatus==='pending';});
+      function _sp(s,fb){if(!s||typeof s!=='string')return s||fb;var t=s.trim();if(t[0]!=='{'&&t[0]!=='[')return fb;try{return JSON.parse(t);}catch(e){return fb;}}
+      // Rebuild from server
+      var fresh=d.quotes.map(function(rq){
+        var inp=_sp(rq.inputsJson,{policyholderName:rq.clientName,dob1:rq.clientDob,gender1:rq.clientGender,initialConsideration:rq.consideration,dueDate:rq.dueDate,basisName:rq.basis,frequency:rq.frequency,paymentTiming:rq.timing,annuityStructure:rq.structure});
+        var res=_sp(rq.resultsJson,[]);
+        return {localId:rq.localId||genLocalId(),quoteId:rq.quoteId,syncStatus:'synced',
+          quoteDate:rq.quoteDate,inputs:inp,results:res,anb1:rq.anb,
+          policyStatus:rq.policyStatus||'Pending',statusDate:rq.statusDate||'',statusBy:rq.statusBy||'',
+          faSnapshot:{userId:rq.userId||'',name:rq.faName||'',title:rq.faTitle||'Intermediary',faEmail:rq.faEmail||'',phone:rq.faPhone||''}};
+      });
+      // Merge pending back (avoid duplicates)
+      pending.forEach(function(p){
+        if(!fresh.find(function(q){return q.localId===p.localId;})) fresh.unshift(p);
+      });
+      localQuotes=fresh;
+      saveLocalQuotes();
+      renderHistory();renderRecentQuotes();updateStats();
+      showToast('✓ Hard sync: '+fresh.length+' quotes from server'+(pending.length?' + '+pending.length+' pending':''));
+    }catch(e){showToast('Hard sync error: '+e.message);}
+  });
 }
 async function retroSync(){
   if(!navigator.onLine){showToast('Offline — retrosync needs a connection');return;}
