@@ -1258,7 +1258,7 @@ document.addEventListener('DOMContentLoaded',function(){_warmGAS();});
 
 function resetQuoteForm(){
   // Clear all quote state so no previous user's data leaks to next login
-  currentInputs={};lastQuote=null;_reviseMode=false;_viewMode=false;_selectedFA=null;_viewFASnap=null;_actingUser=null;
+  currentInputs={};lastQuote=null;_reviseMode=false;_viewMode=false;_selectedFA=null;_viewFASnap=null;_actingUser=null;_lastAutoSaveKey='';
   var qfaSel=document.getElementById('quoteFA');if(qfaSel)qfaSel.value='';
   // Clear text / date / number inputs
   ['policyholderName','dob1','dob2','name2','initialConsideration'].forEach(function(id){
@@ -1508,12 +1508,17 @@ function goReview(){
   goQTab('panel-review');
   document.querySelector('[data-panel="panel-review"]').classList.add('done');
 }
+var _calcRunning=false;
 async function runCalc(){
+  if(_calcRunning){showToast('Calculation in progress…');return;}
   // Phase 2: Engine runs server-side. Online required to generate a quote.
   if(!navigator.onLine){
     showToast('No connection — can\'t generate a quote');
     return;
   }
+  _calcRunning=true;
+  var _calcBtn=document.getElementById('calc-btn');
+  if(_calcBtn){_calcBtn.disabled=true;_calcBtn.textContent='Computing…';}
   var spin=document.getElementById('spin');spin.classList.add('show');
   try{
     // Pass mortality gender override as separate param — do NOT overwrite client gender
@@ -1532,6 +1537,8 @@ async function runCalc(){
       throw new Error(msg);
     }
     lastQuote=d.quote;
+    _calcRunning=false;
+    var _cb=document.getElementById('calc-btn');if(_cb){_cb.disabled=false;_cb.textContent='Calculate';}
     _viewMode=false;
     var _actEl=document.querySelector('#panel-quote .actions');if(_actEl)_actEl.style.display='';
     var doRender=function(){renderQuoteCanvas(lastQuote,currentInputs);};
@@ -1545,6 +1552,8 @@ async function runCalc(){
     console.error(e);
   }finally{
     spin.classList.remove('show');
+    _calcRunning=false;
+    var _cbe=document.getElementById('calc-btn');if(_cbe){_cbe.disabled=false;_cbe.textContent='Calculate';}
   }
 }
 
@@ -2155,10 +2164,23 @@ function loadLocalQuotes(){try{localQuotes=JSON.parse(localStorage.getItem('vla_
 function saveLocalQuotes(){localStorage.setItem('vla_ann_quotes',JSON.stringify(localQuotes));updateSyncDot();updateStats();renderRecentQuotes();}
 function updateSyncDot(){var p=localQuotes.filter(function(q){return q.syncStatus==='pending';}).length;var dot=document.getElementById('sync-dot');if(dot)dot.className='sync-dot'+(p>0?' pending':'');}
 
+var _lastAutoSaveKey='';
 function _autoSaveQuote(){
   if(!lastQuote||!currentInputs||!currentInputs.policyholderName)return;
+  var _key=(currentInputs.policyholderName||'').trim().toLowerCase()
+    +'|'+(currentInputs.dob1||'')+'|'+(currentInputs.initialConsideration||'');
+  if(_key===_lastAutoSaveKey){return;}
+  _lastAutoSaveKey=_key;
+  var _now=Date.now(),_parts=_key.split('|');
+  var _recentDup=!_reviseMode&&localQuotes.find(function(q){
+    if(!q.quoteDate||_now-new Date(q.quoteDate).getTime()>60000)return false;
+    return (q.inputs&&q.inputs.policyholderName||'').trim().toLowerCase()===_parts[0]
+      &&(q.inputs&&q.inputs.dob1||'')===_parts[1]
+      &&String(q.inputs&&q.inputs.initialConsideration||'')===String(_parts[2]);
+  });
+  if(_recentDup){showToast('✓ Already saved for '+(currentInputs.policyholderName||'client'));return;}
   _doSave();
-  showToast('✓ Quote auto-saved — '+(currentInputs.policyholderName||'client'));
+  showToast('✓ Quote saved — '+(currentInputs.policyholderName||'client'));
 }
 function saveAndSync(){
   if(!lastQuote)return;
