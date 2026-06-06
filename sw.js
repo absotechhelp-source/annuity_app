@@ -1,92 +1,100 @@
-/* ═══════════════════════════════════════════════════════
-   VLA Sales App — Service Worker v2.7
-═══════════════════════════════════════════════════════ */
+// ================================================================
+//  VLA Annuity App — Service Worker v5
+//  Single file app: only index.html + manifest + icons to cache.
+//  Network-first for HTML (always fresh), cache-first for images.
+//  Auto-update: skipWaiting + clients.claim on activate.
+//  To trigger update on all devices: bump CACHE_VERSION below.
+// ================================================================
 
-const CACHE_VERSION = 'vla-v7.65';
-const CACHE_NAME    = CACHE_VERSION;
+const CACHE_VERSION = 'vla-annuity-v64';
 
-// Only cache static assets — NEVER index.html
-const PRECACHE_URLS = [
+const CORE_ASSETS = [
+  './',
+  './index.html',
   './manifest.json',
   './icon-192.png',
-  './icon-512.png',
+  './icon-512.png'
 ];
 
-// ── Install: take over immediately, don't wait ──
-self.addEventListener('install', event => {
-  self.skipWaiting(); // Always activate new SW immediately
-  event.waitUntil(
-    caches.open(CACHE_NAME).then(cache =>
-      cache.addAll(PRECACHE_URLS).catch(() => {}) // Fail silently if icons missing
-    )
+// ── Install ───────────────────────────────────────────────────
+self.addEventListener('install', function(e) {
+  e.waitUntil(
+    caches.open(CACHE_VERSION)
+      .then(function(c) { return c.addAll(CORE_ASSETS); })
+      .then(function() { return self.skipWaiting(); })
   );
 });
 
-// ── Activate: delete all old caches, claim all tabs immediately ──
-self.addEventListener('activate', event => {
-  event.waitUntil(
+// ── Activate: purge old caches, claim all tabs ────────────────
+self.addEventListener('activate', function(e) {
+  e.waitUntil(
     caches.keys()
-      .then(keys => Promise.all(
-        keys.filter(k => k !== CACHE_NAME).map(k => caches.delete(k))
-      ))
-      .then(() => self.clients.claim()) // Take control of all open tabs now
+      .then(function(keys) {
+        return Promise.all(
+          keys.filter(function(k) { return k !== CACHE_VERSION; })
+              .map(function(k) { return caches.delete(k); })
+        );
+      })
+      .then(function() { return self.clients.claim(); })
+      .then(function() { return self.clients.matchAll({ type: 'window' }); })
+      .then(function(clients) {
+        clients.forEach(function(c) {
+          c.postMessage({ type: 'SW_UPDATED', version: CACHE_VERSION });
+        });
+      })
   );
 });
 
-// ── Fetch strategy ──
-self.addEventListener('fetch', event => {
-  if(event.request.method !== 'GET') return;
+// ── Fetch ─────────────────────────────────────────────────────
+self.addEventListener('fetch', function(e) {
+  if (e.request.method !== 'GET') return;
 
-  const url = new URL(event.request.url);
+  var url = e.request.url;
+  var isImage = /\.(png|jpg|jpeg|svg|ico|gif|webp)(\?.*)?$/.test(url);
+  var isExternal = url.indexOf('script.google.com') > -1 ||
+                   url.indexOf('googleapis.com') > -1;
 
-  // ── licence.json: NEVER cache — always fetch fresh, no offline fallback ──
-  if(url.pathname.endsWith('licence.json')){
-    event.respondWith(
-      fetch(event.request, {cache:'no-store', redirect:'follow'})
-        .catch(() => new Response('{"expiry":"2026-06-30"}', {
-          headers: {'Content-Type': 'application/json'}
-        }))
+  // Never cache Apps Script calls — always network, no fallback
+  if (isExternal) return;
+
+  if (isImage) {
+    // Cache-first for icons
+    e.respondWith(
+      caches.match(e.request).then(function(cached) {
+        return cached || fetch(e.request).then(function(res) {
+          if (res && res.status === 200) {
+            caches.open(CACHE_VERSION).then(function(c) {
+              c.put(e.request, res.clone());
+            });
+          }
+          return res;
+        });
+      })
     );
-    return;
-  }
-
-  // ── index.html: ALWAYS network-first, never serve stale cached version ──
-  // If offline, serve cached copy as fallback only
-  if(event.request.mode === 'navigate' ||
-     url.pathname.endsWith('index.html') ||
-     url.pathname === '/' ||
-     url.pathname.endsWith('/')){
-    event.respondWith(
-      fetch(event.request, { cache: 'no-cache' }) // Force revalidate from server
-        .then(res => {
-          // Only cache successful responses
-          if(res.ok){
-            const copy = res.clone();
-            caches.open(CACHE_NAME).then(c => c.put(event.request, copy));
+  } else {
+    // Network-first for HTML and everything else
+    e.respondWith(
+      fetch(e.request)
+        .then(function(res) {
+          if (res && res.status === 200) {
+            caches.open(CACHE_VERSION).then(function(c) {
+              c.put(e.request, res.clone());
+            });
           }
           return res;
         })
-        .catch(() => caches.match('./index.html')) // Offline fallback only
+        .catch(function() {
+          return caches.match(e.request).then(function(cached) {
+            return cached || new Response('Offline', { status: 503 });
+          });
+        })
     );
-    return;
   }
-
-  // ── Everything else (icons, manifest): cache-first ──
-  event.respondWith(
-    caches.match(event.request).then(cached => {
-      if(cached) return cached;
-      return fetch(event.request).then(res => {
-        if(res.ok){
-          const copy = res.clone();
-          caches.open(CACHE_NAME).then(c => c.put(event.request, copy));
-        }
-        return res;
-      });
-    }).catch(() => new Response('Offline', { status: 503 }))
-  );
 });
 
-// ── External reload trigger (kept for compatibility) ──
-self.addEventListener('message', event => {
-  if(event.data && event.data.type === 'SKIP_WAITING') self.skipWaiting();
+// ── Message: tab asks SW to skip waiting ─────────────────────
+self.addEventListener('message', function(e) {
+  if (e.data && e.data.type === 'SKIP_WAITING') {
+    self.skipWaiting();
+  }
 });
