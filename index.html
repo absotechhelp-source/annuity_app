@@ -201,7 +201,17 @@ input::placeholder{color:#ccc}
   #panel-quote,#quote-canvas{display:block!important}
   #quote-canvas{max-width:100%;box-shadow:none;width:100%!important;height:auto!important}
   .qbody{padding:0;overflow:visible}
-}</style></head><body>
+}
+/* ── Inactivity timeout warning ─────────────────────────────── */
+#idle-overlay{position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.55);display:none;align-items:center;justify-content:center;}
+#idle-overlay.show{display:flex;}
+#idle-box{background:#fff;border-radius:16px;padding:1.6rem 1.4rem 1.2rem;max-width:310px;width:90%;text-align:center;box-shadow:0 8px 32px rgba(0,0,0,.22);}
+#idle-box .idle-icon{font-size:2rem;margin-bottom:.5rem;}
+#idle-box h3{margin:0 0 .4rem;font-size:1rem;color:#1a1a1a;}
+#idle-box p{margin:0 0 1rem;font-size:.82rem;color:#555;line-height:1.5;}
+#idle-box .idle-countdown{font-size:1.6rem;font-weight:700;color:var(--red);margin-bottom:1rem;}
+#idle-box .idle-btn{width:100%;padding:.65rem;border:none;border-radius:9px;font-size:.88rem;font-weight:600;cursor:pointer;background:var(--red);color:#fff;}
+#idle-box .idle-btn:active{opacity:.85;}</style></head><body>
 <script>
 /** @license
  *
@@ -1335,9 +1345,79 @@ function showApp(){
   goScreen('scr-home');
   // Start background sync: every 3 minutes + on tab/window focus
   _startBackgroundSync();
+  // Start inactivity timeout watch (20 minutes)
+  _startIdleWatch();
 }
+// ================================================================
+//  INACTIVITY TIMEOUT  (20 minutes)
+//  Watches for any user interaction. Shows a 2-minute warning
+//  countdown at the 18-minute mark, then auto-logs out at 20.
+// ================================================================
+var IDLE_LIMIT_MS = 20 * 60 * 1000;   // 20 minutes total
+var IDLE_WARN_MS  = 18 * 60 * 1000;   // show warning at 18 min (2 min before logout)
+var _idleTimer    = null;
+var _warnTimer    = null;
+var _cdTimer      = null;   // countdown interval
+var _idleWarning  = false;
+
+function _idleStaySignedIn(){
+  document.getElementById('idle-overlay').classList.remove('show');
+  _idleWarning=false;
+  clearInterval(_cdTimer);
+  _cdTimer=null;
+  _resetIdle();
+}
+
+function _showIdleWarning(){
+  _idleWarning=true;
+  var secsLeft=120;
+  function _fmt(s){var m=Math.floor(s/60),sc=s%60;return m+':'+(sc<10?'0':'')+sc;}
+  document.getElementById('idle-countdown').textContent=_fmt(secsLeft);
+  document.getElementById('idle-overlay').classList.add('show');
+  clearInterval(_cdTimer);
+  _cdTimer=setInterval(function(){
+    secsLeft--;
+    if(secsLeft<=0){clearInterval(_cdTimer);_cdTimer=null;return;}
+    document.getElementById('idle-countdown').textContent=_fmt(secsLeft);
+  },1000);
+}
+
+function _resetIdle(){
+  if(!currentUser) return;
+  clearTimeout(_warnTimer);
+  clearTimeout(_idleTimer);
+  _warnTimer=setTimeout(function(){ _showIdleWarning(); }, IDLE_WARN_MS);
+  _idleTimer=setTimeout(function(){
+    clearInterval(_cdTimer);_cdTimer=null;
+    document.getElementById('idle-overlay').classList.remove('show');
+    showToast('Signed out due to inactivity');
+    doLogout();
+  }, IDLE_LIMIT_MS);
+}
+
+var _idleWatching=false;
+function _startIdleWatch(){
+  _resetIdle();
+  if(_idleWatching) return;
+  _idleWatching=true;
+  ['click','keydown','touchstart','scroll','mousemove'].forEach(function(ev){
+    document.addEventListener(ev,function(){
+      if(_idleWarning) return;   // while warning is up, only the button resets the timer
+      _resetIdle();
+    },{passive:true});
+  });
+}
+function _stopIdleWatch(){
+  clearTimeout(_idleTimer);
+  clearTimeout(_warnTimer);
+  clearInterval(_cdTimer);
+  _idleTimer=null;_warnTimer=null;_cdTimer=null;_idleWarning=false;
+  document.getElementById('idle-overlay').classList.remove('show');
+}
+
 function doLogout(){
   _stopBackgroundSync();
+  _stopIdleWatch();
   currentUser=null;
   localStorage.removeItem('vla_ann_user');
   localStorage.removeItem('vla_ann_cred');
@@ -1380,7 +1460,9 @@ function updateStats(){
 function renderRecentQuotes(){
   var el=document.getElementById('recent-quotes-list');
   var myQ=currentUser&&(currentUser.role==='Admin'||isPS(currentUser.role)||isTS(currentUser.role))?localQuotes:localQuotes.filter(function(q){return !q.faSnapshot||!q.faSnapshot.name||q.faSnapshot.name===currentUser.name;});
-  var recent=myQ.slice(0,3);
+  // Always sort newest first before slicing — localQuotes order is not guaranteed
+  // (server-synced quotes are pushed to the end, so slice(0,3) would show stale entries)
+  var recent=myQ.slice().sort(function(a,b){return new Date(b.quoteDate||0)-new Date(a.quoteDate||0);}).slice(0,3);
   if(!recent.length){el.innerHTML='<div style="font-size:.78rem;color:var(--muted);padding:.5rem 0">No quotes yet. Tap New Quote to get started.</div>';return;}
   el.innerHTML=recent.map(function(entry,i){
     var inp=entry.inputs||{};
@@ -3218,6 +3300,16 @@ function vlaPrompt(msg, cb){
 
 </script>
 
+<!-- Inactivity timeout warning overlay -->
+<div id="idle-overlay">
+  <div id="idle-box">
+    <div class="idle-icon">&#9201;</div>
+    <h3>Still there?</h3>
+    <p>You will be signed out automatically due to inactivity in:</p>
+    <div class="idle-countdown" id="idle-countdown">2:00</div>
+    <button class="idle-btn" onclick="_idleStaySignedIn()">Stay Signed In</button>
+  </div>
+</div>
 <!-- Toast notification -->
 <div id="vla-toast" style="display:none;position:fixed;bottom:72px;left:50%;transform:translateX(-50%);background:#641414;color:#fff;padding:.45rem 1.1rem;border-radius:20px;font-size:.76rem;font-weight:600;z-index:9998;white-space:nowrap;box-shadow:0 3px 12px rgba(0,0,0,.25)"></div>
 
