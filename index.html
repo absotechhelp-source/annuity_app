@@ -1045,6 +1045,11 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
           <button class="btn btn-ghost btn-sm" onclick="_setAllMedProvs(true)"  style="font-size:.72rem">Activate All</button>
         </div>
       </div>
+      <div class="field" style="margin-bottom:1.2rem">
+        <label style="font-weight:600;font-size:.82rem">Session Timeout</label>
+        <p style="font-size:.72rem;color:var(--muted);margin:.2rem 0 .6rem">FAs are signed out after 20 minutes of inactivity. A 2-minute warning is shown first. Use the button below to verify the feature is working.</p>
+        <button class="btn btn-ghost btn-sm" onclick="_testIdleTimeout()" style="font-size:.72rem">&#9201; Test Timeout Now</button>
+      </div>
       <button class="btn btn-primary" onclick="saveAppSettings()" style="min-width:140px">✓ Save Settings</button>
       <div id="settings-saved-msg" style="font-size:.75rem;color:#2e7d32;margin-top:.5rem;display:none">✓ Settings saved</div>
     </div>
@@ -1363,16 +1368,17 @@ function showApp(){
 }
 // ================================================================
 //  INACTIVITY TIMEOUT  (20 minutes)
-//  Watches all user interaction. Shows a live 2-minute countdown
-//  warning at 18 min, then auto-signs-out at 20 min.
+//  Uses a real-clock deadline in addition to setTimeout so the
+//  logout fires correctly even after the phone screen sleeps.
 // ================================================================
-var IDLE_LIMIT_MS = 20 * 60 * 1000;  // 20 minutes
-var IDLE_WARN_MS  = 18 * 60 * 1000;  // warn at 18 min (2 min before logout)
-var _idleTimer    = null;
-var _warnTimer    = null;
-var _cdTimer      = null;
-var _idleWarning  = false;
-var _idleWatching = false;
+var IDLE_LIMIT_MS  = 20 * 60 * 1000;   // 20 minutes
+var IDLE_WARN_MS   = 18 * 60 * 1000;   // warning at 18 min (2 min before logout)
+var _idleTimer     = null;
+var _warnTimer     = null;
+var _cdTimer       = null;
+var _idleWarning   = false;
+var _idleWatching  = false;
+var _idleDeadline  = 0;   // Date.now() timestamp of scheduled auto-logout
 
 function _idleStaySignedIn(){
   document.getElementById('idle-overlay').classList.remove('show');
@@ -1380,22 +1386,26 @@ function _idleStaySignedIn(){
   clearInterval(_cdTimer);_cdTimer=null;
   _resetIdle();
 }
+
 function _showIdleWarning(){
+  if(!currentUser||_idleWarning)return;
   _idleWarning=true;
-  var secsLeft=120;
+  var secsLeft=Math.max(0,Math.round((_idleDeadline-Date.now())/1000));
   function _fmt(s){var m=Math.floor(s/60),sc=s%60;return m+':'+(sc<10?'0':'')+sc;}
   document.getElementById('idle-countdown').textContent=_fmt(secsLeft);
   document.getElementById('idle-overlay').classList.add('show');
   clearInterval(_cdTimer);
   _cdTimer=setInterval(function(){
-    secsLeft--;
-    if(secsLeft<=0){clearInterval(_cdTimer);_cdTimer=null;return;}
-    document.getElementById('idle-countdown').textContent=_fmt(secsLeft);
+    var rem=Math.max(0,Math.round((_idleDeadline-Date.now())/1000));
+    document.getElementById('idle-countdown').textContent=_fmt(rem);
+    if(rem<=0){clearInterval(_cdTimer);_cdTimer=null;}
   },1000);
 }
+
 function _resetIdle(){
   if(!currentUser)return;
   clearTimeout(_warnTimer);clearTimeout(_idleTimer);
+  _idleDeadline=Date.now()+IDLE_LIMIT_MS;
   _warnTimer=setTimeout(function(){_showIdleWarning();},IDLE_WARN_MS);
   _idleTimer=setTimeout(function(){
     clearInterval(_cdTimer);_cdTimer=null;
@@ -1404,22 +1414,56 @@ function _resetIdle(){
     doLogout();
   },IDLE_LIMIT_MS);
 }
+
 function _startIdleWatch(){
   _resetIdle();
   if(_idleWatching)return;
   _idleWatching=true;
   ['click','keydown','touchstart','scroll','mousemove'].forEach(function(ev){
     document.addEventListener(ev,function(){
-      if(_idleWarning)return; // only the Stay button resets the clock while warning shows
+      if(!currentUser||_idleWarning)return;
       _resetIdle();
     },{passive:true});
   });
+  // Handles phone screen locking: setTimeout pauses when screen is off.
+  // On wake, check the real-clock deadline and act immediately if overdue.
+  document.addEventListener('visibilitychange',function(){
+    if(document.visibilityState!=='visible'||!currentUser)return;
+    var now=Date.now();
+    if(now>=_idleDeadline){
+      // Should have been logged out while screen was off
+      clearTimeout(_warnTimer);clearTimeout(_idleTimer);
+      clearInterval(_cdTimer);_cdTimer=null;
+      document.getElementById('idle-overlay').classList.remove('show');
+      showToast('Signed out due to inactivity');
+      doLogout();
+    } else if(now>=_idleDeadline-IDLE_WARN_MS && !_idleWarning){
+      // In the warning window — show immediately
+      _showIdleWarning();
+    }
+  });
 }
+
 function _stopIdleWatch(){
   clearTimeout(_idleTimer);clearTimeout(_warnTimer);clearInterval(_cdTimer);
-  _idleTimer=null;_warnTimer=null;_cdTimer=null;_idleWarning=false;
+  _idleTimer=null;_warnTimer=null;_cdTimer=null;
+  _idleWarning=false;_idleWatching=false;_idleDeadline=0;   // full reset for clean re-login
   var ov=document.getElementById('idle-overlay');
   if(ov)ov.classList.remove('show');
+}
+
+// Admin test helper — triggers the warning immediately (for verification only)
+function _testIdleTimeout(){
+  _idleDeadline=Date.now()+120000; // 2 min from now
+  clearTimeout(_warnTimer);clearTimeout(_idleTimer);
+  _warnTimer=null;
+  _idleTimer=setTimeout(function(){
+    clearInterval(_cdTimer);_cdTimer=null;
+    document.getElementById('idle-overlay').classList.remove('show');
+    showToast('Signed out due to inactivity');
+    doLogout();
+  },120000);
+  _showIdleWarning();
 }
 
 function doLogout(){
