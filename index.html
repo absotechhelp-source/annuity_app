@@ -1769,17 +1769,41 @@ function _drawQuotePage2(ctx,C,yOffset){
     for(var c=0;c<=nc+1;c++){ctx.beginPath();ctx.moveTo(MX+tcW*c,Y);ctx.lineTo(MX+tcW*c,Y+40);ctx.stroke();}
     ctx.strokeRect(MX,Y,CONTENT_W,40);Y+=40;
     rows.forEach(function(row){
-      var rh=row.tall?42:26;
-      ctx.fillStyle='#fff';ctx.fillRect(MX,Y,CONTENT_W,rh);ctx.strokeStyle=LINE;ctx.strokeRect(MX,Y,CONTENT_W,rh);
-      ctx.fillStyle=DGRAY;ctx.font='11px '+SANS;ctx.textAlign='left';ctx.fillText(row.label,MX+5,Y+rh/2+3);
-      ctx.textAlign='center';ctx.fillStyle='#111';ctx.font='11px '+SANS;
-      row.vals.forEach(function(v,i){
-        if(v.length>24&&row.tall){
-          var words=v.split(' '),line='',ly=Y+13;
-          for(var w=0;w<words.length;w++){if((line+words[w]).length>20){ctx.fillText(line,MX+tcW*(i+1)+tcW/2,ly);line=words[w]+' ';ly+=12;}else line+=words[w]+' ';}
-          ctx.fillText(line,MX+tcW*(i+1)+tcW/2,ly);
-        } else ctx.fillText(v,MX+tcW*(i+1)+tcW/2,Y+rh/2+3);
+      // Pre-wrap every cell so we know how many lines each needs BEFORE drawing the box
+      var LH=13,CHAR_W=18; // line height px; approx max chars per column
+      var wrapped=row.vals.map(function(v){
+        if(!row.tall||v.length<=CHAR_W)return [v];
+        var words=v.split(' '),lines=[],line='';
+        words.forEach(function(w){
+          if(line&&(line+w).length>CHAR_W){lines.push(line.trim());line=w+' ';}
+          else line+=w+' ';
+        });
+        if(line.trim())lines.push(line.trim());
+        return lines;
       });
+      var maxLines=wrapped.reduce(function(m,ls){return Math.max(m,ls.length);},1);
+      // Row height: enough for maxLines + top/bottom padding; minimum 26px
+      var rh=row.tall?Math.max(32,maxLines*LH+14):26;
+
+      // Draw row background and border NOW that we know the height
+      ctx.fillStyle='#fff';ctx.fillRect(MX,Y,CONTENT_W,rh);
+      ctx.strokeStyle=LINE;ctx.lineWidth=0.6;ctx.strokeRect(MX,Y,CONTENT_W,rh);
+
+      // Row label (left column), vertically centred
+      ctx.fillStyle=DGRAY;ctx.font='11px '+SANS;ctx.textAlign='left';
+      ctx.fillText(row.label,MX+5,Y+rh/2+4);
+
+      // Cell text, vertically centred as a block
+      ctx.textAlign='center';ctx.fillStyle='#111';ctx.font='11px '+SANS;
+      wrapped.forEach(function(lines,i){
+        var blockH=lines.length*LH;
+        var startY=Y+(rh-blockH)/2+LH-2; // top of first line, centred in cell
+        lines.forEach(function(l,li){
+          ctx.fillText(l,MX+tcW*(i+1)+tcW/2,startY+li*LH);
+        });
+      });
+
+      // Column dividers
       for(var c=0;c<=nc+1;c++){ctx.beginPath();ctx.moveTo(MX+tcW*c,Y);ctx.lineTo(MX+tcW*c,Y+rh);ctx.stroke();}
       Y+=rh;
     });
