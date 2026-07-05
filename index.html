@@ -216,7 +216,21 @@ input::placeholder{color:#ccc}
 #idle-box p{margin:0 0 1rem;font-size:.82rem;color:#555;line-height:1.5}
 #idle-box .idle-countdown{font-size:1.6rem;font-weight:700;color:var(--red);margin-bottom:1rem}
 #idle-box .idle-btn{width:100%;padding:.65rem;border:none;border-radius:9px;font-size:.88rem;font-weight:600;cursor:pointer;background:var(--red);color:#fff}
-#idle-box .idle-btn:active{opacity:.85}</style></head><body>
+#idle-box .idle-btn:active{opacity:.85}
+/* ── Product Info — enriched FA selling guide ───────────────── */
+.pinfo-section{margin-top:.65rem;border-top:1px solid var(--border);padding-top:.55rem}
+.pinfo-section-title{font-size:.68rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;margin-bottom:.45rem}
+.pinfo-tag{display:inline-block;background:#f0e6e6;color:var(--red);border-radius:4px;padding:.12rem .38rem;font-size:.68rem;font-weight:600;margin:.1rem .1rem .1rem 0}
+.pinfo-tip{background:#f0f7ff;border-left:3px solid #1565c0;padding:.42rem .6rem;border-radius:0 6px 6px 0;font-size:.77rem;line-height:1.55;margin-bottom:.3rem}
+.pinfo-objection{background:#fff8e1;border-left:3px solid #f9a825;padding:.42rem .6rem;border-radius:0 6px 6px 0;font-size:.77rem;line-height:1.55;margin-bottom:.3rem}
+.pinfo-objection strong{color:#e65100;font-size:.7rem;display:block;margin-bottom:.25rem}
+.pinfo-faq-item{border-bottom:1px solid var(--border)}
+.pinfo-faq-item:last-child{border-bottom:none}
+.pinfo-faq-q{width:100%;background:none;border:none;text-align:left;padding:.5rem 0;font-size:.79rem;font-weight:600;color:#1a1a1a;cursor:pointer;display:flex;justify-content:space-between;align-items:flex-start;gap:.5rem}
+.pinfo-faq-q::after{content:'+';font-size:1.1rem;color:var(--red);flex-shrink:0;line-height:1.2}
+.pinfo-faq-q.pifaq-open::after{content:'\2212'}
+.pinfo-faq-a{display:none;font-size:.77rem;line-height:1.6;color:#444;padding-bottom:.5rem}
+.pinfo-faq-a.pifaq-open{display:block}</style></head><body>
 <script>
 /** @license
  *
@@ -930,13 +944,190 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
 <div class="screen" id="scr-productinfo">
   <div class="topbar"><button class="tb-back" onclick="goScreen('scr-home')">&#8592;</button><span class="tb-title">ToolKit</span></div>
   <div class="pinfo-body">
-    <div class="pinfo-card"><h3>With-Profits Annuity (WPA)</h3>
-      <p>Single-premium immediate annuity paying regular income for life. Instalments adjusted annually via Vanguard Life&apos;s bonus declaration.</p>
-      <p><strong>Features:</strong> Lifelong income &middot; Annual bonus &middot; Optional funeral benefit &middot; Guarantee 0/5/10 yrs &middot; Single or joint life</p>
-      <p><strong>Eligibility:</strong> Age 18&ndash;75 &middot; Min MWK 1,000,000</p></div>
-    <div class="pinfo-card"><h3>Programmed Withdrawal (PW)</h3>
-      <p>Systematic retirement drawdown product.</p>
-      <p style="color:var(--muted);font-style:italic">Coming soon.</p></div>
+
+    <!-- ═══ WITH-PROFITS ANNUITY ═══ -->
+    <div class="pinfo-card">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.55rem">
+        <h3 style="margin-bottom:0">With-Profits Annuity (WPA)</h3>
+        <button class="btn btn-primary" onclick="navTo('quote')" style="font-size:.68rem;padding:.28rem .6rem;line-height:1.4">Get Quote</button>
+      </div>
+      <p>Single-premium immediate annuity converting a lump sum into guaranteed lifetime income, growing each year via Vanguard Life&apos;s annual bonus declaration.</p>
+      <div style="margin:.45rem 0">
+        <span class="pinfo-tag">&#128197; Lifetime income</span>
+        <span class="pinfo-tag">&#127381; Annual bonus</span>
+        <span class="pinfo-tag">&#9730; Funeral benefit</span>
+        <span class="pinfo-tag">&#9889; Guarantee 0/5/10 yrs</span>
+        <span class="pinfo-tag">&#128140; Single or joint life</span>
+      </div>
+      <p style="font-size:.74rem;color:var(--muted)"><strong>Eligibility:</strong> Age 18&ndash;75 &middot; Min MWK 1,000,000 &middot; Medical underwriting may increase income</p>
+
+      <!-- Ideal Client -->
+      <div class="pinfo-section">
+        <div class="pinfo-section-title">&#127775; Ideal Client Profile</div>
+        <div class="pinfo-tip">&#9989; <strong>Retiring employee</strong> receiving pension lump sum from NICO, LAPF, NASSCAM or employer pension fund</div>
+        <div class="pinfo-tip">&#9989; <strong>Risk-averse saver</strong> wanting certainty of income over market-linked returns</div>
+        <div class="pinfo-tip">&#9989; <strong>Couples</strong> who want to protect the surviving spouse&apos;s income after death</div>
+        <div class="pinfo-tip">&#9989; <strong>Clients with health conditions</strong> who may qualify for higher income (impaired life annuity)</div>
+      </div>
+
+      <!-- Conversation Starters -->
+      <div class="pinfo-section">
+        <div class="pinfo-section-title">&#128172; Conversation Starters</div>
+        <div class="pinfo-tip"><em>&ldquo;Would you like to know exactly how much you&apos;ll receive every month for the rest of your life &mdash; regardless of the economy?&rdquo;</em></div>
+        <div class="pinfo-tip"><em>&ldquo;Your pension worked hard for 30 years. The WPA makes sure that money keeps working for you, every single month, for life.&rdquo;</em></div>
+        <div class="pinfo-tip"><em>&ldquo;If you live to 90, you will receive far more than you put in. That is the power of a lifetime annuity.&rdquo;</em></div>
+        <div class="pinfo-tip"><em>&ldquo;Your spouse continues receiving income even after you are gone &mdash; the joint life option gives both of you peace of mind.&rdquo;</em></div>
+      </div>
+
+      <!-- Objection Handling -->
+      <div class="pinfo-section">
+        <div class="pinfo-section-title">&#128737; Handling Objections</div>
+        <div class="pinfo-objection">
+          <strong>&#10067; &ldquo;What if I die early?&rdquo;</strong>
+          The guarantee period (5 or 10 years) ensures payments continue to your beneficiary if you die before it expires. The joint life option keeps your spouse covered for life. The funeral benefit provides immediate cash to your family.
+        </div>
+        <div class="pinfo-objection">
+          <strong>&#10067; &ldquo;What about inflation?&rdquo;</strong>
+          Vanguard Life declares an annual bonus which increases income each year. While not inflation-linked, the bonus reflects the company&apos;s performance. Certainty of income often outweighs the uncertainty of market-linked products.
+        </div>
+        <div class="pinfo-objection">
+          <strong>&#10067; &ldquo;Interest rates are rising &mdash; should I wait?&rdquo;</strong>
+          Waiting means missing months of income you could already be receiving. Future rates are unknown. Locking in today gives immediate, predictable income starting next month.
+        </div>
+        <div class="pinfo-objection">
+          <strong>&#10067; &ldquo;I can get better returns investing myself&rdquo;</strong>
+          The annuity eliminates longevity risk (outliving your savings) and market risk. Most retirees want security, not the stress of managing a portfolio. The WPA provides certainty so clients can enjoy retirement without financial anxiety.
+        </div>
+        <div class="pinfo-objection">
+          <strong>&#10067; &ldquo;Can I change my mind later?&rdquo;</strong>
+          Not after the contract is signed &mdash; which is why a thorough needs analysis before purchase is essential. The irreversible nature is also what allows Vanguard Life to guarantee income for an entire lifetime.
+        </div>
+      </div>
+
+      <!-- FAQ -->
+      <div class="pinfo-section">
+        <div class="pinfo-section-title">&#10067; Frequently Asked Questions</div>
+        <div class="pinfo-faq">
+          <div class="pinfo-faq-item">
+            <button class="pinfo-faq-q" onclick="piToggleFaq(this)">How is the monthly income calculated?</button>
+            <div class="pinfo-faq-a">The lump sum is converted using actuarial factors based on age, gender, payment frequency, and chosen options (guarantee period, joint life, funeral benefit). Use the Quote tab for the exact figure for any client.</div>
+          </div>
+          <div class="pinfo-faq-item">
+            <button class="pinfo-faq-q" onclick="piToggleFaq(this)">What happens to capital if the client dies with no guarantee and no joint life?</button>
+            <div class="pinfo-faq-a">Payments stop at death and no residual capital is returned to the estate. This is the trade-off that enables Vanguard Life to guarantee income for life. Always offer guarantee period and/or joint life options to clients with dependants.</div>
+          </div>
+          <div class="pinfo-faq-item">
+            <button class="pinfo-faq-q" onclick="piToggleFaq(this)">How is the annual bonus declared?</button>
+            <div class="pinfo-faq-a">Vanguard Life reviews investment performance and financial results annually and declares a bonus rate. This increases income payments for the following policy year. All WPA policyholders benefit from the same declared rate.</div>
+          </div>
+          <div class="pinfo-faq-item">
+            <button class="pinfo-faq-q" onclick="piToggleFaq(this)">Can the client take a lump sum at any time?</button>
+            <div class="pinfo-faq-a">No &mdash; the annuity pays regular income only. There is no surrender value or cash-in value. This structure is precisely what enables Vanguard Life to guarantee payments for as long as the client lives.</div>
+          </div>
+          <div class="pinfo-faq-item">
+            <button class="pinfo-faq-q" onclick="piToggleFaq(this)">What payment frequencies are available?</button>
+            <div class="pinfo-faq-a">Monthly, quarterly, half-yearly, or annual. Monthly is most popular as it aligns with living expense budgets. The quote tool shows income amounts for all frequencies.</div>
+          </div>
+          <div class="pinfo-faq-item">
+            <button class="pinfo-faq-q" onclick="piToggleFaq(this)">Does the joint life nominee have to be named at the start?</button>
+            <div class="pinfo-faq-a">Yes. The reversionary beneficiary (spouse or dependant) and the reversion percentage must both be nominated at inception. Neither can be changed after the policy is issued.</div>
+          </div>
+          <div class="pinfo-faq-item">
+            <button class="pinfo-faq-q" onclick="piToggleFaq(this)">Does poor health increase or decrease the annuity?</button>
+            <div class="pinfo-faq-a">Serious health conditions that reduce life expectancy can qualify the client for a higher income (impaired life annuity). Vanguard Life may request a medical report. Conditions such as diabetes, heart disease, or cancer may attract enhanced rates.</div>
+          </div>
+          <div class="pinfo-faq-item">
+            <button class="pinfo-faq-q" onclick="piToggleFaq(this)">What documents does the client need?</button>
+            <div class="pinfo-faq-a">National ID or passport, proof of age, pension fund clearance/award letter, bank account details, and completed VLA application form. For joint life, the nominee&apos;s ID and personal details are also required.</div>
+          </div>
+          <div class="pinfo-faq-item">
+            <button class="pinfo-faq-q" onclick="piToggleFaq(this)">Can a client get a quote without committing?</button>
+            <div class="pinfo-faq-a">Absolutely. The Quote tab generates a fully detailed, printable illustration at zero obligation. The quote is for comparison purposes only until a signed application is submitted and accepted.</div>
+          </div>
+          <div class="pinfo-faq-item">
+            <button class="pinfo-faq-q" onclick="piToggleFaq(this)">How does the funeral benefit work?</button>
+            <div class="pinfo-faq-a">An optional add-on that pays a lump sum to the nominated beneficiary on the annuitant&apos;s death. The amount is agreed at inception. It reduces the regular income slightly but provides immediate liquidity for funeral expenses, relieving family financial stress at a difficult time.</div>
+          </div>
+        </div>
+      </div>
+    </div><!-- end WPA card -->
+
+    <!-- ═══ PROGRAMMED WITHDRAWAL ═══ -->
+    <div class="pinfo-card">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.55rem">
+        <h3 style="margin-bottom:0">Programmed Withdrawal (PW)</h3>
+        <span class="pinfo-tag" style="background:#fff3e0;color:#e65100;font-size:.7rem">Coming Soon</span>
+      </div>
+      <p>A flexible retirement drawdown product where the client retains ownership of their capital and receives regular income over a defined period. Residual capital passes to the estate on death &mdash; unlike an annuity where capital is exchanged for lifetime income.</p>
+
+      <!-- WPA vs PW comparison -->
+      <div class="pinfo-section">
+        <div class="pinfo-section-title">&#9878; WPA vs Programmed Withdrawal</div>
+        <div style="font-size:.76rem">
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:.3rem;margin-bottom:.3rem">
+            <div style="background:#f0e6e6;border-radius:6px;padding:.35rem .45rem;text-align:center"><strong style="color:var(--red)">WPA</strong></div>
+            <div style="background:#e8f5e9;border-radius:6px;padding:.35rem .45rem;text-align:center"><strong style="color:#2e7d32">PW</strong></div>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:.3rem;margin-bottom:.2rem">
+            <div style="padding:.3rem .45rem;background:#fafafa;border-radius:4px">Guaranteed income <strong>for life</strong></div>
+            <div style="padding:.3rem .45rem;background:#fafafa;border-radius:4px">Income for <strong>defined term</strong></div>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:.3rem;margin-bottom:.2rem">
+            <div style="padding:.3rem .45rem;background:#fafafa;border-radius:4px">No residual capital</div>
+            <div style="padding:.3rem .45rem;background:#fafafa;border-radius:4px"><strong>Capital preserved</strong> &amp; passes to estate</div>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:.3rem;margin-bottom:.2rem">
+            <div style="padding:.3rem .45rem;background:#fafafa;border-radius:4px">Vanguard Life bears longevity risk</div>
+            <div style="padding:.3rem .45rem;background:#fafafa;border-radius:4px">Client bears longevity risk</div>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:.3rem;margin-bottom:.2rem">
+            <div style="padding:.3rem .45rem;background:#fafafa;border-radius:4px">Best if long life expected</div>
+            <div style="padding:.3rem .45rem;background:#fafafa;border-radius:4px">Best if legacy / estate goals matter</div>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:.3rem">
+            <div style="padding:.3rem .45rem;background:#fafafa;border-radius:4px">Risk-averse retirees</div>
+            <div style="padding:.3rem .45rem;background:#fafafa;border-radius:4px">Clients with other income sources</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Coming soon notice -->
+      <div class="pinfo-section">
+        <div style="text-align:center;padding:1rem .75rem;background:#fff8e1;border-radius:8px">
+          <div style="font-size:1.6rem;margin-bottom:.35rem">&#9201;</div>
+          <p style="font-size:.8rem;color:#e65100;font-weight:600;margin-bottom:.2rem">Product Under Development</p>
+          <p style="font-size:.75rem;color:#666;line-height:1.5">Rates, full benefit structure, and quoting will be available at launch. FAs should note client interest now and follow up when the product launches.</p>
+        </div>
+      </div>
+
+      <!-- PW FAQ -->
+      <div class="pinfo-section">
+        <div class="pinfo-section-title">&#10067; Client Questions to Expect</div>
+        <div class="pinfo-faq">
+          <div class="pinfo-faq-item">
+            <button class="pinfo-faq-q" onclick="piToggleFaq(this)">What if the client outlives the PW period?</button>
+            <div class="pinfo-faq-a">This is the key limitation of the PW. When the withdrawal period ends, payments stop. Clients must have an alternative income source or purchase a new product (potentially an annuity at an older age). Always discuss this risk clearly. For clients who cannot afford to outlive their income, the WPA is safer.</div>
+          </div>
+          <div class="pinfo-faq-item">
+            <button class="pinfo-faq-q" onclick="piToggleFaq(this)">What happens to remaining capital on death?</button>
+            <div class="pinfo-faq-a">Any residual capital passes to nominated beneficiaries or the estate. This is the PW&apos;s key advantage over the WPA and appeals strongly to clients with estate planning priorities.</div>
+          </div>
+          <div class="pinfo-faq-item">
+            <button class="pinfo-faq-q" onclick="piToggleFaq(this)">Can a client switch from PW to WPA later?</button>
+            <div class="pinfo-faq-a">Yes, subject to VLA terms at the time. A client can use remaining PW capital to purchase a WPA at a later stage. The annuity rate will be based on their age at conversion and prevailing rates at that time.</div>
+          </div>
+          <div class="pinfo-faq-item">
+            <button class="pinfo-faq-q" onclick="piToggleFaq(this)">Which product is better &mdash; WPA or PW?</button>
+            <div class="pinfo-faq-a">Neither is universally better. The WPA suits clients who want lifetime income certainty and are not concerned about a capital legacy. The PW suits clients who prioritise preserving capital for their estate and who have other income to fall back on if the PW period expires. Many clients ultimately choose the WPA for its simplicity and longevity protection.</div>
+          </div>
+          <div class="pinfo-faq-item">
+            <button class="pinfo-faq-q" onclick="piToggleFaq(this)">How should I discuss PW with clients now?</button>
+            <div class="pinfo-faq-a">Be transparent that the product is coming soon. Explain the concept and how it differs from the WPA. If the client&apos;s priority is capital preservation, record their interest and commit to following up at launch. In the meantime, offer a WPA illustration for comparison.</div>
+          </div>
+        </div>
+      </div>
+    </div><!-- end PW card -->
+
   </div>
   <div class="bnav">
     <button class="bnav-btn" onclick="navTo('home')"><svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>Home</button>
@@ -3438,6 +3629,12 @@ function vlaPrompt(msg, cb){
   document.getElementById('vla-modal-cancel').onclick=function(){m.style.display='none';inp.style.display='none';cb(null);};
 }
 
+
+// ── Product Info FAQ accordion ────────────────────────────────
+function piToggleFaq(btn) {
+  btn.classList.toggle('pifaq-open');
+  btn.nextElementSibling.classList.toggle('pifaq-open');
+}
 
 // ── Restore session on refresh ────────────────────────────────
 (function(){
