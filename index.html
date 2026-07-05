@@ -202,16 +202,11 @@ input::placeholder{color:#ccc}
   #quote-canvas{max-width:100%;box-shadow:none;width:100%!important;height:auto!important}
   .qbody{padding:0;overflow:visible}
 }
-/* ── Inactivity timeout warning ─────────────────────────────── */
-#idle-overlay{position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.55);display:none;align-items:center;justify-content:center;}
-#idle-overlay.show{display:flex;}
-#idle-box{background:#fff;border-radius:16px;padding:1.6rem 1.4rem 1.2rem;max-width:310px;width:90%;text-align:center;box-shadow:0 8px 32px rgba(0,0,0,.22);}
-#idle-box .idle-icon{font-size:2rem;margin-bottom:.5rem;}
-#idle-box h3{margin:0 0 .4rem;font-size:1rem;color:#1a1a1a;}
-#idle-box p{margin:0 0 1rem;font-size:.82rem;color:#555;line-height:1.5;}
-#idle-box .idle-countdown{font-size:1.6rem;font-weight:700;color:var(--red);margin-bottom:1rem;}
-#idle-box .idle-btn{width:100%;padding:.65rem;border:none;border-radius:9px;font-size:.88rem;font-weight:600;cursor:pointer;background:var(--red);color:#fff;}
-#idle-box .idle-btn:active{opacity:.85;}</style></head><body>
+/* ── Medical provider toggles (Admin → App Settings) ────────── */
+.med-prov-row{display:flex;align-items:center;gap:.6rem;padding:.55rem 0;border-bottom:1px solid var(--border)}
+.med-prov-row:last-child{border-bottom:none}
+.med-prov-name{flex:1;font-size:.84rem;font-weight:500;color:#1a1a1a}
+.med-prov-plans{font-size:.7rem;color:var(--muted);margin-top:.1rem}</style></head><body>
 <script>
 /** @license
  *
@@ -823,8 +818,6 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
             <div class="field"><label>Medical Aid Provider</label>
               <select id="medProvider" onchange="updateMedPlans()">
                 <option value="">Select provider</option>
-                <option value="Medhealth">Medhealth</option>
-                <option value="MASM">MASM</option>
               </select></div>
             <div class="field"><label>Plan</label>
               <select id="medPlan"><option value="">Select plan</option></select></div>
@@ -1032,6 +1025,15 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
           <option value="Female">Always Female (PA90‑F / A55‑F)</option>
           <option value="Male">Always Male (PA90‑M / A55‑M)</option>
         </select>
+      </div>
+      <div class="field" style="margin-bottom:1.2rem">
+        <label style="font-weight:600;font-size:.82rem">Medical Aid Providers on Quotes</label>
+        <p style="font-size:.72rem;color:var(--muted);margin:.2rem 0 .6rem">Active providers appear in the FA quote form and on the PDF. Suspended providers are hidden from FAs immediately after saving.</p>
+        <div id="med-prov-toggles" style="margin-bottom:.6rem"></div>
+        <div style="display:flex;gap:.5rem">
+          <button class="btn btn-ghost btn-sm" onclick="_setAllMedProvs(false)" style="font-size:.72rem">Suspend All</button>
+          <button class="btn btn-ghost btn-sm" onclick="_setAllMedProvs(true)"  style="font-size:.72rem">Activate All</button>
+        </div>
       </div>
       <button class="btn btn-primary" onclick="saveAppSettings()" style="min-width:140px">✓ Save Settings</button>
       <div id="settings-saved-msg" style="font-size:.75rem;color:#2e7d32;margin-top:.5rem;display:none">✓ Settings saved</div>
@@ -1333,6 +1335,7 @@ function showApp(){
     el.style.display=(isAdmin||isTechServ||isPS(currentUser.role))?'':'none';
   });
   loadLocalQuotes();
+  _populateMedProviders();
   if(currentUser&&(currentUser.role==='Admin'||isPS(currentUser.role)||isTechServ)&&navigator.onLine){_autoSyncQuotes();}
   // Clean orphaned local quotes (deleted from sheet, still in local storage)
   _cleanLocalOrphans();
@@ -1345,79 +1348,9 @@ function showApp(){
   goScreen('scr-home');
   // Start background sync: every 3 minutes + on tab/window focus
   _startBackgroundSync();
-  // Start inactivity timeout watch (20 minutes)
-  _startIdleWatch();
 }
-// ================================================================
-//  INACTIVITY TIMEOUT  (20 minutes)
-//  Watches for any user interaction. Shows a 2-minute warning
-//  countdown at the 18-minute mark, then auto-logs out at 20.
-// ================================================================
-var IDLE_LIMIT_MS = 20 * 60 * 1000;   // 20 minutes total
-var IDLE_WARN_MS  = 18 * 60 * 1000;   // show warning at 18 min (2 min before logout)
-var _idleTimer    = null;
-var _warnTimer    = null;
-var _cdTimer      = null;   // countdown interval
-var _idleWarning  = false;
-
-function _idleStaySignedIn(){
-  document.getElementById('idle-overlay').classList.remove('show');
-  _idleWarning=false;
-  clearInterval(_cdTimer);
-  _cdTimer=null;
-  _resetIdle();
-}
-
-function _showIdleWarning(){
-  _idleWarning=true;
-  var secsLeft=120;
-  function _fmt(s){var m=Math.floor(s/60),sc=s%60;return m+':'+(sc<10?'0':'')+sc;}
-  document.getElementById('idle-countdown').textContent=_fmt(secsLeft);
-  document.getElementById('idle-overlay').classList.add('show');
-  clearInterval(_cdTimer);
-  _cdTimer=setInterval(function(){
-    secsLeft--;
-    if(secsLeft<=0){clearInterval(_cdTimer);_cdTimer=null;return;}
-    document.getElementById('idle-countdown').textContent=_fmt(secsLeft);
-  },1000);
-}
-
-function _resetIdle(){
-  if(!currentUser) return;
-  clearTimeout(_warnTimer);
-  clearTimeout(_idleTimer);
-  _warnTimer=setTimeout(function(){ _showIdleWarning(); }, IDLE_WARN_MS);
-  _idleTimer=setTimeout(function(){
-    clearInterval(_cdTimer);_cdTimer=null;
-    document.getElementById('idle-overlay').classList.remove('show');
-    showToast('Signed out due to inactivity');
-    doLogout();
-  }, IDLE_LIMIT_MS);
-}
-
-var _idleWatching=false;
-function _startIdleWatch(){
-  _resetIdle();
-  if(_idleWatching) return;
-  _idleWatching=true;
-  ['click','keydown','touchstart','scroll','mousemove'].forEach(function(ev){
-    document.addEventListener(ev,function(){
-      if(_idleWarning) return;   // while warning is up, only the button resets the timer
-      _resetIdle();
-    },{passive:true});
-  });
-}
-function _stopIdleWatch(){
-  clearTimeout(_idleTimer);
-  clearTimeout(_warnTimer);
-  clearInterval(_cdTimer);
-  _idleTimer=null;_warnTimer=null;_cdTimer=null;_idleWarning=false;
-  document.getElementById('idle-overlay').classList.remove('show');
-}
-
 function doLogout(){
   _stopBackgroundSync();
-  _stopIdleWatch();
   currentUser=null;
   localStorage.removeItem('vla_ann_user');
   localStorage.removeItem('vla_ann_cred');
@@ -1460,9 +1393,7 @@ function updateStats(){
 function renderRecentQuotes(){
   var el=document.getElementById('recent-quotes-list');
   var myQ=currentUser&&(currentUser.role==='Admin'||isPS(currentUser.role)||isTS(currentUser.role))?localQuotes:localQuotes.filter(function(q){return !q.faSnapshot||!q.faSnapshot.name||q.faSnapshot.name===currentUser.name;});
-  // Always sort newest first before slicing — localQuotes order is not guaranteed
-  // (server-synced quotes are pushed to the end, so slice(0,3) would show stale entries)
-  var recent=myQ.slice().sort(function(a,b){return new Date(b.quoteDate||0)-new Date(a.quoteDate||0);}).slice(0,3);
+  var recent=myQ.slice(0,3);
   if(!recent.length){el.innerHTML='<div style="font-size:.78rem;color:var(--muted);padding:.5rem 0">No quotes yet. Tap New Quote to get started.</div>';return;}
   el.innerHTML=recent.map(function(entry,i){
     var inp=entry.inputs||{};
@@ -1854,17 +1785,27 @@ function _drawQuotePage2(ctx,C,yOffset){
     });
     Y+=12;
   }
-  medTableTick('Medical Coverage Options \u2014 Medhealth',['CARE','CAREPLUS','MEDISAVE','MEDICARE'],
-    [{label:'Benefit Limit/yr (MK)',vals:['7,000,000','13,500,000','31,500,000','74,000,000']},
-     {label:'Adult Contribution/m (MK)',vals:['10,800','24,780','35,400','54,000']},
-     {label:'Child Contribution/m (MK)',vals:['10,800','24,780','30,210','50,400']}]);
-  Y+=16; // extra gap between Medhealth and MASM
-  Y+=14; // gap between Medhealth and MASM
-  medTableTick('Medical Coverage Options \u2014 MASM',['ECO-2026','EXE-2026','VIP-2026'],
-    [{label:'Benefit Limit/yr (MK)',vals:['8,000,000','32,000,000','90,000,000']},
-     {label:'Adult Contribution/m (MK)',vals:['9,000','30,000','63,000']},
-     {label:'Child Contribution/m (MK)',vals:['9,000','29,000','56,000']},
-     {label:'Territorial Limit',vals:['Malawi, Mission & Govt hospitals & GPs','SADC, India, Egypt, Kenya','SADC, India, Egypt, Kenya'],tall:true}]);
+  // Dynamic: only render tables for providers that are currently active in App Settings
+  var _activeProvs=getActiveProviders();
+  if(_activeProvs.length===0){
+    ctx.fillStyle=MGRAY;ctx.font='italic 12px '+SANS;ctx.textAlign='left';
+    ctx.fillText('No medical aid providers are currently available.',MX,Y+12);Y+=28;
+  } else {
+    _activeProvs.forEach(function(prov,pi){
+      if(pi>0)Y+=30; // gap between providers
+      var _plans=MED_PLANS[prov];
+      var _hdrs=_plans.map(function(p){return p.code;});
+      var _rows=[
+        {label:'Benefit Limit/yr (MK)',    vals:_plans.map(function(p){return p.limit.replace('MWK ','');})},
+        {label:'Adult Contribution/m (MK)',vals:_plans.map(function(p){return p.adult.replace('MWK ','');})},
+        {label:'Child Contribution/m (MK)',vals:_plans.map(function(p){return p.child.replace('MWK ','');})}
+      ];
+      if(_plans.some(function(p){return p.terr&&p.terr.length;})){
+        _rows.push({label:'Territorial Limit',vals:_plans.map(function(p){return p.terr||'Malawi';}),tall:true});
+      }
+      medTableTick('Medical Coverage Options \u2014 '+prov,_hdrs,_rows);
+    });
+  }
   ctx.fillStyle='#111';ctx.font='bold 12px '+SANS;ctx.textAlign='left';ctx.fillText('SPOUSE\u2019S PERSONAL DETAILS',MX,Y+4);Y+=20;
   var sp=[['First name','Surname'],['National ID','Contact telephone'],['Date of birth','']];
   sp.forEach(function(pair){
@@ -3050,38 +2991,114 @@ function _renderPSDash(){
   +'<div style="font-size:.68rem;color:var(--muted);text-align:center;padding:.5rem">'+(rows.length)+' of '+_psLog.length+' entries</div>';
 }
 // ── App Settings ─────────────────────────────────────────────
-var _appSettings={basis:'PA90',mortGender:''};
+var _appSettings={basis:'PA90',mortGender:'',medProviders:{}};
 function loadAppSettings(){
   try{var s=localStorage.getItem('vla_app_settings');if(s)_appSettings=JSON.parse(s);}catch(e){}
+  if(!_appSettings.medProviders)_appSettings.medProviders={};
   var bs=document.getElementById('set-basis');
   var mg=document.getElementById('set-mort-gender');
   if(bs)bs.value=_appSettings.basis||'PA90';
   if(mg)mg.value=_appSettings.mortGender||'';
+  _renderMedProvToggles();
 }
 function saveAppSettings(){
   _appSettings.basis=(document.getElementById('set-basis')||{}).value||'PA90';
   _appSettings.mortGender=(document.getElementById('set-mort-gender')||{}).value||'';
+  // medProviders already updated in-memory by _toggleMedProv / _setAllMedProvs
   localStorage.setItem('vla_app_settings',JSON.stringify(_appSettings));
+  // Push to server — medProviders sent as JSON string; server stores if configured
   if(APPS_SCRIPT_URL){
     fetch(APPS_SCRIPT_URL+'?action=saveSettings&token='+encodeURIComponent(APP_TOKEN)
       +'&basis='+encodeURIComponent(_appSettings.basis)
-      +'&mortGender='+encodeURIComponent(_appSettings.mortGender),
+      +'&mortGender='+encodeURIComponent(_appSettings.mortGender)
+      +'&medProviders='+encodeURIComponent(JSON.stringify(_appSettings.medProviders)),
     {redirect:'follow'}).catch(function(){});
   }
+  _populateMedProviders();   // refresh quote form provider dropdown immediately
   var msg=document.getElementById('settings-saved-msg');
   if(msg){msg.style.display='block';setTimeout(function(){msg.style.display='none';},2500);}
   showToast('Settings saved ✓');
 }
 function getAppSettings(){
   try{var s=localStorage.getItem('vla_app_settings');if(s)_appSettings=JSON.parse(s);}catch(e){}
+  if(!_appSettings.medProviders)_appSettings.medProviders={};
   return _appSettings;
 }
 function _fetchAppSettings(){
   if(!APPS_SCRIPT_URL)return;
   fetch(APPS_SCRIPT_URL+'?action=getSettings&token='+encodeURIComponent(APP_TOKEN),{redirect:'follow'})
     .then(function(r){return r.json();})
-    .then(function(d){if(d.ok&&d.settings){_appSettings=d.settings;localStorage.setItem('vla_app_settings',JSON.stringify(_appSettings));}})
+    .then(function(d){
+      if(d.ok&&d.settings){
+        var srv=d.settings;
+        // Preserve local medProviders if server doesn't return them (backwards-compatible)
+        if(!srv.medProviders)srv.medProviders=_appSettings.medProviders||{};
+        _appSettings=srv;
+        localStorage.setItem('vla_app_settings',JSON.stringify(_appSettings));
+        _populateMedProviders();
+      }
+    })
     .catch(function(){});
+}
+
+// ── Medical provider management ───────────────────────────────
+// Returns array of provider names that are currently active (not suspended).
+// A provider with no entry in medProviders defaults to active.
+function getActiveProviders(){
+  var mp=getAppSettings().medProviders||{};
+  return Object.keys(MED_PLANS).filter(function(prov){return mp[prov]!==false;});
+}
+
+// Rebuild the provider dropdown in the quote form (called on login + after settings save)
+function _populateMedProviders(){
+  var sel=document.getElementById('medProvider');
+  if(!sel)return;
+  var cur=sel.value;
+  var active=getActiveProviders();
+  sel.innerHTML='<option value="">Select provider</option>';
+  active.forEach(function(prov){
+    var o=document.createElement('option');
+    o.value=prov;o.textContent=prov;
+    if(prov===cur)o.selected=true;
+    sel.appendChild(o);
+  });
+  // If the previously selected provider was suspended, clear the plan select
+  if(cur&&active.indexOf(cur)===-1){
+    document.getElementById('medPlan').innerHTML='<option value="">Select plan</option>';
+  }
+}
+
+// Render the provider toggle rows in Admin → App Settings
+function _renderMedProvToggles(){
+  var el=document.getElementById('med-prov-toggles');
+  if(!el)return;
+  var mp=_appSettings.medProviders||{};
+  el.innerHTML=Object.keys(MED_PLANS).map(function(prov){
+    var active=mp[prov]!==false;
+    var plans=MED_PLANS[prov].map(function(p){return p.code;}).join(', ');
+    return '<div class="med-prov-row">'
+      +'<div><div class="med-prov-name">'+escHtml(prov)+'</div>'
+      +'<div class="med-prov-plans">'+escHtml(plans)+'</div></div>'
+      +'<span class="active-pill '+(active?'yes':'no')+'">'+(active?'Active':'Suspended')+'</span>'
+      +'<button class="btn btn-sm '+(active?'btn-ghost':'btn-primary')+'" onclick="_toggleMedProv(\''+prov+'\')">'
+      +(active?'Suspend':'Activate')+'</button>'
+      +'</div>';
+  }).join('');
+}
+
+// Toggle a single provider active ↔ suspended (updates in-memory; save persists it)
+function _toggleMedProv(prov){
+  if(!_appSettings.medProviders)_appSettings.medProviders={};
+  var current=_appSettings.medProviders[prov]!==false;
+  _appSettings.medProviders[prov]=!current;
+  _renderMedProvToggles();
+}
+
+// Bulk set all providers active or suspended
+function _setAllMedProvs(active){
+  if(!_appSettings.medProviders)_appSettings.medProviders={};
+  Object.keys(MED_PLANS).forEach(function(prov){_appSettings.medProviders[prov]=active;});
+  _renderMedProvToggles();
 }
 async function loadAdmin(){
   if(currentUser.role!=='Admin')return;
@@ -3187,15 +3204,15 @@ async function loadAllQuotes(){
 // ── Medical cover ─────────────────────────────────────────────
 var MED_PLANS={
   Medhealth:[
-    {name:'Annuity CARE',     limit:'MWK 7,000,000',  adult:'MWK 10,800', child:'MWK 10,800', terr:''},
-    {name:'Annuity CAREPLUS', limit:'MWK 13,500,000', adult:'MWK 24,780', child:'MWK 24,780', terr:''},
-    {name:'Annuity MEDISAVE', limit:'MWK 31,500,000', adult:'MWK 35,400', child:'MWK 30,210', terr:''},
-    {name:'Annuity MEDICARE', limit:'MWK 74,000,000', adult:'MWK 54,000', child:'MWK 50,400', terr:''}
+    {code:'CARE',     name:'Annuity CARE',     limit:'MWK 7,000,000',  adult:'MWK 10,800', child:'MWK 10,800', terr:''},
+    {code:'CAREPLUS', name:'Annuity CAREPLUS', limit:'MWK 13,500,000', adult:'MWK 24,780', child:'MWK 24,780', terr:''},
+    {code:'MEDISAVE', name:'Annuity MEDISAVE', limit:'MWK 31,500,000', adult:'MWK 35,400', child:'MWK 30,210', terr:''},
+    {code:'MEDICARE', name:'Annuity MEDICARE', limit:'MWK 74,000,000', adult:'MWK 54,000', child:'MWK 50,400', terr:''}
   ],
   MASM:[
-    {name:'ECO-2026', limit:'MWK 8,000,000',  adult:'MWK 9,000',  child:'MWK 9,000',  terr:'Malawi, Mission & Govt hospitals, Paramedics & Nominated GPs'},
-    {name:'EXE-2026', limit:'MWK 32,000,000', adult:'MWK 30,000', child:'MWK 29,000', terr:'SADC, India, Egypt and Kenya'},
-    {name:'VIP-2026', limit:'MWK 90,000,000', adult:'MWK 63,000', child:'MWK 56,000', terr:'SADC, India, Egypt and Kenya'}
+    {code:'ECO-2026', name:'ECO-2026', limit:'MWK 8,000,000',  adult:'MWK 9,000',  child:'MWK 9,000',  terr:'Malawi, Mission & Govt hospitals, Paramedics & Nominated GPs'},
+    {code:'EXE-2026', name:'EXE-2026', limit:'MWK 32,000,000', adult:'MWK 30,000', child:'MWK 29,000', terr:'SADC, India, Egypt and Kenya'},
+    {code:'VIP-2026', name:'VIP-2026', limit:'MWK 90,000,000', adult:'MWK 63,000', child:'MWK 56,000', terr:'SADC, India, Egypt and Kenya'}
   ]
 };
 function updateMedPlans(){
@@ -3300,16 +3317,6 @@ function vlaPrompt(msg, cb){
 
 </script>
 
-<!-- Inactivity timeout warning overlay -->
-<div id="idle-overlay">
-  <div id="idle-box">
-    <div class="idle-icon">&#9201;</div>
-    <h3>Still there?</h3>
-    <p>You will be signed out automatically due to inactivity in:</p>
-    <div class="idle-countdown" id="idle-countdown">2:00</div>
-    <button class="idle-btn" onclick="_idleStaySignedIn()">Stay Signed In</button>
-  </div>
-</div>
 <!-- Toast notification -->
 <div id="vla-toast" style="display:none;position:fixed;bottom:72px;left:50%;transform:translateX(-50%);background:#641414;color:#fff;padding:.45rem 1.1rem;border-radius:20px;font-size:.76rem;font-weight:600;z-index:9998;white-space:nowrap;box-shadow:0 3px 12px rgba(0,0,0,.25)"></div>
 
