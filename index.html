@@ -1321,7 +1321,12 @@ var _viewFASnap=null;   // FA snapshot of the quote currently being viewed (for 
 var _faList=[];         // cached FA list for admin dropdown
 
 // ── Offline / SW ─────────────────────────────────────────────
-function syncOnline(){document.body.classList.toggle('offline',!navigator.onLine);}
+function syncOnline(){
+  document.body.classList.toggle('offline',!navigator.onLine);
+  // Connectivity just restored — push any offline-created quotes immediately
+  // rather than waiting for the user to remember the manual Sync button.
+  if(navigator.onLine&&currentUser) _pushPendingQuiet();
+}
 window.addEventListener('online',syncOnline);window.addEventListener('offline',syncOnline);syncOnline();
 if('serviceWorker' in navigator){
   navigator.serviceWorker.register('./sw.js').then(function(reg){
@@ -1355,6 +1360,7 @@ function loadFADropdown(){
   // Allow Admin, Technical Services and Policy Servicing to load the FA list
   if(currentUser.role!=='Admin'&&!isTS(currentUser.role)&&!isPS(currentUser.role))return;
   var sel=document.getElementById('quoteFA');if(!sel)return;
+  var priorValue=sel.value; // preserve any selection made before this refresh (e.g. background sync mid-form)
   fetch(APPS_SCRIPT_URL+'?action=getUsers&requesterId='+encodeURIComponent(currentUser.userId)+'&token='+encodeURIComponent(APP_TOKEN),{redirect:'follow'})
     .then(function(r){return r.json();})
     .then(function(d){
@@ -1365,7 +1371,16 @@ function loadFADropdown(){
              .forEach(function(u){
                opts+='<option value="'+escHtml(u.userId)+'">'+escHtml(u.name)+'</option>';
              });
-      sel.innerHTML=opts; sel.value=''; _selectedFA=null;
+      sel.innerHTML=opts;
+      // Restore the in-progress selection if it's still a valid, active FA —
+      // otherwise a background refresh mid-quote silently reverts to "Myself".
+      if(priorValue&&_faList.some(function(u){return u.userId===priorValue;})){
+        sel.value=priorValue;
+        onFASelect(priorValue);
+      } else {
+        sel.value='';
+        _selectedFA=null;
+      }
     }).catch(function(){});
 }
 function onFASelect(uid){
@@ -1542,7 +1557,7 @@ function showApp(){
   });
   loadLocalQuotes();
   _populateMedProviders();
-  if(currentUser&&(currentUser.role==='Admin'||isPS(currentUser.role)||isTechServ)&&navigator.onLine){_autoSyncQuotes();}
+  if(currentUser&&navigator.onLine){_pushPendingQuiet();_autoSyncQuotes();}
   // Clean orphaned local quotes (deleted from sheet, still in local storage)
   _cleanLocalOrphans();
   if(currentUser&&(currentUser.role==='Admin'||isTechServ||isPS(currentUser.role)))loadFADropdown();
@@ -1819,6 +1834,7 @@ function goReview(){
     ['Initial Consideration','MWK '+fmtN(inp.initialConsideration)],
   ];
   if(currentUser&&currentUser.role==='Admin'){items.splice(2,0,['Basis',inp.basisName]);}
+  if(_selectedFA&&_selectedFA.name){items.unshift(['Quoting on behalf of',_selectedFA.name]);}
   var _aso=getAppSettings();
   if(_aso.mortGender) items.push(['Mortality Table',inp.basisName+' '+_aso.mortGender+' (system default)']);
   if(inp.annuityStructure==='Reversionary last survivor'&&inp.dob2)
@@ -2575,9 +2591,15 @@ function pushQuote(entry){
   .then(function(d){if(d.ok){entry.syncStatus='synced';entry.quoteId=d.quoteId;saveLocalQuotes();}})
   .catch(function(){});
 }
-async function syncAll(){
-  var btn=document.getElementById('sync-btn');btn.textContent='Syncing\u2026';btn.disabled=true;
-  var pending=localQuotes.filter(function(q){return q.syncStatus==='pending';});var count=0;
+// Core push loop — pushes any 'pending' (offline-created) quotes to the server.
+// Called both by the manual Sync button (syncAll, with UI feedback) and
+// automatically on regaining connectivity / periodic background sync / login,
+// so offline quotes reach the server as soon as possible and are never left
+// sitting only in localStorage longer than necessary.
+async function _pushPendingQuiet(){
+  if(!navigator.onLine||!currentUser)return 0;
+  var pending=localQuotes.filter(function(q){return q.syncStatus==='pending';});
+  var count=0;
   for(var i=0;i<pending.length;i++){
     try{
       var r=await fetch(APPS_SCRIPT_URL,{method:'POST',body:JSON.stringify({token:APP_TOKEN,
@@ -2593,7 +2615,12 @@ async function syncAll(){
       var d=await r.json();if(d.ok){pending[i].syncStatus='synced';pending[i].quoteId=d.quoteId;count++;}
     }catch(e){}
   }
-  saveLocalQuotes();
+  if(count>0)saveLocalQuotes();
+  return count;
+}
+async function syncAll(){
+  var btn=document.getElementById('sync-btn');btn.textContent='Syncing\u2026';btn.disabled=true;
+  var count=await _pushPendingQuiet();
   btn.innerHTML='<span class="sync-dot" id="sync-dot"></span>Sync';showToast(count>0?'✓ '+count+' quote(s) synced':'Nothing to sync');
   btn.disabled=false;updateSyncDot();
 }
@@ -2631,6 +2658,7 @@ function _bgSyncQuiet(){
   var now=Date.now();
   if(now-_lastSyncTime<30000)return; // throttle: no more than once per 30s
   _lastSyncTime=now;
+  _pushPendingQuiet(); // push any offline-created quotes up first
   _autoSyncQuotes();
   // Also refresh FA list if needed
   if(currentUser&&(currentUser.role==='Admin'||isTS(currentUser.role)||isPS(currentUser.role))){
