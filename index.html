@@ -670,6 +670,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
     <button class="tb-btn" id="sync-btn" onclick="syncAll()"><span class="sync-dot" id="sync-dot"></span>Sync</button>
   </div>
   <div class="home-scroll">
+    <div id="home-greeting" style="font-size:.86rem;color:#1a1a1a;margin-bottom:.7rem"></div>
     <div class="stats-grid">
       <div class="stat-card"><div><span style="font-size:.9rem;opacity:.55">&#128196;</span><span class="stat-trend up" id="st-total-trend"></span></div><div class="stat-val" id="st-total">0</div><div class="stat-label">Total Quotes</div></div>
       <div class="stat-card"><div><span style="font-size:.9rem;opacity:.55">&#128197;</span><span class="stat-trend" id="st-week-trend"></span></div><div class="stat-val" id="st-week">0</div><div class="stat-label">This Week</div></div>
@@ -808,7 +809,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
     <div class="panel" id="panel-review">
       <div class="card"><div class="card-title">Review &#8212; confirm all details</div>
         <div class="rev-grid" id="rev-content"></div>
-        <div class="actions"><button class="btn btn-ghost" onclick="goQTab('panel-form')">&#8592; Edit</button><button class="btn btn-primary" onclick="runCalc()">Calculate</button></div>
+        <div class="actions"><button class="btn btn-ghost" onclick="goQTab('panel-form')">&#8592; Edit</button><button class="btn btn-primary" id="calc-btn" onclick="runCalc()">Calculate</button></div>
         <div class="spin-wrap" id="spin"><span class="spinner"></span>Computing&hellip;</div>
       </div>
     </div>
@@ -1871,7 +1872,7 @@ async function runCalc(){
     var d=await resp.json();
     if(!d.ok){
       var msg=d.error||'Server error';
-      if(msg==='Unknown action')msg='Quote server not updated. Please deploy AppsScript.gs v4.0 via Manage Deployments.';
+      if(msg==='Unknown action')msg='Quote server not updated. Please deploy AppsScript.gs v3.3 via Manage Deployments.';
       throw new Error(msg);
     }
     lastQuote=d.quote;
@@ -2942,6 +2943,7 @@ function withdrawQuote(ev,lid){
       var _wUrl=APPS_SCRIPT_URL
         +'?action=updatePolicyStatus'
         +'&token='+encodeURIComponent(APP_TOKEN)
+        +'&requesterId='+encodeURIComponent(currentUser.userId)
         +'&quoteId='+encodeURIComponent(qid)
         +'&status=Withdrawn'
         +'&statusDate='+encodeURIComponent(localQuotes[i].statusDate)
@@ -3038,6 +3040,7 @@ function setPolicyStatus(lid,status){
       var _psUrl=APPS_SCRIPT_URL
         +'?action=updatePolicyStatus'
         +'&token='+encodeURIComponent(APP_TOKEN)
+        +'&requesterId='+encodeURIComponent(currentUser.userId)
         +'&quoteId='+encodeURIComponent(lid)
         +'&status='+encodeURIComponent(status)
         +'&statusDate='+encodeURIComponent(new Date().toISOString().slice(0,10))
@@ -3232,6 +3235,7 @@ function _faClientAccept(){
         var _caUrl=APPS_SCRIPT_URL
           +'?action=clientAccepted'
           +'&token='+encodeURIComponent(APP_TOKEN)
+          +'&requesterId='+encodeURIComponent(currentUser.userId)
           +'&quoteId='+encodeURIComponent(qid)
           +'&faName='+encodeURIComponent(_faName)
           +'&faEmail='+encodeURIComponent(_faEmail)
@@ -3663,6 +3667,67 @@ function piToggleFaq(btn) {
   btn.classList.toggle('pifaq-open');
   btn.nextElementSibling.classList.toggle('pifaq-open');
 }
+
+// ================================================================
+//  VLA Annuity Tool — Licence Gate
+//  ────────────────────────────────────────────────────────────────
+//  To RENEW:  change LICENCE_EXPIRY to the new date (YYYY-MM-DD)
+//             then redeploy this file — no other changes needed.
+//
+//  To change the warning window: update LICENCE_WARN_DAYS.
+//
+//  Behaviour:
+//    > WARN_DAYS before expiry  : no banner, login works normally
+//    within WARN_DAYS of expiry : amber banner with countdown
+//    on / after expiry date     : red banner, Sign In disabled
+// ================================================================
+
+var LICENCE_EXPIRY    = '2026-07-31';  // ← update this to renew
+var LICENCE_WARN_DAYS = 14;            // days before expiry to start warning
+
+function checkLicence() {
+  var expiry  = new Date(LICENCE_EXPIRY + 'T00:00:00');
+  var today   = new Date(); today.setHours(0, 0, 0, 0);
+  var msPerDay = 24 * 60 * 60 * 1000;
+  var daysLeft = Math.ceil((expiry - today) / msPerDay);
+
+  var months = ['Jan','Feb','Mar','Apr','May','Jun',
+                'Jul','Aug','Sep','Oct','Nov','Dec'];
+  var displayDate = expiry.getDate() + ' ' +
+                    months[expiry.getMonth()] + ' ' +
+                    expiry.getFullYear();
+
+  var warnEl    = document.getElementById('lic-warn');
+  var expiredEl = document.getElementById('lic-expired');
+  var loginBtn  = document.getElementById('login-btn');
+  if (!warnEl || !expiredEl || !loginBtn) return true; // elements not on this screen — no-op
+
+  if (daysLeft <= 0) {
+    document.getElementById('lic-exp-date2').textContent = displayDate;
+    expiredEl.style.display = 'block';
+    warnEl.style.display    = 'none';
+    loginBtn.disabled       = true;
+    loginBtn.title          = 'Licence expired — contact admin';
+    return false;
+  }
+
+  if (daysLeft <= LICENCE_WARN_DAYS) {
+    var remaining = daysLeft === 1 ? '1 day remaining'
+                                   : daysLeft + ' days remaining';
+    warnEl.innerHTML = '<strong>\u26a0 Licence Expiring Soon</strong>' +
+                       'Expires <strong>' + displayDate + '</strong> \u2014 ' +
+                       remaining + '. Contact your admin to renew.';
+    warnEl.style.display    = 'block';
+    expiredEl.style.display = 'none';
+    return true;
+  }
+
+  warnEl.style.display    = 'none';
+  expiredEl.style.display = 'none';
+  return true;
+}
+
+document.addEventListener('DOMContentLoaded', function () { checkLicence(); });
 
 // ── Restore session on refresh ────────────────────────────────
 (function(){
