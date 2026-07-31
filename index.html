@@ -1419,7 +1419,7 @@ function _credHash(u,pw){
 }
 
 function doLogin(){
-  if(!checkLicence())return;  // hard block if expired
+  if(typeof checkLicence==='function'&&!checkLicence())return;  // hard block if expired (skips safely if licence.js failed to load)
   var u=document.getElementById('login-user').value.trim();
   var pw=document.getElementById('login-pass').value.trim();
   var errEl=document.getElementById('login-err');
@@ -3667,67 +3667,6 @@ function piToggleFaq(btn) {
   btn.classList.toggle('pifaq-open');
   btn.nextElementSibling.classList.toggle('pifaq-open');
 }
-
-// ================================================================
-//  VLA Annuity Tool — Licence Gate
-//  ────────────────────────────────────────────────────────────────
-//  To RENEW:  change LICENCE_EXPIRY to the new date (YYYY-MM-DD)
-//             then redeploy this file — no other changes needed.
-//
-//  To change the warning window: update LICENCE_WARN_DAYS.
-//
-//  Behaviour:
-//    > WARN_DAYS before expiry  : no banner, login works normally
-//    within WARN_DAYS of expiry : amber banner with countdown
-//    on / after expiry date     : red banner, Sign In disabled
-// ================================================================
-
-var LICENCE_EXPIRY    = '2026-07-31';  // ← update this to renew
-var LICENCE_WARN_DAYS = 14;            // days before expiry to start warning
-
-function checkLicence() {
-  var expiry  = new Date(LICENCE_EXPIRY + 'T00:00:00');
-  var today   = new Date(); today.setHours(0, 0, 0, 0);
-  var msPerDay = 24 * 60 * 60 * 1000;
-  var daysLeft = Math.ceil((expiry - today) / msPerDay);
-
-  var months = ['Jan','Feb','Mar','Apr','May','Jun',
-                'Jul','Aug','Sep','Oct','Nov','Dec'];
-  var displayDate = expiry.getDate() + ' ' +
-                    months[expiry.getMonth()] + ' ' +
-                    expiry.getFullYear();
-
-  var warnEl    = document.getElementById('lic-warn');
-  var expiredEl = document.getElementById('lic-expired');
-  var loginBtn  = document.getElementById('login-btn');
-  if (!warnEl || !expiredEl || !loginBtn) return true; // elements not on this screen — no-op
-
-  if (daysLeft <= 0) {
-    document.getElementById('lic-exp-date2').textContent = displayDate;
-    expiredEl.style.display = 'block';
-    warnEl.style.display    = 'none';
-    loginBtn.disabled       = true;
-    loginBtn.title          = 'Licence expired — contact admin';
-    return false;
-  }
-
-  if (daysLeft <= LICENCE_WARN_DAYS) {
-    var remaining = daysLeft === 1 ? '1 day remaining'
-                                   : daysLeft + ' days remaining';
-    warnEl.innerHTML = '<strong>\u26a0 Licence Expiring Soon</strong>' +
-                       'Expires <strong>' + displayDate + '</strong> \u2014 ' +
-                       remaining + '. Contact your admin to renew.';
-    warnEl.style.display    = 'block';
-    expiredEl.style.display = 'none';
-    return true;
-  }
-
-  warnEl.style.display    = 'none';
-  expiredEl.style.display = 'none';
-  return true;
-}
-
-document.addEventListener('DOMContentLoaded', function () { checkLicence(); });
 
 // ── Restore session on refresh ────────────────────────────────
 (function(){

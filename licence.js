@@ -1,13 +1,16 @@
 // ================================================================
 //  VLA Annuity Tool — Licence Gate
 //  ────────────────────────────────────────────────────────────────
+//  This file is loaded by index.html via <script src="licence.js">.
+//  Deploy it in the SAME folder as index.html on your web host.
+//
 //  To RENEW:  change LICENCE_EXPIRY to the new date (YYYY-MM-DD)
-//             then redeploy this file only — index.html unchanged.
+//             then upload this file only — index.html unchanged.
 //
 //  To change the warning window: update LICENCE_WARN_DAYS.
 //
 //  Behaviour:
-//    > WARN_DAYS before expiry  : amber banner, login still works
+//    > WARN_DAYS before expiry  : no banner, login works normally
 //    within WARN_DAYS of expiry : amber banner with countdown
 //    on / after expiry date     : red banner, Sign In disabled
 // ================================================================
@@ -21,7 +24,7 @@ function checkLicence() {
   var msPerDay = 24 * 60 * 60 * 1000;
   var daysLeft = Math.ceil((expiry - today) / msPerDay);
 
-  // e.g. "31 Dec 2026"
+  // e.g. "14 Aug 2026"
   var months = ['Jan','Feb','Mar','Apr','May','Jun',
                 'Jul','Aug','Sep','Oct','Nov','Dec'];
   var displayDate = expiry.getDate() + ' ' +
@@ -31,6 +34,7 @@ function checkLicence() {
   var warnEl    = document.getElementById('lic-warn');
   var expiredEl = document.getElementById('lic-expired');
   var loginBtn  = document.getElementById('login-btn');
+  if (!warnEl || !expiredEl || !loginBtn) return true; // elements not on this screen — no-op
 
   if (daysLeft <= 0) {
     // ── Hard block ───────────────────────────────────────────
