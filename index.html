@@ -1490,6 +1490,17 @@ function _warmGAS(){
 document.addEventListener('DOMContentLoaded',function(){_warmGAS();});
 
 
+// Returns the last calendar day of the current month as YYYY-MM-DD
+// (e.g. any day in July 2026 returns '2026-07-31'). Used as the default
+// "Expected due date for first payment" — the FA can still edit it manually.
+function _lastDayOfMonth(){
+  var now=new Date();
+  var end=new Date(now.getFullYear(),now.getMonth()+1,0); // day 0 of next month = last day of this month
+  var y=end.getFullYear();
+  var m=String(end.getMonth()+1).padStart(2,'0');
+  var d=String(end.getDate()).padStart(2,'0');
+  return y+'-'+m+'-'+d;
+}
 function resetQuoteForm(){
   // Clear all quote state so no previous user's data leaks to next login
   currentInputs={};lastQuote=null;_reviseMode=false;_viewMode=false;_selectedFA=null;_viewFASnap=null;_actingUser=null;_lastAutoSaveKey='';
@@ -1514,9 +1525,9 @@ function resetQuoteForm(){
       b.classList.toggle('on',b.dataset.v===togDefaults[g]);
     });
   });
-  // Set dueDate to today
+  // Set dueDate to the last day of the current month (the FA can still override manually)
   var dd=document.getElementById('dueDate');
-  if(dd)dd.value=new Date().toISOString().slice(0,10);
+  if(dd)dd.value=_lastDayOfMonth();
   // Hide ANB display
   var anbWrap=document.getElementById('anb1-wrap');
   if(anbWrap)anbWrap.style.display='none';
@@ -1538,7 +1549,7 @@ function showApp(){
   var today=new Date().toISOString().slice(0,10);
   document.getElementById('dob1').max=today;
   document.getElementById('dob2').max=today;
-  document.getElementById('dueDate').value=today;
+  document.getElementById('dueDate').value=_lastDayOfMonth();
   document.getElementById('topbar-name').textContent=currentUser.name;
   var _hr=new Date().getHours();
   var _greet=_hr<12?'Good morning':_hr<17?'Good afternoon':'Good evening';
@@ -3496,6 +3507,7 @@ async function loadAdmin(){
           +'<td><span class="active-pill '+(u.active?'yes':'no')+'">'+(u.active?'Active':'Inactive')+'</span></td>'
           +'<td style="white-space:nowrap">'
           +'<button class="btn btn-ghost btn-sm" data-uid="'+escHtml(u.userId)+'" onclick="toggleFA(this.getAttribute(\'data-uid\'))">'+(u.active?'Deactivate':'Activate')+'</button> '
+          +'<button class="btn btn-ghost btn-sm" data-uid="'+escHtml(u.userId)+'" data-name="'+escHtml(u.name)+'" data-title="'+escHtml(u.title||'')+'" onclick="editFATitle(this.getAttribute(\'data-uid\'),this.getAttribute(\'data-name\'),this.getAttribute(\'data-title\'))">Edit Title</button> '
           +'<button class="btn btn-ghost btn-sm" data-uid="'+escHtml(u.userId)+'" data-name="'+escHtml(u.name)+'" onclick="resetFAPass(this.getAttribute(\'data-uid\'),this.getAttribute(\'data-name\'))">Reset PW</button> '
           +'<button class="btn btn-ghost btn-sm" style="border-color:#b00;color:#b00" data-uid="'+escHtml(u.userId)+'" data-name="'+escHtml(u.name)+'" onclick="deleteFA(this.getAttribute(\'data-uid\'),this.getAttribute(\'data-name\'))">Delete</button>'
           +'</td>'
@@ -3533,6 +3545,17 @@ function resetFAPass(userId,name){
         if(d.ok){showToast('\u2713 Password reset for '+name);}else{showToast('Reset failed: '+(d.error||'Unknown'));}})
       .catch(function(e){showToast('Network error');});
   });
+}
+function editFATitle(userId,name,currentTitle){
+  vlaPrompt('Edit job title for '+name+':',function(newTitle){
+    newTitle=(newTitle||'').trim();
+    if(!newTitle){return;} // cancelled or left blank — no change
+    fetch(APPS_SCRIPT_URL,{method:'POST',redirect:'follow',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({token:APP_TOKEN,action:'updateUser',requesterId:currentUser.userId,userId:userId,title:newTitle})})
+      .then(function(r){return r.text();})
+      .then(function(raw){var d;try{d=JSON.parse(raw);}catch(e){showToast('Server error');return;}
+        if(d.ok){showToast('\u2713 Title updated for '+name);loadAdmin();}else{showToast('Update failed: '+(d.error||'Unknown'));}})
+      .catch(function(e){showToast('Network error');});
+  },currentTitle);
 }
 function deleteFA(userId,name){
   vlaConfirm('Permanently delete '+name+'? This cannot be undone. (Their saved quotes remain in the system.)',function(yes){
@@ -3641,7 +3664,7 @@ function vlaConfirm(msg, cb){
   document.getElementById('vla-modal-ok').onclick=function(){m.style.display='none';cb(true);};
   document.getElementById('vla-modal-cancel').onclick=function(){m.style.display='none';cb(false);};
 }
-function vlaPrompt(msg, cb){
+function vlaPrompt(msg, cb, defaultVal){
   var m=document.getElementById('vla-modal');
   var msgEl=document.getElementById('vla-modal-msg');
   msgEl.textContent=msg;
@@ -3654,9 +3677,9 @@ function vlaPrompt(msg, cb){
     inp.style.cssText='width:100%;margin-top:.7rem;padding:.5rem;border:1.5px solid #641414;border-radius:6px;font-size:.85rem;box-sizing:border-box';
     msgEl.parentNode.insertBefore(inp,msgEl.nextSibling);
   }
-  inp.style.display='';inp.value='';
+  inp.style.display='';inp.value=defaultVal||'';
   m.style.display='flex';
-  setTimeout(function(){inp.focus();},50);
+  setTimeout(function(){inp.focus();if(defaultVal)inp.select();},50);
   document.getElementById('vla-modal-ok').onclick=function(){var v=inp.value;m.style.display='none';inp.style.display='none';cb(v);};
   document.getElementById('vla-modal-cancel').onclick=function(){m.style.display='none';inp.style.display='none';cb(null);};
 }
